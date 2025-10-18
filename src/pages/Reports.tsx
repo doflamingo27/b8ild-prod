@@ -92,12 +92,21 @@ const Reports = () => {
             const coutsFixes = factures.reduce((sum: number, f: any) => sum + (f.montant_ht || 0), 0) +
                                frais.reduce((sum: number, f: any) => sum + (f.montant_total || 0), 0);
 
-            const calculations = useCalculations({
-              membres,
-              budget_devis: devis?.montant_ht || 0,
-              couts_fixes: coutsFixes,
-              jours_effectifs: chantier.duree_estimee || 0,
-            });
+            // Calculs manuels sans hook
+            const budget_devis = devis?.montant_ht || 0;
+            const cout_journalier_equipe = membres.reduce((total: number, membre: any) => {
+              const cout_horaire_reel = membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+              return total + (cout_horaire_reel * 8);
+            }, 0);
+            const budget_disponible = budget_devis - coutsFixes;
+            const rentabilite_pct = budget_devis > 0 ? (budget_disponible / budget_devis) * 100 : 0;
+            const jour_critique = cout_journalier_equipe > 0 ? budget_disponible / cout_journalier_equipe : Infinity;
+            
+            let statut: "success" | "warning" | "alert" | "danger";
+            if (rentabilite_pct >= 20) statut = "success";
+            else if (rentabilite_pct >= 10) statut = "warning";
+            else if (rentabilite_pct > 0) statut = "alert";
+            else statut = "danger";
 
             return (
               <Card key={chantier.id} className="card-premium hover-lift">
@@ -116,7 +125,16 @@ const Reports = () => {
                       devis={devis}
                       factures={factures}
                       frais={frais}
-                      calculations={calculations}
+                      calculations={{
+                        cout_journalier_equipe,
+                        budget_disponible,
+                        jour_critique,
+                        rentabilite_pct,
+                        jours_restants_avant_deficit: 0,
+                        statut,
+                        calculerCoutHoraireReel: () => 0,
+                        calculerCoutJournalierMembre: () => 0,
+                      }}
                     />
                   </div>
                 </CardHeader>
@@ -124,37 +142,37 @@ const Reports = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Budget</p>
-                      <p className="text-2xl font-black font-mono text-primary">{(devis?.montant_ht || 0).toFixed(2)} €</p>
+                      <p className="text-2xl font-black font-mono text-gradient-primary">{(devis?.montant_ht || 0).toFixed(2)} €</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Rentabilité</p>
                       <p className={`text-2xl font-black font-mono ${
-                        calculations.rentabilite_pct >= 20 ? "text-success" :
-                        calculations.rentabilite_pct >= 10 ? "text-warning" :
-                        calculations.rentabilite_pct > 0 ? "text-alert" :
+                        rentabilite_pct >= 20 ? "text-success" :
+                        rentabilite_pct >= 10 ? "text-warning" :
+                        rentabilite_pct > 0 ? "text-alert" :
                         "text-danger"
                       }`}>
-                        {calculations.rentabilite_pct.toFixed(1)} %
+                        {rentabilite_pct.toFixed(1)} %
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Jour critique</p>
-                      <p className="text-2xl font-black font-mono">{calculations.jour_critique.toFixed(1)} j</p>
+                      <p className="text-2xl font-black font-mono">{jour_critique.toFixed(1)} j</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Statut</p>
                       <Badge 
                         variant={
-                          calculations.statut === "success" ? "default" :
-                          calculations.statut === "warning" ? "secondary" :
-                          calculations.statut === "alert" ? "outline" :
+                          statut === "success" ? "default" :
+                          statut === "warning" ? "secondary" :
+                          statut === "alert" ? "outline" :
                           "destructive"
                         }
                         className="text-sm font-bold px-3 py-1"
                       >
-                        {calculations.statut === "success" ? "Excellent" :
-                         calculations.statut === "warning" ? "Bon" :
-                         calculations.statut === "alert" ? "Attention" :
+                        {statut === "success" ? "Excellent" :
+                         statut === "warning" ? "Bon" :
+                         statut === "alert" ? "Attention" :
                          "Critique"}
                       </Badge>
                     </div>
