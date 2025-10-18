@@ -122,42 +122,42 @@ const Profile = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-up">
       <div>
-        <h1 className="text-3xl font-black">Profil Entreprise</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-4xl font-black text-gradient-primary">Profil Entreprise</h1>
+        <p className="text-muted-foreground mt-2 text-lg">
           Gérez les informations de votre entreprise
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="card-premium">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-2xl font-black">
+              <Building className="h-6 w-6 text-primary" />
               Logo de l'entreprise
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Téléchargez le logo de votre entreprise (PNG, JPG - max 2MB)
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-24 w-24">
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-28 w-28 border-4 border-border shadow-lg">
                 <AvatarImage src={entreprise.logo_url} alt={entreprise.nom} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                <AvatarFallback className="bg-gradient-primary text-primary-foreground text-3xl font-black">
                   {entreprise.nom?.[0]?.toUpperCase() || "E"}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <Label htmlFor="logo-upload" className="cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <div className="flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all font-semibold">
                     {uploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
+                      <Upload className="h-5 w-5" />
                     )}
-                    <span className="text-sm font-medium">
+                    <span>
                       {uploading ? "Téléchargement..." : "Changer le logo"}
                     </span>
                   </div>
@@ -175,17 +175,17 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="card-premium">
           <CardHeader>
-            <CardTitle>Informations entreprise</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-black">Informations entreprise</CardTitle>
+            <CardDescription className="text-base">
               Mettez à jour les informations de votre entreprise
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nom">Nom de l'entreprise</Label>
+                <Label htmlFor="nom" className="font-semibold">Nom de l'entreprise</Label>
                 <Input
                   id="nom"
                   value={entreprise.nom}
@@ -196,7 +196,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="siret">SIRET</Label>
+                <Label htmlFor="siret" className="font-semibold">SIRET</Label>
                 <Input
                   id="siret"
                   value={entreprise.siret}
@@ -207,7 +207,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="specialite">Spécialité métier</Label>
+                <Label htmlFor="specialite" className="font-semibold">Spécialité métier</Label>
                 <Input
                   id="specialite"
                   value={entreprise.specialite_metier}
@@ -218,7 +218,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="adresse">Adresse</Label>
+                <Label htmlFor="adresse" className="font-semibold">Adresse</Label>
                 <Input
                   id="adresse"
                   value={entreprise.adresse}
@@ -228,7 +228,7 @@ const Profile = () => {
                 />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
+              <Button type="submit" disabled={loading} className="w-full font-bold" size="lg">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Enregistrer les modifications
               </Button>

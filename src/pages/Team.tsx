@@ -169,14 +169,14 @@ const Team = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-up">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black flex items-center gap-2">
-            <Users className="h-8 w-8" />
+          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
+            <Users className="h-9 w-9 text-primary" />
             Gestion de l'équipe
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-2 text-lg">
             Gérez les membres de votre équipe et leurs coûts
           </p>
         </div>
@@ -185,25 +185,25 @@ const Team = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
+            <Button size="lg" className="gap-2 font-bold">
+              <UserPlus className="h-5 w-5" />
               Ajouter un membre
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-2xl font-black">
                   {editingMembre ? "Modifier le membre" : "Ajouter un membre"}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-base">
                   Renseignez les informations du membre de l'équipe
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="prenom">Prénom</Label>
+                    <Label htmlFor="prenom" className="font-semibold">Prénom</Label>
                     <Input
                       id="prenom"
                       value={formData.prenom}
@@ -212,7 +212,7 @@ const Team = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nom">Nom</Label>
+                    <Label htmlFor="nom" className="font-semibold">Nom</Label>
                     <Input
                       id="nom"
                       value={formData.nom}
@@ -223,7 +223,7 @@ const Team = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="poste">Poste</Label>
+                    <Label htmlFor="poste" className="font-semibold">Poste</Label>
                     <Input
                       id="poste"
                       value={formData.poste}
@@ -233,7 +233,7 @@ const Team = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="specialite">Spécialité</Label>
+                    <Label htmlFor="specialite" className="font-semibold">Spécialité</Label>
                     <Input
                       id="specialite"
                       value={formData.specialite}
@@ -244,7 +244,7 @@ const Team = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="taux_horaire">Taux horaire (€/h)</Label>
+                  <Label htmlFor="taux_horaire" className="font-semibold">Taux horaire (€/h)</Label>
                   <Input
                     id="taux_horaire"
                     type="number"
@@ -256,7 +256,7 @@ const Team = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="charges_salariales">Charges salariales (%)</Label>
+                    <Label htmlFor="charges_salariales" className="font-semibold">Charges salariales (%)</Label>
                     <Input
                       id="charges_salariales"
                       type="number"
@@ -267,7 +267,7 @@ const Team = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="charges_patronales">Charges patronales (%)</Label>
+                    <Label htmlFor="charges_patronales" className="font-semibold">Charges patronales (%)</Label>
                     <Input
                       id="charges_patronales"
                       type="number"
@@ -280,7 +280,7 @@ const Team = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} size="lg" className="font-bold">
                   {editingMembre ? "Mettre à jour" : "Ajouter"}
                 </Button>
               </DialogFooter>
@@ -289,92 +289,98 @@ const Team = () => {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="card-premium">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-2xl font-black">
+            <Calculator className="h-6 w-6 text-primary" />
             Coût total de l'équipe
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Coût journalier de l'équipe complète (membres actifs uniquement)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-black font-mono">
-            {cout_journalier_equipe.toFixed(2)} €<span className="text-lg text-muted-foreground">/jour</span>
+          <div className="text-5xl font-black font-mono text-gradient-primary">
+            {cout_journalier_equipe.toFixed(2)} €<span className="text-xl text-muted-foreground font-sans">/jour</span>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-premium">
         <CardHeader>
-          <CardTitle>Liste des membres</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-black">Liste des membres</CardTitle>
+          <CardDescription className="text-base">
             {membres.filter(m => m.actif).length} membre(s) actif(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Poste</TableHead>
-                <TableHead>Spécialité</TableHead>
-                <TableHead className="text-right">Taux horaire</TableHead>
-                <TableHead className="text-right">Coût/jour</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {membres.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Aucun membre dans l'équipe. Ajoutez votre premier membre.
-                  </TableCell>
+                  <TableHead className="font-bold">Nom</TableHead>
+                  <TableHead className="font-bold">Poste</TableHead>
+                  <TableHead className="font-bold">Spécialité</TableHead>
+                  <TableHead className="text-right font-bold">Taux horaire</TableHead>
+                  <TableHead className="text-right font-bold">Coût/jour</TableHead>
+                  <TableHead className="font-bold">Statut</TableHead>
+                  <TableHead className="text-right font-bold">Actions</TableHead>
                 </TableRow>
-              ) : (
-                membres.map((membre) => (
-                  <TableRow key={membre.id}>
-                    <TableCell className="font-medium">
-                      {membre.prenom} {membre.nom}
-                    </TableCell>
-                    <TableCell>{membre.poste}</TableCell>
-                    <TableCell>{membre.specialite}</TableCell>
-                    <TableCell className="text-right font-mono">{membre.taux_horaire.toFixed(2)} €</TableCell>
-                    <TableCell className="text-right font-mono font-bold">
-                      {calculerCoutJournalierMembre(membre).toFixed(2)} €
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={membre.actif ? "default" : "secondary"}>
-                        {membre.actif ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(membre)}
-                          disabled={!membre.actif}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(membre.id)}
-                          disabled={!membre.actif}
-                        >
-                          <Trash2 className="h-4 w-4 text-danger" />
-                        </Button>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {membres.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                      <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="font-semibold">Aucun membre dans l'équipe</p>
+                      <p className="text-sm">Ajoutez votre premier membre pour commencer</p>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  membres.map((membre) => (
+                    <TableRow key={membre.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-bold">
+                        {membre.prenom} {membre.nom}
+                      </TableCell>
+                      <TableCell>{membre.poste}</TableCell>
+                      <TableCell>{membre.specialite}</TableCell>
+                      <TableCell className="text-right font-mono font-semibold">{membre.taux_horaire.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-mono font-black text-primary">
+                        {calculerCoutJournalierMembre(membre).toFixed(2)} €
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={membre.actif ? "default" : "secondary"} className="font-semibold">
+                          {membre.actif ? "Actif" : "Inactif"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(membre)}
+                            disabled={!membre.actif}
+                            className="hover:bg-primary/10"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(membre.id)}
+                            disabled={!membre.actif}
+                            className="hover:bg-danger/10"
+                          >
+                            <Trash2 className="h-4 w-4 text-danger" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

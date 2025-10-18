@@ -53,46 +53,49 @@ const Subscription = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-up">
       <div>
-        <h1 className="text-3xl font-black flex items-center gap-2">
-          <CreditCard className="h-8 w-8" />
+        <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
+          <CreditCard className="h-9 w-9 text-primary" />
           Mon Abonnement
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2 text-lg">
           Gérez votre abonnement et votre facturation
         </p>
       </div>
 
       {/* Statut actuel */}
-      <Card>
+      <Card className="card-premium">
         <CardHeader>
-          <CardTitle>Statut actuel</CardTitle>
-          <CardDescription>Votre abonnement en cours</CardDescription>
+          <CardTitle className="text-2xl font-black">Statut actuel</CardTitle>
+          <CardDescription className="text-base">Votre abonnement en cours</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold">Plan {planName}</p>
+                  <p className="text-2xl font-black">Plan {planName}</p>
                   {subscriptionEnd && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground mt-1">
                       Expire le {new Date(subscriptionEnd).toLocaleDateString('fr-FR')}
                     </p>
                   )}
                 </div>
-                <Badge variant={subscribed ? "default" : "secondary"}>
+                <Badge 
+                  variant={subscribed ? "default" : "secondary"}
+                  className="text-base font-bold px-4 py-2"
+                >
                   {subscribed ? "Actif" : "Essai"}
                 </Badge>
               </div>
               {subscribed && (
-                <Button variant="outline" className="w-full" onClick={openCustomerPortal}>
-                  <CreditCard className="mr-2 h-4 w-4" />
+                <Button variant="outline" className="w-full font-bold" size="lg" onClick={openCustomerPortal}>
+                  <CreditCard className="mr-2 h-5 w-5" />
                   Gérer mon abonnement
                 </Button>
               )}
@@ -103,40 +106,42 @@ const Subscription = () => {
 
       {/* Plans disponibles */}
       <div>
-        <h2 className="text-2xl font-black mb-4">Plans disponibles</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {plans.map((plan) => (
+        <h2 className="text-3xl font-black mb-6">Plans disponibles</h2>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {plans.map((plan, index) => (
             <Card 
               key={plan.name}
-              className={plan.isPopular ? "border-accent shadow-glow" : ""}
+              className={`card-premium ${plan.isPopular ? "border-accent shadow-xl shadow-accent/20 scale-105" : ""} animate-fade-up`}
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardHeader>
                 {plan.isPopular && (
-                  <Badge className="w-fit mb-2 bg-accent text-accent-foreground">
-                    <Zap className="h-3 w-3 mr-1" />
+                  <Badge className="w-fit mb-3 bg-gradient-accent text-primary font-bold px-3 py-1.5">
+                    <Zap className="h-4 w-4 mr-1" />
                     Populaire
                   </Badge>
                 )}
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-black text-foreground">
+                <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  <span className="text-4xl font-black text-gradient-primary block">
                     {plan.price}
                   </span>
                   <span className="text-muted-foreground">{plan.period}</span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-success" />
+                    <li key={index} className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Button 
-                  className="w-full"
+                  className={`w-full font-bold ${plan.isPopular ? "hover-glow" : ""}`}
                   variant={plan.isPopular ? "default" : "outline"}
+                  size="lg"
                   onClick={() => plan.priceId && handleSubscribe(plan.priceId)}
                   disabled={loading || plan.name === "Gratuit" || (planName === plan.name && subscribed)}
                 >
@@ -153,10 +158,10 @@ const Subscription = () => {
       </div>
 
       {/* Informations supplémentaires */}
-      <Card>
+      <Card className="card-premium">
         <CardHeader>
-          <CardTitle>Méthode de paiement</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-black">Méthode de paiement</CardTitle>
+          <CardDescription className="text-base">
             Gérez vos informations de paiement
           </CardDescription>
         </CardHeader>
@@ -166,8 +171,8 @@ const Subscription = () => {
               <p className="text-muted-foreground">
                 Gérez vos informations de paiement via le portail client Stripe.
               </p>
-              <Button variant="outline" onClick={openCustomerPortal}>
-                <CreditCard className="mr-2 h-4 w-4" />
+              <Button variant="outline" size="lg" className="font-bold" onClick={openCustomerPortal}>
+                <CreditCard className="mr-2 h-5 w-5" />
                 Gérer mes moyens de paiement
               </Button>
             </div>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Building } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
 
 const Projects = () => {
@@ -113,32 +113,35 @@ const Projects = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-up">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black">Mes Chantiers</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
+            <Building className="h-9 w-9 text-primary" />
+            Mes Chantiers
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
             Gérez et suivez tous vos chantiers
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button size="lg" className="gap-2 font-bold">
+              <Plus className="h-5 w-5" />
               Nouveau chantier
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-xl">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Créer un nouveau chantier</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-2xl font-black">Créer un nouveau chantier</DialogTitle>
+                <DialogDescription className="text-base">
                   Renseignez les informations du chantier
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nom_chantier">Nom du chantier</Label>
+                  <Label htmlFor="nom_chantier" className="font-semibold">Nom du chantier</Label>
                   <Input
                     id="nom_chantier"
                     value={formData.nom_chantier}
@@ -148,7 +151,7 @@ const Projects = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="client">Client</Label>
+                  <Label htmlFor="client" className="font-semibold">Client</Label>
                   <Input
                     id="client"
                     value={formData.client}
@@ -158,7 +161,7 @@ const Projects = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="adresse">Adresse</Label>
+                  <Label htmlFor="adresse" className="font-semibold">Adresse</Label>
                   <Input
                     id="adresse"
                     value={formData.adresse}
@@ -168,7 +171,7 @@ const Projects = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duree_estimee">Durée estimée (jours)</Label>
+                  <Label htmlFor="duree_estimee" className="font-semibold">Durée estimée (jours)</Label>
                   <Input
                     id="duree_estimee"
                     type="number"
@@ -178,7 +181,7 @@ const Projects = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="font-semibold">Description</Label>
                   <Input
                     id="description"
                     value={formData.description}
@@ -188,7 +191,7 @@ const Projects = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} size="lg" className="font-bold">
                   Créer le chantier
                 </Button>
               </DialogFooter>
@@ -198,20 +201,30 @@ const Projects = () => {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           placeholder="Rechercher un chantier..."
-          className="pl-10"
+          className="pl-12 h-12 text-base"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       {filteredProjects.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            {searchTerm ? "Aucun chantier trouvé." : "Aucun chantier. Créez votre premier chantier."}
+        <div className="card-premium text-center py-16">
+          <Building className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <p className="text-xl font-semibold text-muted-foreground mb-2">
+            {searchTerm ? "Aucun chantier trouvé" : "Aucun chantier pour le moment"}
           </p>
+          <p className="text-muted-foreground mb-6">
+            {searchTerm ? "Essayez avec d'autres mots-clés" : "Créez votre premier chantier pour commencer"}
+          </p>
+          {!searchTerm && (
+            <Button size="lg" onClick={() => setDialogOpen(true)}>
+              <Plus className="mr-2 h-5 w-5" />
+              Créer un chantier
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

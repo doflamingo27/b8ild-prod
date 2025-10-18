@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, HardHat } from "lucide-react";
 
 const signUpSchema = z.object({
   email: z.string().email({ message: "Email invalide" }),
@@ -172,19 +173,24 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-xl font-black text-primary-foreground">B8</span>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-hero px-4 py-12 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute h-96 w-96 rounded-full bg-accent blur-3xl top-10 left-10 animate-pulse" />
+        <div className="absolute h-96 w-96 rounded-full bg-primary-light blur-3xl bottom-10 right-10 animate-pulse" style={{ animationDelay: "1s" }} />
+      </div>
+      
+      <Card className="w-full max-w-md card-premium animate-scale-in relative z-10">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 rounded-xl bg-primary shadow-lg">
+              <HardHat className="h-7 w-7 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-black text-foreground">ild</span>
+            <span className="text-3xl font-black text-gradient-primary">B8ild</span>
           </div>
-          <CardTitle className="text-2xl font-bold">
-            {mode === "login" ? "Connexion" : "Créer un compte"}
+          <CardTitle className="text-2xl font-black">
+            {mode === "login" ? "Bon retour !" : "Créer un compte"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             {mode === "login"
               ? "Connectez-vous pour accéder à votre tableau de bord"
               : "Commencez votre essai gratuit de 7 jours"}
@@ -196,7 +202,7 @@ const Auth = () => {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="prenom">Prénom</Label>
+                    <Label htmlFor="prenom" className="font-semibold">Prénom</Label>
                     <Input
                       id="prenom"
                       name="prenom"
@@ -207,11 +213,11 @@ const Auth = () => {
                       className={errors.prenom ? "border-destructive" : ""}
                     />
                     {errors.prenom && (
-                      <p className="text-xs text-destructive">{errors.prenom}</p>
+                      <p className="text-xs text-destructive font-medium">{errors.prenom}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nom">Nom</Label>
+                    <Label htmlFor="nom" className="font-semibold">Nom</Label>
                     <Input
                       id="nom"
                       name="nom"
@@ -222,12 +228,12 @@ const Auth = () => {
                       className={errors.nom ? "border-destructive" : ""}
                     />
                     {errors.nom && (
-                      <p className="text-xs text-destructive">{errors.nom}</p>
+                      <p className="text-xs text-destructive font-medium">{errors.nom}</p>
                     )}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nomEntreprise">Nom de l'entreprise</Label>
+                  <Label htmlFor="nomEntreprise" className="font-semibold">Nom de l'entreprise</Label>
                   <Input
                     id="nomEntreprise"
                     name="nomEntreprise"
@@ -238,13 +244,13 @@ const Auth = () => {
                     className={errors.nomEntreprise ? "border-destructive" : ""}
                   />
                   {errors.nomEntreprise && (
-                    <p className="text-xs text-destructive">{errors.nomEntreprise}</p>
+                    <p className="text-xs text-destructive font-medium">{errors.nomEntreprise}</p>
                   )}
                 </div>
               </>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="font-semibold">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -256,27 +262,28 @@ const Auth = () => {
                 className={errors.email ? "border-destructive" : ""}
               />
               {errors.email && (
-                <p className="text-xs text-destructive">{errors.email}</p>
+                <p className="text-xs text-destructive font-medium">{errors.email}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password" className="font-semibold">Mot de passe</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
+                placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
                 disabled={loading}
                 className={errors.password ? "border-destructive" : ""}
               />
               {errors.password && (
-                <p className="text-xs text-destructive">{errors.password}</p>
+                <p className="text-xs text-destructive font-medium">{errors.password}</p>
               )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full font-bold" disabled={loading} size="lg">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {mode === "login" ? "Se connecter" : "Créer mon compte"}
             </Button>
@@ -287,7 +294,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setMode("signup")}
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:text-primary-light font-bold underline-offset-4 hover:underline transition-colors"
                     disabled={loading}
                   >
                     Créer un compte
@@ -299,7 +306,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setMode("login")}
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:text-primary-light font-bold underline-offset-4 hover:underline transition-colors"
                     disabled={loading}
                   >
                     Se connecter
@@ -315,5 +322,3 @@ const Auth = () => {
 };
 
 export default Auth;
-
-import { supabase } from "@/integrations/supabase/client";
