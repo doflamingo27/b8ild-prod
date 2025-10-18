@@ -14,16 +14,373 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chantiers: {
+        Row: {
+          adresse: string | null
+          client: string
+          created_at: string | null
+          date_creation: string | null
+          description: string | null
+          duree_estimee: number | null
+          entreprise_id: string
+          id: string
+          nom_chantier: string
+          statut: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          client: string
+          created_at?: string | null
+          date_creation?: string | null
+          description?: string | null
+          duree_estimee?: number | null
+          entreprise_id: string
+          id?: string
+          nom_chantier: string
+          statut?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          client?: string
+          created_at?: string | null
+          date_creation?: string | null
+          description?: string | null
+          duree_estimee?: number | null
+          entreprise_id?: string
+          id?: string
+          nom_chantier?: string
+          statut?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantiers_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devis: {
+        Row: {
+          chantier_id: string
+          created_at: string | null
+          fichier_url: string | null
+          id: string
+          montant_ht: number
+          montant_ttc: number
+          tva: number
+          updated_at: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string | null
+          fichier_url?: string | null
+          id?: string
+          montant_ht?: number
+          montant_ttc?: number
+          tva?: number
+          updated_at?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string | null
+          fichier_url?: string | null
+          id?: string
+          montant_ht?: number
+          montant_ttc?: number
+          tva?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entreprises: {
+        Row: {
+          adresse: string | null
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          nom: string
+          proprietaire_user_id: string
+          siret: string | null
+          specialite_metier: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          nom: string
+          proprietaire_user_id: string
+          siret?: string | null
+          specialite_metier?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          nom?: string
+          proprietaire_user_id?: string
+          siret?: string | null
+          specialite_metier?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      equipe_chantier: {
+        Row: {
+          chantier_id: string
+          created_at: string | null
+          id: string
+          membre_id: string
+          role_chantier: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string | null
+          id?: string
+          membre_id: string
+          role_chantier?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string | null
+          id?: string
+          membre_id?: string
+          role_chantier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_chantier_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipe_chantier_membre_id_fkey"
+            columns: ["membre_id"]
+            isOneToOne: false
+            referencedRelation: "membres_equipe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factures_fournisseurs: {
+        Row: {
+          categorie: string
+          chantier_id: string
+          created_at: string | null
+          date_facture: string | null
+          fichier_url: string | null
+          fournisseur: string | null
+          id: string
+          montant_ht: number
+          updated_at: string | null
+        }
+        Insert: {
+          categorie: string
+          chantier_id: string
+          created_at?: string | null
+          date_facture?: string | null
+          fichier_url?: string | null
+          fournisseur?: string | null
+          id?: string
+          montant_ht?: number
+          updated_at?: string | null
+        }
+        Update: {
+          categorie?: string
+          chantier_id?: string
+          created_at?: string | null
+          date_facture?: string | null
+          fichier_url?: string | null
+          fournisseur?: string | null
+          id?: string
+          montant_ht?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_fournisseurs_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frais_chantier: {
+        Row: {
+          chantier_id: string
+          created_at: string | null
+          date_frais: string | null
+          description: string | null
+          id: string
+          montant_total: number
+          type_frais: string
+          updated_at: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string | null
+          date_frais?: string | null
+          description?: string | null
+          id?: string
+          montant_total?: number
+          type_frais: string
+          updated_at?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string | null
+          date_frais?: string | null
+          description?: string | null
+          id?: string
+          montant_total?: number
+          type_frais?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frais_chantier_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membres_equipe: {
+        Row: {
+          actif: boolean | null
+          charges_patronales: number
+          charges_salariales: number
+          created_at: string | null
+          entreprise_id: string
+          id: string
+          nom: string
+          poste: string | null
+          prenom: string
+          specialite: string | null
+          taux_horaire: number
+          updated_at: string | null
+        }
+        Insert: {
+          actif?: boolean | null
+          charges_patronales?: number
+          charges_salariales?: number
+          created_at?: string | null
+          entreprise_id: string
+          id?: string
+          nom: string
+          poste?: string | null
+          prenom: string
+          specialite?: string | null
+          taux_horaire?: number
+          updated_at?: string | null
+        }
+        Update: {
+          actif?: boolean | null
+          charges_patronales?: number
+          charges_salariales?: number
+          created_at?: string | null
+          entreprise_id?: string
+          id?: string
+          nom?: string
+          poste?: string | null
+          prenom?: string
+          specialite?: string | null
+          taux_horaire?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membres_equipe_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          nom: string | null
+          prenom: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          nom?: string | null
+          prenom?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nom?: string | null
+          prenom?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "chef" | "ouvrier"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +507,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "chef", "ouvrier"],
+    },
   },
 } as const

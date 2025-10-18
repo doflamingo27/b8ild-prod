@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const plans = [
   {
@@ -111,8 +112,9 @@ const Pricing = () => {
                   }`}
                   variant={plan.popular ? "default" : "outline"}
                   size="lg"
+                  asChild
                 >
-                  {plan.cta}
+                  <Link to="/auth?mode=signup">{plan.cta}</Link>
                 </Button>
                 <ul className="space-y-3">
                   {plan.features.map((feature, featureIndex) => (

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import patternBg from "@/assets/pattern-construction.jpg";
 
 const CTA = () => {
@@ -22,12 +23,14 @@ const CTA = () => {
             Essai gratuit 7 jours, sans carte bancaire.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" className="gap-2 bg-accent text-primary hover:bg-accent/90 shadow-glow">
-              Commencer maintenant
-              <ArrowRight className="h-5 w-5" />
+            <Button size="lg" className="gap-2 bg-accent text-primary hover:bg-accent/90 shadow-glow" asChild>
+              <Link to="/auth?mode=signup">
+                Commencer maintenant
+                <ArrowRight className="h-5 w-5" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline">
-              Planifier une démo
+            <Button size="lg" variant="outline" asChild>
+              <a href="#pricing">Planifier une démo</a>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
