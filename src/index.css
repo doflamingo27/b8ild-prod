@@ -1,15 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* B8ild Design System - Industrial Modern for BTP Professionals
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 17%;
+    /* Base Colors */
+    --background: 0 0% 97%; /* Gris béton clair */
+    --foreground: 0 0% 17%; /* Gris anthracite */
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 17%;
@@ -17,92 +20,111 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 17%;
 
-    /* B8ild Brand Colors */
+    /* B8ild Brand Colors - Industrial Modern */
     --primary: 207 56% 24%; /* Bleu acier #1C3F60 */
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 207 56% 20%;
+    --primary-light: 207 56% 35%;
 
     --secondary: 0 0% 90%; /* Gris béton #E5E5E5 */
     --secondary-foreground: 0 0% 17%;
 
     --accent: 43 100% 48%; /* Jaune chantier #F7B500 */
     --accent-foreground: 0 0% 17%;
+    --accent-hover: 35 100% 45%; /* Orange clair */
+    --accent-light: 43 100% 65%;
 
-    --muted: 0 0% 95%;
+    --muted: 0 0% 94%;
     --muted-foreground: 0 0% 45%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 354 70% 54%; /* Rouge alerte #E63946 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
     --ring: 207 56% 24%;
 
     /* Status Colors */
-    --success: 142 71% 45%; /* Vert */
+    --success: 142 76% 36%; /* Vert succès #1DB954 */
     --warning: 43 100% 48%; /* Jaune */
     --alert: 33 100% 50%; /* Orange */
-    --danger: 0 84% 60%; /* Rouge */
+    --danger: 354 70% 54%; /* Rouge #E63946 */
 
-    --radius: 0.5rem;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(207 56% 24%) 0%, hsl(0 0% 17%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(43 100% 48%) 0%, hsl(35 100% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(207 56% 24% / 0.95) 0%, hsl(207 56% 35% / 0.9) 100%);
 
-    --sidebar-background: 0 0% 98%;
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+    --shadow-glow-accent: 0 0 30px hsl(43 100% 48% / 0.3);
+    --shadow-glow-primary: 0 0 30px hsl(207 56% 24% / 0.2);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Transitions */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 1rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 207 56% 24%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 43 100% 48%;
+    --sidebar-primary-foreground: 0 0% 17%;
+    --sidebar-accent: 207 56% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 207 56% 20%;
+    --sidebar-ring: 43 100% 48%;
   }
 
   .dark {
-    --background: 0 0% 10%;
+    --background: 0 0% 12%; /* Anthracite foncé */
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 12%;
+    --card: 0 0% 15%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 12%;
+    --popover: 0 0% 15%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 207 56% 24%;
+    --primary: 207 56% 35%;
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 207 56% 40%;
+    --primary-light: 207 56% 45%;
 
     --secondary: 0 0% 20%;
     --secondary-foreground: 0 0% 95%;
 
-    --accent: 43 100% 48%;
+    --accent: 43 100% 55%;
     --accent-foreground: 0 0% 10%;
+    --accent-hover: 43 100% 60%;
+    --accent-light: 43 100% 70%;
 
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 60%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 354 70% 54%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 207 56% 24%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 207 56% 35%;
 
-    --success: 142 71% 45%;
-    --warning: 43 100% 48%;
-    --alert: 33 100% 50%;
-    --danger: 0 84% 60%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 76% 45%;
+    --warning: 43 100% 55%;
+    --alert: 33 100% 55%;
+    --danger: 354 70% 54%;
+
+    --sidebar-background: 207 56% 15%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 43 100% 55%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 207 56% 20%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 207 56% 20%;
+    --sidebar-ring: 43 100% 55%;
   }
 }
 
@@ -113,12 +135,27 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-weight: 400;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', sans-serif;
     font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
   }
 
   .font-mono {
@@ -127,15 +164,125 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  /* Text Gradients */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
   }
   
+  .text-gradient-accent {
+    @apply bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent;
+  }
+
+  /* Background Gradients */
   .bg-gradient-hero {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.95) 0%, hsl(var(--primary-light) / 0.9) 100%);
   }
-  
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%);
+  }
+
+  .bg-gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-hover)) 100%);
+  }
+
+  /* Shadows */
   .shadow-glow {
-    box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+    box-shadow: 0 0 30px hsl(var(--accent) / 0.3);
+  }
+
+  .shadow-glow-primary {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+  }
+
+  /* Animations */
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.4s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out;
+  }
+
+  /* Transitions */
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+
+  /* Interactive Elements */
+  .hover-lift {
+    @apply transition-smooth hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .hover-scale {
+    @apply transition-smooth hover:scale-105;
+  }
+
+  .hover-glow {
+    @apply transition-smooth hover:shadow-glow;
+  }
+}
+
+@layer components {
+  /* Card Variants */
+  .card-premium {
+    @apply rounded-2xl bg-card border border-border shadow-md hover:shadow-xl transition-smooth;
+  }
+
+  /* Button Ripple Effect */
+  .btn-ripple {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-ripple::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20 scale-0 rounded-full;
+    transition: transform 0.5s ease-out;
+  }
+
+  .btn-ripple:active::after {
+    @apply scale-100;
+    transition: transform 0s;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

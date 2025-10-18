@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import KPICard from "@/components/KPICard";
 import ProjectCard from "@/components/ProjectCard";
 import { TrendingUp, Users, AlertTriangle, Building } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -102,15 +104,17 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-black">Tableau de bord</h1>
-        <p className="text-muted-foreground mt-1">
-          Bienvenue {user?.user_metadata?.prenom} ! Voici un aperçu de votre activité.
-        </p>
+    <div className="space-y-8 animate-fade-up">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black text-gradient-primary">Tableau de bord</h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Bienvenue {user?.user_metadata?.prenom} ! Voici un aperçu de votre activité.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Chantiers actifs"
           value={stats.totalProjects}
@@ -137,16 +141,30 @@ const Dashboard = () => {
         />
       </div>
 
-      <div>
-        <h2 className="text-2xl font-black mb-4">Chantiers récents</h2>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-black">Chantiers récents</h2>
+          <Button variant="default" size="sm" asChild>
+            <Link to="/projects">Voir tous</Link>
+          </Button>
+        </div>
+        
         {recentProjects.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            Aucun chantier. Créez votre premier chantier pour commencer.
-          </p>
+          <div className="card-premium text-center py-16">
+            <Building className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-xl font-semibold text-muted-foreground mb-2">
+              Aucun chantier pour le moment
+            </p>
+            <p className="text-muted-foreground mb-6">
+              Créez votre premier chantier pour commencer à suivre sa rentabilité
+            </p>
+            <Button size="lg" asChild>
+              <Link to="/projects">Créer un chantier</Link>
+            </Button>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => {
-              // Get proper rentabilite from calculations
               const rentabilite = project.rentabilite || 0;
               const joursRestants = project.jours_restants || project.duree_estimee;
               

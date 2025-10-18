@@ -42,11 +42,11 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="py-20 lg:py-32">
+    <section id="features" className="py-24 lg:py-32">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-extrabold text-foreground lg:text-5xl">
-            Anticipez, ajustez, <span className="text-accent">rentabilisez</span>
+        <div className="mb-16 text-center animate-fade-up">
+          <h2 className="mb-4 text-4xl font-black text-gradient-primary lg:text-5xl">
+            Anticipez, ajustez, <span className="text-gradient-accent">rentabilisez</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Tous les outils dont vous avez besoin pour piloter vos chantiers comme un pro
@@ -59,16 +59,17 @@ const Features = () => {
             return (
               <Card
                 key={index}
-                className="group border-border/50 transition-all hover:border-accent/50 hover:shadow-lg"
+                className="card-premium hover-lift group animate-fade-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardContent className="pt-6">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
-                    <Icon className={`h-6 w-6 ${feature.color}`} />
+                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-smooth">
+                    <Icon className={`h-7 w-7 ${feature.color} group-hover:scale-110 transition-smooth`} />
                   </div>
-                  <h3 className="mb-2 text-xl font-bold text-foreground">
+                  <h3 className="mb-3 text-xl font-black text-foreground">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             );

@@ -29,11 +29,11 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="bg-secondary/30 py-20 lg:py-32">
+    <section id="how-it-works" className="bg-muted/30 py-24 lg:py-32">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-extrabold text-foreground lg:text-5xl">
-            Simple, rapide, <span className="text-accent">efficace</span>
+        <div className="mb-16 text-center animate-fade-up">
+          <h2 className="mb-4 text-4xl font-black text-gradient-primary lg:text-5xl">
+            Simple, rapide, <span className="text-gradient-accent">efficace</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             4 étapes pour prendre le contrôle de vos chantiers
@@ -44,21 +44,21 @@ const HowItWorks = () => {
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
-              <div key={index} className="relative">
+              <div key={index} className="relative animate-fade-up" style={{ animationDelay: `${index * 0.15}s` }}>
                 <div className="mb-6 flex items-center gap-4">
-                  <span className="text-5xl font-extrabold text-accent/20">
+                  <span className="text-6xl font-black text-accent/20 font-mono">
                     {step.number}
                   </span>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary">
-                    <Icon className="h-7 w-7 text-white" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary shadow-lg hover-scale">
+                    <Icon className="h-8 w-8 text-white" />
                   </div>
                 </div>
-                <h3 className="mb-2 text-xl font-bold text-foreground">
+                <h3 className="mb-3 text-xl font-black text-foreground">
                   {step.title}
                 </h3>
-                <p className="text-muted-foreground">{step.description}</p>
+                <p className="text-muted-foreground leading-relaxed">{step.description}</p>
                 {index < steps.length - 1 && (
-                  <div className="absolute right-0 top-12 hidden h-0.5 w-full bg-accent/20 lg:block" />
+                  <div className="absolute right-0 top-14 hidden h-0.5 w-full bg-gradient-to-r from-accent/40 to-transparent lg:block" />
                 )}
               </div>
             );

@@ -56,11 +56,11 @@ const plans = [
 
 const Pricing = () => {
   return (
-    <section id="pricing" className="py-20 lg:py-32">
+    <section id="pricing" className="py-24 lg:py-32">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-extrabold text-foreground lg:text-5xl">
-            Un tarif simple, <span className="text-accent">transparent</span>
+        <div className="mb-16 text-center animate-fade-up">
+          <h2 className="mb-4 text-4xl font-black text-gradient-primary lg:text-5xl">
+            Un tarif simple, <span className="text-gradient-accent">transparent</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Choisissez la formule adaptée à votre activité
@@ -71,43 +71,44 @@ const Pricing = () => {
           {plans.map((plan, index) => (
             <Card
               key={index}
-              className={`relative ${
+              className={`card-premium relative animate-fade-up ${
                 plan.popular
-                  ? "border-accent shadow-lg shadow-accent/20"
-                  : "border-border/50"
+                  ? "border-accent shadow-xl shadow-accent/20 scale-105"
+                  : ""
               }`}
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent px-4 py-1">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-accent px-4 py-1.5 shadow-lg">
                   <span className="text-sm font-bold text-primary">
                     Le plus populaire
                   </span>
                 </div>
               )}
               {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-success px-4 py-1">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-success px-4 py-1.5 shadow-lg">
                   <span className="text-sm font-bold text-white">
                     {plan.badge}
                   </span>
                 </div>
               )}
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <CardDescription className="mt-2">
+                <CardTitle className="text-2xl font-black">{plan.name}</CardTitle>
+                <CardDescription className="mt-2 text-base">
                   {plan.description}
                 </CardDescription>
                 <div className="mt-6">
-                  <span className="text-5xl font-extrabold text-foreground font-mono">
+                  <span className="text-5xl font-black text-gradient-primary font-mono">
                     {plan.price}€
                   </span>
-                  <span className="text-muted-foreground">/{plan.duration}</span>
+                  <span className="text-muted-foreground font-medium">/{plan.duration}</span>
                 </div>
               </CardHeader>
               <CardContent>
                 <Button
-                  className={`mb-6 w-full ${
+                  className={`mb-6 w-full font-bold ${
                     plan.popular
-                      ? "bg-accent text-primary hover:bg-accent/90 shadow-glow"
+                      ? "hover-glow shadow-lg"
                       : ""
                   }`}
                   variant={plan.popular ? "default" : "outline"}
@@ -131,7 +132,7 @@ const Pricing = () => {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-muted-foreground font-medium">
           Tous les prix sont HT. TVA applicable selon votre pays.
         </p>
       </div>
