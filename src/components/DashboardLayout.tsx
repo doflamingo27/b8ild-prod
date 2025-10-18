@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
+import Footer from "./Footer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -25,6 +26,8 @@ const DashboardLayout = () => {
     { name: "Équipe", href: "/team", icon: Users },
     { name: "Rapports", href: "/reports", icon: FileText },
   ];
+  
+  // TODO: Ajouter { name: "Abonnement", href: "/subscription", icon: CreditCard } quand Stripe sera intégré
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -153,6 +156,7 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+      <Footer />
     </div>
   );
 };

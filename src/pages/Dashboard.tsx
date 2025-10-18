@@ -34,13 +34,13 @@ const Dashboard = () => {
       if (!entrepriseData) return;
       setEntrepriseId(entrepriseData.id);
 
-      // Get projects
+      // Get projects with details for real calculations
       const { data: projects } = await supabase
         .from("chantiers")
         .select("*")
         .eq("entreprise_id", entrepriseData.id)
-        .order("date_creation", { ascending: false })
-        .limit(6);
+        .eq("statut", "actif")
+        .order("date_creation", { ascending: false });
 
       // Get team members
       const { data: team } = await supabase
@@ -49,14 +49,53 @@ const Dashboard = () => {
         .eq("entreprise_id", entrepriseData.id)
         .eq("actif", true);
 
+      // Calculate real stats
+      const totalProjects = projects?.length || 0;
+      
+      // Get devis for all projects to calculate average rentabilite
+      const projectsWithDevis = await Promise.all(
+        (projects || []).map(async (project) => {
+          const { data: devis } = await supabase
+            .from("devis")
+            .select("montant_ttc")
+            .eq("chantier_id", project.id)
+            .maybeSingle();
+
+          const { data: factures } = await supabase
+            .from("factures_fournisseurs")
+            .select("montant_ht")
+            .eq("chantier_id", project.id);
+
+          const { data: frais } = await supabase
+            .from("frais_chantier")
+            .select("montant_total")
+            .eq("chantier_id", project.id);
+
+          const totalFactures = factures?.reduce((sum, f) => sum + Number(f.montant_ht), 0) || 0;
+          const totalFrais = frais?.reduce((sum, f) => sum + Number(f.montant_total), 0) || 0;
+          const coutsFixes = totalFactures + totalFrais;
+          const budgetDisponible = (devis?.montant_ttc || 0) - coutsFixes;
+          const rentabilite = devis?.montant_ttc > 0 ? (budgetDisponible / devis.montant_ttc) * 100 : 0;
+
+          return { ...project, rentabilite, jours_restants: 30 }; // TODO: Calculate real days
+        })
+      );
+
+      const avgRentabilite = projectsWithDevis.length > 0
+        ? projectsWithDevis.reduce((sum, p) => sum + p.rentabilite, 0) / projectsWithDevis.length
+        : 0;
+
+      // Count alerts
+      const alertsCount = projectsWithDevis.filter(p => p.rentabilite < 10).length;
+
       setStats({
-        totalProjects: projects?.length || 0,
-        avgRentabilite: 15.5, // Calculé dynamiquement plus tard
+        totalProjects,
+        avgRentabilite,
         totalTeam: team?.length || 0,
-        alertsCount: 0,
+        alertsCount,
       });
 
-      setRecentProjects(projects || []);
+      setRecentProjects(projectsWithDevis.slice(0, 6));
     } catch (error) {
       console.error("Erreur chargement dashboard:", error);
     }
@@ -106,16 +145,22 @@ const Dashboard = () => {
           </p>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {recentProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                id={project.id}
-                nom_chantier={project.nom_chantier}
-                client={project.client}
-                rentabilite={0}
-                jours_restants={project.duree_estimee}
-              />
-            ))}
+            {recentProjects.map((project) => {
+              // Get proper rentabilite from calculations
+              const rentabilite = project.rentabilite || 0;
+              const joursRestants = project.jours_restants || project.duree_estimee;
+              
+              return (
+                <ProjectCard
+                  key={project.id}
+                  id={project.id}
+                  nom_chantier={project.nom_chantier}
+                  client={project.client}
+                  rentabilite={rentabilite}
+                  jours_restants={joursRestants}
+                />
+              );
+            })}
           </div>
         )}
       </div>
