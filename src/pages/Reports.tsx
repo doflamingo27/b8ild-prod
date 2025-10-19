@@ -101,6 +101,10 @@ const Reports = () => {
             const budget_disponible = budget_devis - coutsFixes;
             const rentabilite_pct = budget_devis > 0 ? (budget_disponible / budget_devis) * 100 : 0;
             const jour_critique = cout_journalier_equipe > 0 ? budget_disponible / cout_journalier_equipe : Infinity;
+            const jours_effectifs = chantier.date_debut 
+              ? Math.max(0, Math.floor((new Date().getTime() - new Date(chantier.date_debut).getTime()) / (1000 * 60 * 60 * 24)))
+              : 0;
+            const jours_restants_avant_deficit = Math.max(0, Math.floor(jour_critique - jours_effectifs));
             
             let statut: "success" | "warning" | "alert" | "danger";
             if (rentabilite_pct >= 20) statut = "success";
@@ -130,10 +134,15 @@ const Reports = () => {
                         budget_disponible,
                         jour_critique,
                         rentabilite_pct,
-                        jours_restants_avant_deficit: 0,
+                        jours_restants_avant_deficit,
                         statut,
-                        calculerCoutHoraireReel: () => 0,
-                        calculerCoutJournalierMembre: () => 0,
+                        calculerCoutHoraireReel: (membre: any) => {
+                          return membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+                        },
+                        calculerCoutJournalierMembre: (membre: any) => {
+                          const cout_horaire_reel = membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+                          return cout_horaire_reel * 8;
+                        },
                       }}
                     />
                   </div>

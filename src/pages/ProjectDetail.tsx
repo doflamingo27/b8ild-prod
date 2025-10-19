@@ -28,6 +28,7 @@ interface Chantier {
   duree_estimee: number;
   statut: string;
   date_creation: string;
+  date_debut: string | null;
 }
 
 const ProjectDetail = () => {
@@ -52,7 +53,7 @@ const ProjectDetail = () => {
     membres,
     budget_devis: devis?.montant_ttc || 0,
     couts_fixes: coutsFixes,
-    jours_effectifs: 0, // À calculer selon les dates
+    date_debut: chantier?.date_debut,
   });
 
   useEffect(() => {

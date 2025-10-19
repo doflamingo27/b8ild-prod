@@ -20,6 +20,7 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     fournisseur: "",
@@ -35,10 +36,60 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     "Autres",
   ];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    setExtracting(true);
+
+    try {
+      // Upload temporaire pour OCR
+      const fileExt = selectedFile.name.split('.').pop();
+      const tempFileName = `${Math.random()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('factures')
+        .upload(tempFileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('factures')
+        .getPublicUrl(uploadData.path);
+
+      // Appel à l'edge function d'extraction
+      const { data: extractedData, error: extractError } = await supabase.functions
+        .invoke('extract-document-data', {
+          body: { fileUrl: publicUrl, documentType: 'invoice' }
+        });
+
+      if (extractError) throw extractError;
+
+      // Pré-remplir le formulaire avec les données extraites
+      if (extractedData) {
+        setFormData(prev => ({
+          ...prev,
+          fournisseur: extractedData.fournisseur || prev.fournisseur,
+          montant_ht: extractedData.montant_ht || prev.montant_ht,
+          date_facture: extractedData.date_facture || prev.date_facture,
+        }));
+        toast({
+          title: "Extraction réussie",
+          description: "Les données ont été extraites automatiquement",
+        });
+      }
+
+      // Supprimer le fichier temporaire
+      await supabase.storage.from('factures').remove([tempFileName]);
+    } catch (error) {
+      console.error('Erreur extraction OCR:', error);
+      toast({
+        title: "Extraction impossible",
+        description: "Veuillez remplir manuellement les informations",
+        variant: "destructive",
+      });
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -156,12 +207,18 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="file">Fichier (PDF, Image)</Label>
-                    <Input
-                      id="file"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                    />
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileChange}
+                    disabled={loading || extracting}
+                  />
+                  {extracting && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      ✨ Extraction automatique en cours...
+                    </p>
+                  )}
                   </div>
 
                   <div className="space-y-2">

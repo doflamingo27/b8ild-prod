@@ -95,11 +95,101 @@ const ExportManager = ({
     });
   };
 
-  const exportToPDF = () => {
-    toast({
-      title: "Export PDF",
-      description: "Fonctionnalité en cours de développement",
-    });
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
+      
+      const doc = new jsPDF();
+      
+      // En-tête avec logo B8ild
+      doc.setFontSize(24);
+      doc.setTextColor(234, 88, 12); // Orange B8ild
+      doc.text("B8ild", 20, 20);
+      
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Rapport de Chantier", 20, 35);
+      
+      // Informations générales
+      doc.setFontSize(12);
+      doc.text(`Nom: ${chantierData.nom_chantier}`, 20, 50);
+      doc.text(`Client: ${chantierData.client}`, 20, 58);
+      doc.text(`Adresse: ${chantierData.adresse || "Non renseignée"}`, 20, 66);
+      doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 20, 74);
+      
+      // Finances
+      doc.setFontSize(14);
+      doc.setTextColor(234, 88, 12);
+      doc.text("Finances", 20, 90);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Budget devis HT: ${devis?.montant_ht || 0} €`, 20, 100);
+      doc.text(`Budget devis TTC: ${devis?.montant_ttc || 0} €`, 20, 108);
+      doc.text(`Coût journalier équipe: ${calculations.cout_journalier_equipe.toFixed(2)} €`, 20, 116);
+      doc.text(`Budget disponible: ${calculations.budget_disponible.toFixed(2)} €`, 20, 124);
+      doc.text(`Rentabilité: ${calculations.rentabilite_pct.toFixed(2)} %`, 20, 132);
+      doc.text(`Jour critique: ${calculations.jour_critique.toFixed(2)}`, 20, 140);
+      
+      // Équipe (tableau)
+      const equipeData = membres.map(m => [
+        `${m.prenom} ${m.nom}`,
+        m.poste,
+        `${calculations.calculerCoutJournalierMembre(m).toFixed(2)} €`
+      ]);
+      
+      autoTable(doc, {
+        head: [['Nom', 'Poste', 'Coût journalier']],
+        body: equipeData,
+        startY: 155,
+        theme: 'grid',
+        headStyles: { fillColor: [234, 88, 12] },
+      });
+      
+      // Factures (nouvelle page si nécessaire)
+      const finalY = (doc as any).lastAutoTable.finalY || 155;
+      if (finalY > 200) {
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setTextColor(234, 88, 12);
+        doc.text("Factures fournisseurs", 20, 20);
+      } else {
+        doc.setFontSize(14);
+        doc.setTextColor(234, 88, 12);
+        doc.text("Factures fournisseurs", 20, finalY + 15);
+      }
+      
+      const facturesData = factures.map(f => [
+        f.fournisseur || "Non renseigné",
+        f.categorie,
+        `${f.montant_ht} €`,
+        f.date_facture || "Non renseignée"
+      ]);
+      
+      autoTable(doc, {
+        head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
+        body: facturesData,
+        startY: finalY > 200 ? 30 : finalY + 20,
+        theme: 'grid',
+        headStyles: { fillColor: [234, 88, 12] },
+      });
+      
+      // Télécharger
+      doc.save(`chantier_${chantierData.nom_chantier}_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: "Export PDF réussi",
+        description: "Le fichier a été téléchargé",
+      });
+    } catch (error) {
+      console.error('Erreur export PDF:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter en PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

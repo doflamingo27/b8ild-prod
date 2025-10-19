@@ -79,7 +79,11 @@ const Dashboard = () => {
           const budgetDisponible = (devis?.montant_ttc || 0) - coutsFixes;
           const rentabilite = devis?.montant_ttc > 0 ? (budgetDisponible / devis.montant_ttc) * 100 : 0;
 
-          return { ...project, rentabilite, jours_restants: 30 }; // TODO: Calculate real days
+          const jours_effectifs = project.date_debut 
+            ? Math.max(0, Math.floor((new Date().getTime() - new Date(project.date_debut).getTime()) / (1000 * 60 * 60 * 24)))
+            : 0;
+          
+          return { ...project, rentabilite, jours_restants: 30 }; // TODO: recalculate with real budget
         })
       );
 

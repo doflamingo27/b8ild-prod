@@ -31,13 +31,55 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
     if (!selectedFile) return;
 
     setFile(selectedFile);
-    
-    // TODO: Implémenter l'extraction OCR ici
-    // Pour l'instant, on laisse l'utilisateur saisir manuellement
-    toast({
-      title: "Fichier sélectionné",
-      description: "Veuillez saisir les montants manuellement pour le moment.",
-    });
+    setExtracting(true);
+
+    try {
+      // Upload temporaire pour OCR
+      const fileExt = selectedFile.name.split('.').pop();
+      const tempFileName = `${Math.random()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('devis')
+        .upload(tempFileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('devis')
+        .getPublicUrl(uploadData.path);
+
+      // Appel à l'edge function d'extraction
+      const { data: extractedData, error: extractError } = await supabase.functions
+        .invoke('extract-document-data', {
+          body: { fileUrl: publicUrl, documentType: 'quote' }
+        });
+
+      if (extractError) throw extractError;
+
+      // Pré-remplir le formulaire avec les données extraites
+      if (extractedData) {
+        setFormData({
+          montant_ht: extractedData.montant_ht || 0,
+          tva: extractedData.tva || 20,
+          montant_ttc: extractedData.montant_ttc || 0,
+        });
+        toast({
+          title: "Extraction réussie",
+          description: "Les données ont été extraites automatiquement",
+        });
+      }
+
+      // Supprimer le fichier temporaire
+      await supabase.storage.from('devis').remove([tempFileName]);
+    } catch (error) {
+      console.error('Erreur extraction OCR:', error);
+      toast({
+        title: "Extraction impossible",
+        description: "Veuillez remplir manuellement les informations",
+        variant: "destructive",
+      });
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const calculateTTC = (ht: number, tva: number) => {
@@ -151,7 +193,13 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={handleFileChange}
+                      disabled={loading || extracting}
                     />
+                    {extracting && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        ✨ Extraction automatique en cours...
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

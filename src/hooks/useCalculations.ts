@@ -10,16 +10,20 @@ interface CalculationsParams {
   membres?: Membre[];
   budget_devis?: number;
   couts_fixes?: number;
-  jours_effectifs?: number;
+  date_debut?: string | null;
 }
 
 export const useCalculations = ({
   membres = [],
   budget_devis = 0,
   couts_fixes = 0,
-  jours_effectifs = 0,
+  date_debut = null,
 }: CalculationsParams) => {
   return useMemo(() => {
+    // Calculer les jours effectifs (jours ouvrés depuis la date de début)
+    const jours_effectifs = date_debut 
+      ? Math.max(0, Math.floor((new Date().getTime() - new Date(date_debut).getTime()) / (1000 * 60 * 60 * 24)))
+      : 0;
     // Coût horaire réel d'un membre
     const calculerCoutHoraireReel = (membre: Membre) => {
       return membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
@@ -68,5 +72,5 @@ export const useCalculations = ({
       calculerCoutHoraireReel,
       calculerCoutJournalierMembre,
     };
-  }, [membres, budget_devis, couts_fixes, jours_effectifs]);
+  }, [membres, budget_devis, couts_fixes, date_debut]);
 };

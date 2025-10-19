@@ -20,6 +20,7 @@ export type Database = {
           client: string
           created_at: string | null
           date_creation: string | null
+          date_debut: string | null
           description: string | null
           duree_estimee: number | null
           entreprise_id: string
@@ -33,6 +34,7 @@ export type Database = {
           client: string
           created_at?: string | null
           date_creation?: string | null
+          date_debut?: string | null
           description?: string | null
           duree_estimee?: number | null
           entreprise_id: string
@@ -46,6 +48,7 @@ export type Database = {
           client?: string
           created_at?: string | null
           date_creation?: string | null
+          date_debut?: string | null
           description?: string | null
           duree_estimee?: number | null
           entreprise_id?: string
