@@ -20,10 +20,13 @@ export async function deriveKey(password: string, salt: Uint8Array): Promise<Cry
     ["deriveKey"]
   );
 
+  // Ensure salt is a proper Uint8Array with ArrayBuffer
+  const saltBuffer = new Uint8Array(salt);
+
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt,
+      salt: saltBuffer,
       iterations: 100000,
       hash: "SHA-256",
     },
@@ -46,7 +49,7 @@ export async function encryptData(
   const key = await deriveKey(password, salt);
 
   const encrypted = await crypto.subtle.encrypt(
-    { name: ALGORITHM, iv: iv as Uint8Array },
+    { name: ALGORITHM, iv },
     key,
     data
   );
@@ -65,8 +68,11 @@ export async function decryptData(
 ): Promise<ArrayBuffer> {
   const key = await deriveKey(password, salt);
   
+  // Ensure iv is a proper Uint8Array with ArrayBuffer
+  const ivBuffer = new Uint8Array(iv);
+  
   return crypto.subtle.decrypt(
-    { name: ALGORITHM, iv: iv as Uint8Array },
+    { name: ALGORITHM, iv: ivBuffer },
     key,
     encrypted
   );
