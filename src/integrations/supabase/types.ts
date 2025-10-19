@@ -111,6 +111,81 @@ export type Database = {
           },
         ]
       }
+      commentaires: {
+        Row: {
+          chantier_id: string
+          contenu: string
+          created_at: string | null
+          id: string
+          parent_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chantier_id: string
+          contenu: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chantier_id?: string
+          contenu?: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commentaires_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commentaires_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "commentaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_exports: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          fichier_url: string | null
+          id: string
+          statut: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          fichier_url?: string | null
+          id?: string
+          statut?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          fichier_url?: string | null
+          id?: string
+          statut?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       devis: {
         Row: {
           chantier_id: string
@@ -223,6 +298,62 @@ export type Database = {
             columns: ["membre_id"]
             isOneToOne: false
             referencedRelation: "membres_equipe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factures_clients: {
+        Row: {
+          chantier_id: string
+          created_at: string | null
+          date_echeance: string
+          date_emission: string
+          fichier_url: string | null
+          id: string
+          montant_ht: number
+          montant_ttc: number
+          notes: string | null
+          numero_facture: string
+          statut: string
+          tva: number
+          updated_at: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string | null
+          date_echeance: string
+          date_emission?: string
+          fichier_url?: string | null
+          id?: string
+          montant_ht?: number
+          montant_ttc?: number
+          notes?: string | null
+          numero_facture: string
+          statut?: string
+          tva?: number
+          updated_at?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string | null
+          date_echeance?: string
+          date_emission?: string
+          fichier_url?: string | null
+          id?: string
+          montant_ht?: number
+          montant_ttc?: number
+          notes?: string | null
+          numero_facture?: string
+          statut?: string
+          tva?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_clients_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
             referencedColumns: ["id"]
           },
         ]
@@ -470,6 +601,56 @@ export type Database = {
         }
         Relationships: []
       }
+      paiements_clients: {
+        Row: {
+          chantier_id: string
+          created_at: string | null
+          date_paiement: string
+          id: string
+          montant: number
+          moyen_paiement: string | null
+          notes: string | null
+          reference: string | null
+          statut: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string | null
+          date_paiement?: string
+          id?: string
+          montant?: number
+          moyen_paiement?: string | null
+          notes?: string | null
+          reference?: string | null
+          statut?: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string | null
+          date_paiement?: string
+          id?: string
+          montant?: number
+          moyen_paiement?: string | null
+          notes?: string | null
+          reference?: string | null
+          statut?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paiements_clients_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -496,6 +677,103 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      snapshots_chantier: {
+        Row: {
+          budget_disponible: number
+          chantier_id: string
+          cout_engage: number
+          created_at: string | null
+          date: string
+          id: string
+          nb_factures: number | null
+          nb_frais: number | null
+          rentabilite_pct: number
+        }
+        Insert: {
+          budget_disponible?: number
+          chantier_id: string
+          cout_engage?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          nb_factures?: number | null
+          nb_frais?: number | null
+          rentabilite_pct?: number
+        }
+        Update: {
+          budget_disponible?: number
+          chantier_id?: string
+          cout_engage?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          nb_factures?: number | null
+          nb_frais?: number | null
+          rentabilite_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshots_chantier_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates_chantier: {
+        Row: {
+          budget_type: string | null
+          created_at: string | null
+          description: string | null
+          duree_estimee: number | null
+          entreprise_id: string
+          equipement_type: Json | null
+          fournisseurs_habituels: Json | null
+          id: string
+          is_public: boolean | null
+          nom: string
+          postes_prevus: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          duree_estimee?: number | null
+          entreprise_id: string
+          equipement_type?: Json | null
+          fournisseurs_habituels?: Json | null
+          id?: string
+          is_public?: boolean | null
+          nom: string
+          postes_prevus?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          duree_estimee?: number | null
+          entreprise_id?: string
+          equipement_type?: Json | null
+          fournisseurs_habituels?: Json | null
+          id?: string
+          is_public?: boolean | null
+          nom?: string
+          postes_prevus?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_chantier_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
