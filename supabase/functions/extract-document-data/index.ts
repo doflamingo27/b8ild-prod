@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { fileUrl, documentType } = await req.json();
+    console.log('[EXTRACT-DOC] Start extraction', { fileUrl: fileUrl?.substring(0, 100), documentType });
     
     if (!fileUrl) {
       throw new Error("File URL is required");
@@ -25,7 +26,14 @@ serve(async (req) => {
 
     // Télécharger le fichier
     const fileResponse = await fetch(fileUrl);
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+    }
+    
     const fileBlob = await fileResponse.blob();
+    const mimeType = fileBlob.type || 'application/pdf';
+    console.log('[EXTRACT-DOC] File downloaded', { mimeType, size: fileBlob.size });
+    
     const base64File = btoa(String.fromCharCode(...new Uint8Array(await fileBlob.arrayBuffer())));
 
     // Préparer le prompt selon le type de document
@@ -62,7 +70,7 @@ serve(async (req) => {
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:image/jpeg;base64,${base64File}`
+                  url: `data:${mimeType};base64,${base64File}`
                 }
               }
             ]
@@ -98,8 +106,11 @@ serve(async (req) => {
       }),
     });
 
+    console.log('[EXTRACT-DOC] AI Response status:', aiResponse.status);
+
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
+      console.error('[EXTRACT-DOC] AI Error:', errorText);
       throw new Error(`AI API error: ${errorText}`);
     }
 
@@ -107,10 +118,12 @@ serve(async (req) => {
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall) {
+      console.error('[EXTRACT-DOC] No tool call in response:', JSON.stringify(aiData));
       throw new Error("No data extracted from document");
     }
 
     const extractedData = JSON.parse(toolCall.function.arguments);
+    console.log('[EXTRACT-DOC] Data extracted:', extractedData);
 
     return new Response(JSON.stringify(extractedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -69,7 +69,14 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
           body: { fileUrl: signedData.signedUrl, documentType: 'invoice' }
         });
 
-      if (extractError) throw extractError;
+      if (extractError) {
+        console.error('Erreur Edge Function:', extractError);
+        throw new Error(`Extraction failed: ${extractError.message || 'Unknown error'}`);
+      }
+
+      if (!extractedData) {
+        throw new Error('Aucune donnée extraite du document');
+      }
 
       // Pré-remplir le formulaire avec les données extraites
       if (extractedData) {

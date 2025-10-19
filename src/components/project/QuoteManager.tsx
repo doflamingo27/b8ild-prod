@@ -34,26 +34,36 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
     setExtracting(true);
 
     try {
-      // Upload temporaire pour OCR
+      // Upload temporaire pour OCR avec signed URL
       const fileExt = selectedFile.name.split('.').pop();
-      const tempFileName = `${Math.random()}.${fileExt}`;
+      const tempFileName = `temp-${Math.random()}.${fileExt}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('devis')
         .upload(tempFileName, selectedFile);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // Créer une signed URL valide 60 secondes
+      const { data: signedData, error: signedError } = await supabase.storage
         .from('devis')
-        .getPublicUrl(uploadData.path);
+        .createSignedUrl(uploadData.path, 60);
 
-      // Appel à l'edge function d'extraction
+      if (signedError) throw signedError;
+
+      // Appel à l'edge function d'extraction avec signed URL
       const { data: extractedData, error: extractError } = await supabase.functions
         .invoke('extract-document-data', {
-          body: { fileUrl: publicUrl, documentType: 'quote' }
+          body: { fileUrl: signedData.signedUrl, documentType: 'quote' }
         });
 
-      if (extractError) throw extractError;
+      if (extractError) {
+        console.error('Erreur Edge Function:', extractError);
+        throw new Error(`Extraction failed: ${extractError.message || 'Unknown error'}`);
+      }
+
+      if (!extractedData) {
+        throw new Error('Aucune donnée extraite du document');
+      }
 
       // Pré-remplir le formulaire avec les données extraites
       if (extractedData) {
