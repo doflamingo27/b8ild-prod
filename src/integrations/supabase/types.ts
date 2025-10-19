@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      absences_equipe: {
+        Row: {
+          created_at: string | null
+          date_debut: string
+          date_fin: string
+          id: string
+          membre_id: string
+          motif: string | null
+          type_absence: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_debut: string
+          date_fin: string
+          id?: string
+          membre_id: string
+          motif?: string | null
+          type_absence: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_debut?: string
+          date_fin?: string
+          id?: string
+          membre_id?: string
+          motif?: string | null
+          type_absence?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absences_equipe_membre_id_fkey"
+            columns: ["membre_id"]
+            isOneToOne: false
+            referencedRelation: "membres_equipe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chantiers: {
         Row: {
           adresse: string | null
@@ -21,6 +62,7 @@ export type Database = {
           created_at: string | null
           date_creation: string | null
           date_debut: string | null
+          date_fin_prevue: string | null
           description: string | null
           duree_estimee: number | null
           entreprise_id: string
@@ -35,6 +77,7 @@ export type Database = {
           created_at?: string | null
           date_creation?: string | null
           date_debut?: string | null
+          date_fin_prevue?: string | null
           description?: string | null
           duree_estimee?: number | null
           entreprise_id: string
@@ -49,6 +92,7 @@ export type Database = {
           created_at?: string | null
           date_creation?: string | null
           date_debut?: string | null
+          date_fin_prevue?: string | null
           description?: string | null
           duree_estimee?: number | null
           entreprise_id?: string
@@ -268,6 +312,42 @@ export type Database = {
           },
         ]
       }
+      historique_modifications: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       membres_equipe: {
         Row: {
           actif: boolean | null
@@ -320,6 +400,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_alertes_budget: boolean | null
+          email_alertes_critiques: boolean | null
+          email_commentaires: boolean | null
+          email_modifications: boolean | null
+          id: string
+          push_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_alertes_budget?: boolean | null
+          email_alertes_critiques?: boolean | null
+          email_commentaires?: boolean | null
+          email_modifications?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_alertes_budget?: boolean | null
+          email_alertes_critiques?: boolean | null
+          email_commentaires?: boolean | null
+          email_modifications?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          link: string | null
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          link?: string | null
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

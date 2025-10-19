@@ -4,6 +4,7 @@ import { Home, Users, FolderKanban, FileText, User, CreditCard, LogOut, HardHat 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import NotificationBell from "./NotificationBell";
 
 const Header = () => {
   const location = useLocation();
@@ -60,15 +61,18 @@ const Header = () => {
           })}
         </nav>
 
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleLogout} 
-          className="gap-2 hover:border-destructive hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4" />
-          Déconnexion
-        </Button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout} 
+            className="gap-2 hover:border-destructive hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            Déconnexion
+          </Button>
+        </div>
       </div>
     </header>
   );

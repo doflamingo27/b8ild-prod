@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { calculateWorkingDays } from "@/lib/dateUtils";
 
 interface Membre {
   taux_horaire: number;
@@ -11,6 +12,7 @@ interface CalculationsParams {
   budget_devis?: number;
   couts_fixes?: number;
   date_debut?: string | null;
+  absences?: Array<{ date_debut: string; date_fin: string }>;
 }
 
 export const useCalculations = ({
@@ -18,11 +20,13 @@ export const useCalculations = ({
   budget_devis = 0,
   couts_fixes = 0,
   date_debut = null,
+  absences = [],
 }: CalculationsParams) => {
   return useMemo(() => {
-    // Calculer les jours effectifs (jours ouvrés depuis la date de début)
+    // Calculer les jours effectifs (jours ouvrés réels depuis la date de début)
+    // Exclut les week-ends, jours fériés français et absences de l'équipe
     const jours_effectifs = date_debut 
-      ? Math.max(0, Math.floor((new Date().getTime() - new Date(date_debut).getTime()) / (1000 * 60 * 60 * 24)))
+      ? calculateWorkingDays(date_debut, new Date(), absences)
       : 0;
     // Coût horaire réel d'un membre
     const calculerCoutHoraireReel = (membre: Membre) => {
@@ -63,6 +67,7 @@ export const useCalculations = ({
     else statut = "danger";
 
     return {
+      jours_effectifs,
       cout_journalier_equipe,
       budget_disponible,
       jour_critique,
@@ -72,5 +77,5 @@ export const useCalculations = ({
       calculerCoutHoraireReel,
       calculerCoutJournalierMembre,
     };
-  }, [membres, budget_devis, couts_fixes, date_debut]);
+  }, [membres, budget_devis, couts_fixes, date_debut, absences]);
 };
