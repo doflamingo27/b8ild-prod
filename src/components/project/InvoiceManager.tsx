@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, FileText, Loader2 } from "lucide-react";
+import { Plus, Trash2, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { DocumentFallbackUI } from "@/components/document/DocumentFallbackUI";
+import { useDocumentExtraction } from "@/hooks/useDocumentExtraction";
 import { labels, placeholders, toasts, modals, tooltips } from "@/lib/content";
 
 interface InvoiceManagerProps {
@@ -20,11 +23,14 @@ interface InvoiceManagerProps {
 
 const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps) => {
   const { toast } = useToast();
+  const { extractDocument, isExtracting } = useDocumentExtraction();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [extracting, setExtracting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showFallback, setShowFallback] = useState(false);
+  const [extractedData, setExtractedData] = useState<any>(null);
   const [formData, setFormData] = useState({
     fournisseur: "",
     montant_ht: 0,
@@ -44,66 +50,42 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     if (!selectedFile) return;
 
     setFile(selectedFile);
-    setExtracting(true);
+    
+    // Créer URL pour le fallback
+    const url = URL.createObjectURL(selectedFile);
+    setFileUrl(url);
 
-    try {
-      // Upload temporaire pour OCR avec signed URL
-      const fileExt = selectedFile.name.split('.').pop();
-      const tempFileName = `temp-${Math.random()}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('factures')
-        .upload(tempFileName, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      // Créer une signed URL valide 60 secondes
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('factures')
-        .createSignedUrl(uploadData.path, 60);
-
-      if (signedError) throw signedError;
-
-      // Appel à l'edge function d'extraction avec signed URL
-      const { data: extractedData, error: extractError } = await supabase.functions
-        .invoke('extract-document-data', {
-          body: { fileUrl: signedData.signedUrl, documentType: 'invoice' }
-        });
-
-      if (extractError) {
-        console.error('Erreur Edge Function:', extractError);
-        throw new Error(`Extraction failed: ${extractError.message || 'Unknown error'}`);
-      }
-
-      if (!extractedData) {
-        throw new Error('Aucune donnée extraite du document');
-      }
-
-      // Pré-remplir le formulaire avec les données extraites
-      if (extractedData) {
-        setFormData(prev => ({
-          ...prev,
-          fournisseur: extractedData.fournisseur || prev.fournisseur,
-          montant_ht: extractedData.montant_ht || prev.montant_ht,
-          date_facture: extractedData.date_facture || prev.date_facture,
-        }));
-        toast({
-          title: toasts.saved,
-          description: "Les données ont été extraites automatiquement",
-        });
-      }
-
-      // Supprimer le fichier temporaire
-      await supabase.storage.from('factures').remove([tempFileName]);
-    } catch (error) {
-      console.error('Erreur extraction OCR:', error);
-      toast({
-        title: toasts.errorGeneric,
-        description: "Veuillez remplir manuellement les informations",
-        variant: "destructive",
-      });
-    } finally {
-      setExtracting(false);
+    // Extraire les données
+    const result = await extractDocument(selectedFile, 'facture');
+    
+    if (result.needsFallback) {
+      setExtractedData(result.partialData);
+      setShowFallback(true);
+    } else if (result.success && result.data) {
+      // Pré-remplir le formulaire
+      setFormData(prev => ({
+        ...prev,
+        fournisseur: result.data.fournisseur_nom || prev.fournisseur,
+        montant_ht: result.data.totaux?.ht || prev.montant_ht,
+        date_facture: result.data.date_document_iso || prev.date_facture,
+      }));
+      setExtractedData(result.data);
     }
+  };
+
+  const handleFallbackSave = async (data: any) => {
+    setExtractedData(data);
+    setFormData(prev => ({
+      ...prev,
+      fournisseur: data.fournisseur_nom || prev.fournisseur,
+      montant_ht: data.totaux?.ht || prev.montant_ht,
+      date_facture: data.date_document_iso || prev.date_facture,
+    }));
+    setShowFallback(false);
+    toast({
+      title: "Données validées",
+      description: "Vous pouvez maintenant enregistrer la facture."
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -226,9 +208,9 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={handleFileChange}
-                      disabled={loading || extracting}
+                      disabled={loading || isExtracting}
                     />
-                    {extracting && (
+                    {isExtracting && (
                       <p className="text-sm text-muted-foreground mt-2">
                         ✨ {tooltips.uploadOCR}
                       </p>
@@ -352,6 +334,24 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
           )}
         </CardContent>
       </Card>
+
+      {/* Fallback UI pour extraction manuelle */}
+      <Dialog open={showFallback} onOpenChange={setShowFallback}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
+          {fileUrl && (
+            <DocumentFallbackUI
+              documentUrl={fileUrl}
+              partialData={extractedData}
+              documentType="facture"
+              onSave={handleFallbackSave}
+              onCancel={() => {
+                setShowFallback(false);
+                setFileUrl(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}

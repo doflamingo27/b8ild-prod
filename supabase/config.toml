@@ -3,6 +3,9 @@ project_id = "yjlekwaxmjjuhajdjgax"
 [functions.extract-document-data]
 verify_jwt = false
 
+[functions.extract-document-v2]
+verify_jwt = false
+
 [functions.calculate-tender-match]
 verify_jwt = false
 

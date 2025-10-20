@@ -362,34 +362,52 @@ export type Database = {
         Row: {
           categorie: string
           chantier_id: string
+          confiance: number | null
           created_at: string | null
           date_facture: string | null
+          extraction_json: Json | null
           fichier_url: string | null
           fournisseur: string | null
           id: string
           montant_ht: number
+          pages_count: number | null
+          siret: string | null
+          tva_montant: number | null
+          tva_pct: number | null
           updated_at: string | null
         }
         Insert: {
           categorie: string
           chantier_id: string
+          confiance?: number | null
           created_at?: string | null
           date_facture?: string | null
+          extraction_json?: Json | null
           fichier_url?: string | null
           fournisseur?: string | null
           id?: string
           montant_ht?: number
+          pages_count?: number | null
+          siret?: string | null
+          tva_montant?: number | null
+          tva_pct?: number | null
           updated_at?: string | null
         }
         Update: {
           categorie?: string
           chantier_id?: string
+          confiance?: number | null
           created_at?: string | null
           date_facture?: string | null
+          extraction_json?: Json | null
           fichier_url?: string | null
           fournisseur?: string | null
           id?: string
           montant_ht?: number
+          pages_count?: number | null
+          siret?: string | null
+          tva_montant?: number | null
+          tva_pct?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -402,34 +420,90 @@ export type Database = {
           },
         ]
       }
+      fournisseurs_templates: {
+        Row: {
+          anchors: Json
+          created_at: string | null
+          entreprise_id: string
+          field_positions: Json
+          fournisseur_nom: string
+          id: string
+          siret: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          anchors?: Json
+          created_at?: string | null
+          entreprise_id: string
+          field_positions?: Json
+          fournisseur_nom: string
+          id?: string
+          siret?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          anchors?: Json
+          created_at?: string | null
+          entreprise_id?: string
+          field_positions?: Json
+          fournisseur_nom?: string
+          id?: string
+          siret?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fournisseurs_templates_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       frais_chantier: {
         Row: {
           chantier_id: string
+          confiance: number | null
           created_at: string | null
           date_frais: string | null
           description: string | null
+          extraction_json: Json | null
+          fournisseur_nom: string | null
           id: string
           montant_total: number
+          pages_count: number | null
+          siret: string | null
           type_frais: string
           updated_at: string | null
         }
         Insert: {
           chantier_id: string
+          confiance?: number | null
           created_at?: string | null
           date_frais?: string | null
           description?: string | null
+          extraction_json?: Json | null
+          fournisseur_nom?: string | null
           id?: string
           montant_total?: number
+          pages_count?: number | null
+          siret?: string | null
           type_frais: string
           updated_at?: string | null
         }
         Update: {
           chantier_id?: string
+          confiance?: number | null
           created_at?: string | null
           date_frais?: string | null
           description?: string | null
+          extraction_json?: Json | null
+          fournisseur_nom?: string | null
           id?: string
           montant_total?: number
+          pages_count?: number | null
+          siret?: string | null
           type_frais?: string
           updated_at?: string | null
         }
@@ -912,12 +986,15 @@ export type Database = {
           buyer: string
           category: string | null
           city: string | null
+          confiance: number | null
           created_at: string | null
           dce_url: string | null
           deadline: string | null
           department: string | null
           description: string | null
+          extraction_json: Json | null
           id: string
+          pages_count: number | null
           postal_code: string | null
           source: string | null
           source_url: string | null
@@ -930,12 +1007,15 @@ export type Database = {
           buyer: string
           category?: string | null
           city?: string | null
+          confiance?: number | null
           created_at?: string | null
           dce_url?: string | null
           deadline?: string | null
           department?: string | null
           description?: string | null
+          extraction_json?: Json | null
           id?: string
+          pages_count?: number | null
           postal_code?: string | null
           source?: string | null
           source_url?: string | null
@@ -948,12 +1028,15 @@ export type Database = {
           buyer?: string
           category?: string | null
           city?: string | null
+          confiance?: number | null
           created_at?: string | null
           dce_url?: string | null
           deadline?: string | null
           department?: string | null
           description?: string | null
+          extraction_json?: Json | null
           id?: string
+          pages_count?: number | null
           postal_code?: string | null
           source?: string | null
           source_url?: string | null
