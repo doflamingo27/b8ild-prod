@@ -14,6 +14,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { DocumentFallbackUI } from "@/components/document/DocumentFallbackUI";
 import { useDocumentExtraction } from "@/hooks/useDocumentExtraction";
 import { useSecureInsert } from "@/hooks/useSecureInsert";
+import { useTemplateManager } from "@/hooks/useTemplateManager";
 import { labels, placeholders, toasts, modals, tooltips } from "@/lib/content";
 
 interface InvoiceManagerProps {
@@ -26,6 +27,7 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
   const { toast } = useToast();
   const { extractDocument, isExtracting } = useDocumentExtraction();
   const { secureInsert } = useSecureInsert();
+  const { saveTemplate } = useTemplateManager();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -33,6 +35,8 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
+  const [extractionConfidence, setExtractionConfidence] = useState<number>(0);
+  const [extractionDebug, setExtractionDebug] = useState<any>(null);
   const [formData, setFormData] = useState({
     fournisseur: "",
     montant_ht: 0,
@@ -60,6 +64,9 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     // Extraire les données
     const result = await extractDocument(selectedFile, 'facture');
     
+    setExtractionConfidence(result.confidence || 0);
+    setExtractionDebug(result.data?.debug);
+    
     if (result.needsFallback) {
       setExtractedData(result.partialData);
       setShowFallback(true);
@@ -67,8 +74,8 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
       // Pré-remplir le formulaire
       setFormData(prev => ({
         ...prev,
-        fournisseur: result.data.fournisseur_nom || prev.fournisseur,
-        montant_ht: result.data.totaux?.ht || prev.montant_ht,
+        fournisseur: result.data.fournisseur_nom || result.data.fournisseur || prev.fournisseur,
+        montant_ht: result.data.montant_ht || prev.montant_ht,
         date_facture: result.data.date_document_iso || prev.date_facture,
       }));
       setExtractedData(result.data);
@@ -79,11 +86,36 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     setExtractedData(data);
     setFormData(prev => ({
       ...prev,
-      fournisseur: data.fournisseur_nom || prev.fournisseur,
-      montant_ht: data.totaux?.ht || prev.montant_ht,
+      fournisseur: data.fournisseur_nom || data.fournisseur || prev.fournisseur,
+      montant_ht: data.montant_ht || prev.montant_ht,
       date_facture: data.date_document_iso || prev.date_facture,
     }));
     setShowFallback(false);
+    
+    // Optionnel: proposer d'enregistrer un template si SIRET détecté
+    if (data.siret && data.fournisseur_nom) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: entreprise } = await supabase
+          .from('entreprises')
+          .select('id')
+          .eq('proprietaire_user_id', user.id)
+          .single();
+        
+        if (entreprise) {
+          await saveTemplate({
+            fournisseur_nom: data.fournisseur_nom,
+            siret: data.siret,
+            anchors: [],
+            field_positions: {
+              montant_ht: [{ label: 'Total HT' }],
+              montant_ttc: [{ label: 'Total TTC' }]
+            }
+          }, entreprise.id);
+        }
+      }
+    }
+    
     toast({
       title: "Données validées",
       description: "Vous pouvez maintenant enregistrer la facture."
@@ -361,6 +393,8 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
               documentUrl={fileUrl}
               partialData={extractedData}
               documentType="facture"
+              confidence={extractionConfidence}
+              debug={extractionDebug}
               onSave={handleFallbackSave}
               onCancel={() => {
                 setShowFallback(false);

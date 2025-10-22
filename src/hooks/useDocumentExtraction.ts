@@ -80,11 +80,12 @@ export const useDocumentExtraction = () => {
         description: "Analyse du document avec IA."
       });
       
-      // Appeler l'edge function d'extraction
-      const { data, error } = await supabase.functions.invoke('extract-document-v2', {
+      // Appeler l'edge function d'extraction v3
+      const { data, error } = await supabase.functions.invoke('extract-document-v3', {
         body: {
           fileUrl: urlData.signedUrl,
-          documentType: documentType === 'frais' ? 'facture' : documentType
+          documentType: documentType === 'ao' ? 'ao' : 'facture',
+          entrepriseId: entreprise.id
         }
       });
       
