@@ -27,15 +27,18 @@ export const useTemplateManager = () => {
     setIsLoading(true);
     
     try {
+      // Créer l'objet avec le type correct pour Supabase
+      const templateRecord = {
+        entreprise_id: entrepriseId,
+        fournisseur_nom: templateData.fournisseur_nom,
+        siret: templateData.siret || null,
+        anchors: JSON.parse(JSON.stringify(templateData.anchors)),
+        field_positions: JSON.parse(JSON.stringify(templateData.field_positions))
+      };
+
       const { error } = await supabase
         .from('fournisseurs_templates')
-        .upsert({
-          fournisseur_nom: templateData.fournisseur_nom,
-          siret: templateData.siret,
-          anchors: templateData.anchors as any,
-          field_positions: templateData.field_positions as any,
-          updated_at: new Date().toISOString()
-        });
+        .insert([templateRecord]);
 
       if (error) throw error;
 
