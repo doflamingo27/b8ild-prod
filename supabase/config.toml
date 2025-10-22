@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.extract-document-v2]
 verify_jwt = false
 
+[functions.extract-document-v3]
+verify_jwt = false
+
 [functions.calculate-tender-match]
 verify_jwt = false
 

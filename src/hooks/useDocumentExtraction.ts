@@ -77,7 +77,14 @@ export const useDocumentExtraction = () => {
       
       toast({
         title: "Extraction en cours...",
-        description: "Analyse du document avec IA."
+        description: "Analyse du document avec IA.",
+        duration: 2000
+      });
+      
+      console.log('[EXTRACTION] Calling extract-document-v3 with:', { 
+        fileUrl: urlData.signedUrl, 
+        documentType: documentType === 'ao' ? 'ao' : 'facture',
+        entrepriseId: entreprise.id 
       });
       
       // Appeler l'edge function d'extraction v3
@@ -89,15 +96,36 @@ export const useDocumentExtraction = () => {
         }
       });
       
+      console.log('[EXTRACTION] Response:', { data, error });
+      
       // Nettoyer le fichier temporaire
       await supabase.storage.from(bucket).remove([tempPath]);
       
       if (error) {
         console.error('[EXTRACTION] Error:', error);
+        toast({
+          title: "Erreur d'extraction",
+          description: error.message || "Impossible d'extraire les données",
+          variant: "destructive"
+        });
         return {
           success: false,
           needsFallback: true,
-          message: "Erreur lors de l'extraction"
+          message: error.message || "Erreur lors de l'extraction"
+        };
+      }
+      
+      if (!data) {
+        console.error('[EXTRACTION] No data returned');
+        toast({
+          title: "Erreur d'extraction",
+          description: "Aucune donnée retournée par le service d'extraction",
+          variant: "destructive"
+        });
+        return {
+          success: false,
+          needsFallback: true,
+          message: "Aucune donnée retournée"
         };
       }
       
