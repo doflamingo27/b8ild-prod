@@ -1,67 +1,35 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import DashboardLayout from '@/components/DashboardLayout';
 import AutoExtractUploader from '@/components/AutoExtractUploader';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
-import { FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText } from 'lucide-react';
 
 export default function ImportAOPage() {
   const { user } = useAuth();
-
   const { data: entreprise } = useQuery({
     queryKey: ['entreprise', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('entreprises')
-        .select('id')
-        .eq('proprietaire_user_id', user!.id)
-        .single();
+      const { data } = await supabase.from('entreprises').select('id').eq('proprietaire_user_id', user!.id).single();
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
   });
 
-  if (!entreprise) return <DashboardLayout><div>Chargement...</div></DashboardLayout>;
+  if (!entreprise) return <DashboardLayout><div>Chargement…</div></DashboardLayout>;
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-4xl mx-auto p-6">
+      <div className="space-y-6 max-w-3xl">
         <div className="flex items-center gap-3">
           <FileText className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Importer un Appel d'Offres</h1>
-            <p className="text-sm text-muted-foreground">
-              PDF ou image. L'extraction est automatique ; vous pourrez confirmer via Fast-Fix si besoin.
-            </p>
-          </div>
+          <div><h1 className="text-3xl font-bold">Importer un Appel d'Offres</h1>
+          <p className="text-muted-foreground">PDF ou image. Extraction 100% automatique.</p></div>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Document AO</CardTitle>
-            <CardDescription>
-              Téléchargez un fichier PDF, JPG ou PNG contenant l'appel d'offres
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AutoExtractUploader 
-              module="ao" 
-              entrepriseId={entreprise.id}
-              onSaved={(id) => console.log('AO saved:', id)}
-            />
-          </CardContent>
-        </Card>
-
-        <div className="bg-muted/50 rounded-lg p-4 text-sm">
-          <p className="font-medium mb-2">💡 Conseils pour une meilleure extraction :</p>
-          <ul className="space-y-1 text-muted-foreground">
-            <li>• Utilisez le PDF original plutôt qu'une photo</li>
-            <li>• Évitez les images floues ou inclinées</li>
-            <li>• Pour les documents scannés, privilégiez une résolution élevée</li>
-          </ul>
-        </div>
+        <Card><CardHeader><CardTitle>Document AO / DCE</CardTitle><CardDescription>Uploadez pour extraction automatique.</CardDescription></CardHeader>
+        <CardContent><AutoExtractUploader module="ao" entrepriseId={entreprise.id} /></CardContent></Card>
       </div>
     </DashboardLayout>
   );
