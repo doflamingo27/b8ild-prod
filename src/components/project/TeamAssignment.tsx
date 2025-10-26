@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Users, Loader2 } from "lucide-react";
+import { Plus, Trash2, Users, Loader2, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,12 +17,20 @@ interface TeamAssignmentProps {
   coutJournalier: number;
 }
 
+interface MembreSelection {
+  id: string;
+  jours_travailles: number;
+}
+
 const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamAssignmentProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<MembreSelection[]>([]);
+  const [editingMember, setEditingMember] = useState<any>(null);
+  const [editJours, setEditJours] = useState(0);
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,10 +64,19 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
   };
 
   const handleToggleMember = (membreId: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(membreId) 
-        ? prev.filter(id => id !== membreId)
-        : [...prev, membreId]
+    setSelectedMembers(prev => {
+      const exists = prev.find(m => m.id === membreId);
+      if (exists) {
+        return prev.filter(m => m.id !== membreId);
+      } else {
+        return [...prev, { id: membreId, jours_travailles: 1 }];
+      }
+    });
+  };
+
+  const handleJoursChange = (membreId: string, jours: number) => {
+    setSelectedMembers(prev =>
+      prev.map(m => m.id === membreId ? { ...m, jours_travailles: Math.max(1, jours) } : m)
     );
   };
 
@@ -70,10 +89,11 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
         .delete()
         .eq("chantier_id", chantierId);
 
-      // Ajouter les nouvelles affectations
-      const newAssignments = selectedMembers.map(membreId => ({
+      // Ajouter les nouvelles affectations avec jours
+      const newAssignments = selectedMembers.map(m => ({
         chantier_id: chantierId,
-        membre_id: membreId,
+        membre_id: m.id,
+        jours_travailles: m.jours_travailles,
       }));
 
       if (newAssignments.length > 0) {
@@ -100,6 +120,33 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditJours = async () => {
+    try {
+      const { error } = await supabase
+        .from("equipe_chantier")
+        .update({ jours_travailles: editJours })
+        .eq("chantier_id", chantierId)
+        .eq("membre_id", editingMember.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Nombre de jours mis à jour",
+      });
+
+      setEditOpen(false);
+      setEditingMember(null);
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -158,24 +205,42 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                {availableMembers.map((membre) => (
-                  <div key={membre.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={membre.id}
-                      checked={selectedMembers.includes(membre.id)}
-                      onCheckedChange={() => handleToggleMember(membre.id)}
-                    />
-                    <label
-                      htmlFor={membre.id}
-                      className="flex-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {membre.prenom} {membre.nom} - {membre.poste}
-                      <span className="text-muted-foreground ml-2">
-                        ({calculerCoutJournalierMembre(membre).toFixed(2)} €/j)
-                      </span>
-                    </label>
-                  </div>
-                ))}
+                {availableMembers.map((membre) => {
+                  const selected = selectedMembers.find(m => m.id === membre.id);
+                  return (
+                    <div key={membre.id} className="space-y-2 p-3 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={membre.id}
+                          checked={!!selected}
+                          onCheckedChange={() => handleToggleMember(membre.id)}
+                        />
+                        <label
+                          htmlFor={membre.id}
+                          className="flex-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {membre.prenom} {membre.nom} - {membre.poste}
+                          <span className="text-muted-foreground ml-2">
+                            ({calculerCoutJournalierMembre(membre).toFixed(2)} €/j)
+                          </span>
+                        </label>
+                      </div>
+                      {selected && (
+                        <div className="ml-6 flex items-center gap-2">
+                          <Label htmlFor={`jours-${membre.id}`} className="text-xs">Jours :</Label>
+                          <Input
+                            id={`jours-${membre.id}`}
+                            type="number"
+                            min="1"
+                            value={selected.jours_travailles}
+                            onChange={(e) => handleJoursChange(membre.id, parseInt(e.target.value) || 1)}
+                            className="w-20 h-8"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <DialogFooter>
@@ -197,6 +262,7 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
                 <TableHead>Nom</TableHead>
                 <TableHead>Poste</TableHead>
                 <TableHead className="text-right">Coût journalier</TableHead>
+                <TableHead className="text-right">Jours planifiés</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -210,14 +276,30 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
                   <TableCell className="text-right font-mono">
                     {calculerCoutJournalierMembre(membre).toFixed(2)} €
                   </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {membre.jours_travailles || 0} j
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleRemoveMember(membre.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <div className="flex gap-1 justify-end">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingMember(membre);
+                          setEditJours(membre.jours_travailles || 0);
+                          setEditOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleRemoveMember(membre.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -229,6 +311,38 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
             Aucun membre affecté. Cliquez sur "Affecter des membres" pour commencer.
           </p>
         )}
+
+        {/* Dialog d'édition des jours */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier les jours travaillés</DialogTitle>
+              <DialogDescription>
+                {editingMember && `${editingMember.prenom} ${editingMember.nom}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-jours">Nombre de jours</Label>
+                <Input
+                  id="edit-jours"
+                  type="number"
+                  min="1"
+                  value={editJours}
+                  onChange={(e) => setEditJours(parseInt(e.target.value) || 1)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleEditJours}>
+                Valider
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

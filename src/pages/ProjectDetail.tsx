@@ -5,13 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCalculations } from "@/hooks/useCalculations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, Building, Users, FileText, Receipt, 
-  AlertTriangle, TrendingUp, Calendar, MapPin 
+  AlertTriangle, TrendingUp, Calendar, MapPin, Edit, Trash2 
 } from "lucide-react";
 import QuoteManager from "@/components/project/QuoteManager";
 import InvoiceManager from "@/components/project/InvoiceManager";
@@ -43,6 +48,16 @@ const ProjectDetail = () => {
   const [membres, setMembres] = useState<any[]>([]);
   const [frais, setFrais] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    nom_chantier: "",
+    client: "",
+    adresse: "",
+    duree_estimee: 30,
+    description: "",
+    statut: "actif",
+  });
 
   // Calculs automatiques
   const totalFactures = factures.reduce((sum, f) => sum + Number(f.montant_ht), 0);
@@ -91,13 +106,16 @@ const ProjectDetail = () => {
         .eq("chantier_id", id);
       setFactures(facturesData || []);
 
-      // Charger les membres affectés
+      // Charger les membres affectés avec leurs jours
       const { data: equipeData } = await supabase
         .from("equipe_chantier")
         .select("*, membres_equipe(*)")
         .eq("chantier_id", id);
       
-      const membresAffectes = equipeData?.map(e => e.membres_equipe) || [];
+      const membresAffectes = equipeData?.map(e => ({
+        ...e.membres_equipe,
+        jours_travailles: e.jours_travailles || 0
+      })) || [];
       setMembres(membresAffectes);
 
       // Charger les frais
@@ -140,6 +158,70 @@ const ProjectDetail = () => {
         {labels[statut]} - {rentabilite_pct.toFixed(1)}%
       </Badge>
     );
+  };
+
+  const handleUpdateChantier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from("chantiers")
+        .update(editFormData)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Chantier modifié avec succès",
+      });
+
+      setEditDialogOpen(false);
+      loadProjectData();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteChantier = async () => {
+    try {
+      const { error } = await supabase
+        .from("chantiers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Chantier supprimé avec succès",
+      });
+
+      navigate("/projects");
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openEditDialog = () => {
+    if (chantier) {
+      setEditFormData({
+        nom_chantier: chantier.nom_chantier,
+        client: chantier.client,
+        adresse: chantier.adresse,
+        duree_estimee: chantier.duree_estimee,
+        description: chantier.description || "",
+        statut: chantier.statut,
+      });
+      setEditDialogOpen(true);
+    }
   };
 
   if (loading) {
@@ -190,6 +272,14 @@ const ProjectDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge()}
+            <Button variant="outline" onClick={openEditDialog}>
+              <Edit className="h-4 w-4 mr-2" />
+              Modifier
+            </Button>
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Supprimer
+            </Button>
             <ExportManager
               chantierId={id!}
               chantierData={chantier}
@@ -204,7 +294,7 @@ const ProjectDetail = () => {
       </div>
 
       {/* KPIs principaux */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-5">
         <Card className="card-premium hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -264,6 +354,23 @@ const ProjectDetail = () => {
               "text-success"
             }`}>
               {calculations.jours_restants_avant_deficit}j
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-premium hover-lift">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Jour critique
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-black font-mono text-warning">
+              J{Math.floor(calculations.jour_critique)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Seuil de déficit
             </p>
           </CardContent>
         </Card>
@@ -352,6 +459,95 @@ const ProjectDetail = () => {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Dialog de modification */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <form onSubmit={handleUpdateChantier}>
+            <DialogHeader>
+              <DialogTitle>Modifier le chantier</DialogTitle>
+              <DialogDescription>
+                Modifiez les informations du chantier
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nom">Nom du chantier</Label>
+                <Input
+                  id="edit-nom"
+                  value={editFormData.nom_chantier}
+                  onChange={(e) => setEditFormData({ ...editFormData, nom_chantier: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-client">Client</Label>
+                <Input
+                  id="edit-client"
+                  value={editFormData.client}
+                  onChange={(e) => setEditFormData({ ...editFormData, client: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-adresse">Adresse</Label>
+                <Input
+                  id="edit-adresse"
+                  value={editFormData.adresse}
+                  onChange={(e) => setEditFormData({ ...editFormData, adresse: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-duree">Durée estimée (jours)</Label>
+                <Input
+                  id="edit-duree"
+                  type="number"
+                  value={editFormData.duree_estimee}
+                  onChange={(e) => setEditFormData({ ...editFormData, duree_estimee: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="submit">
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le chantier "{chantier?.nom_chantier}" 
+              et toutes ses données associées (devis, factures, équipe, frais) 
+              seront définitivement supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteChantier} className="bg-destructive hover:bg-destructive/90">
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

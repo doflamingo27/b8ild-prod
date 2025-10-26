@@ -5,6 +5,7 @@ interface Membre {
   taux_horaire: number;
   charges_salariales: number;
   charges_patronales: number;
+  jours_travailles?: number;
 }
 
 interface CalculationsParams {
@@ -38,10 +39,21 @@ export const useCalculations = ({
       return calculerCoutHoraireReel(membre) * 8;
     };
 
-    // Coût journalier total de l'équipe
-    const cout_journalier_equipe = membres.reduce((total, membre) => {
-      return total + calculerCoutJournalierMembre(membre);
+    // Coût total estimé de l'équipe (basé sur les jours planifiés)
+    const cout_total_equipe = membres.reduce((total, membre) => {
+      const joursPlannifies = membre.jours_travailles || 0;
+      return total + (calculerCoutJournalierMembre(membre) * joursPlannifies);
     }, 0);
+
+    // Jours totaux de l'équipe
+    const jours_totaux_equipe = membres.reduce((total, membre) => {
+      return total + (membre.jours_travailles || 0);
+    }, 0);
+
+    // Coût journalier moyen de l'équipe
+    const cout_journalier_equipe = jours_totaux_equipe > 0 
+      ? cout_total_equipe / jours_totaux_equipe
+      : membres.reduce((total, membre) => total + calculerCoutJournalierMembre(membre), 0);
 
     // Budget disponible
     const budget_disponible = budget_devis - couts_fixes;
@@ -69,6 +81,8 @@ export const useCalculations = ({
     return {
       jours_effectifs,
       cout_journalier_equipe,
+      cout_total_equipe,
+      jours_totaux_equipe,
       budget_disponible,
       jour_critique,
       rentabilite_pct,

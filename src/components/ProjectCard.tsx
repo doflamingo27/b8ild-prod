@@ -2,8 +2,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Link } from "react-router-dom";
-import { Building, Calendar, AlertTriangle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Link, useNavigate } from "react-router-dom";
+import { Building, Calendar, AlertTriangle, MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -13,6 +14,8 @@ interface ProjectCardProps {
   jours_restants?: number;
   budget_devis?: number;
   couts_engages?: number;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const ProjectCard = ({ 
@@ -22,8 +25,11 @@ const ProjectCard = ({
   rentabilite, 
   jours_restants,
   budget_devis = 0,
-  couts_engages = 0 
+  couts_engages = 0,
+  onEdit,
+  onDelete 
 }: ProjectCardProps) => {
+  const navigate = useNavigate();
   const getStatusColor = (rentabilite: number) => {
     if (rentabilite >= 20) return "bg-success";
     if (rentabilite >= 10) return "bg-warning";
@@ -60,12 +66,39 @@ const ProjectCard = ({
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-2 font-medium">{client}</p>
           </div>
-          <Badge 
-            variant={getStatusVariant(rentabilite)}
-            className="font-bold px-3 py-1"
-          >
-            {getStatusLabel(rentabilite)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant={getStatusVariant(rentabilite)}
+              className="font-bold px-3 py-1"
+            >
+              {getStatusLabel(rentabilite)}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/projects/${id}`)}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Voir détails
+                </DropdownMenuItem>
+                {onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(id)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Modifier
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem onClick={() => onDelete(id)} className="text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
       

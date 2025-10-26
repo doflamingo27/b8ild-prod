@@ -268,6 +268,7 @@ export type Database = {
           chantier_id: string
           created_at: string | null
           id: string
+          jours_travailles: number | null
           membre_id: string
           role_chantier: string | null
         }
@@ -275,6 +276,7 @@ export type Database = {
           chantier_id: string
           created_at?: string | null
           id?: string
+          jours_travailles?: number | null
           membre_id: string
           role_chantier?: string | null
         }
@@ -282,6 +284,7 @@ export type Database = {
           chantier_id?: string
           created_at?: string | null
           id?: string
+          jours_travailles?: number | null
           membre_id?: string
           role_chantier?: string | null
         }
@@ -1107,10 +1110,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_current_entreprise: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_entreprise: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1122,10 +1122,7 @@ export type Database = {
         Args: { p_data: Json; p_entreprise_id: string; p_table: string }
         Returns: string
       }
-      jwt_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      jwt_role: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "chef" | "ouvrier"
