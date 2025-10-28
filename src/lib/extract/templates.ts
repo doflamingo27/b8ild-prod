@@ -1,21 +1,48 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type Template = { id:string; fournisseur_nom?:string; siret?:string; anchors:any; };
+export type Template = {
+  id: string;
+  fournisseur_nom?: string;
+  siret?: string;
+  anchors: any;
+  field_positions?: any;
+};
 
-export async function getTemplateFor(entrepriseId: string, providerKey: {siret?:string|null; nom?:string|null}) {
-  const { data } = await supabase
+export async function getTemplate({
+  entrepriseId,
+  siret,
+  nom
+}: {
+  entrepriseId: string;
+  siret?: string | null;
+  nom?: string | null;
+}): Promise<Template | null> {
+  if (!siret && !nom) return null;
+  
+  let query = supabase
     .from('fournisseurs_templates')
     .select('*')
-    .eq('entreprise_id', entrepriseId)
-    .or(`siret.eq.${providerKey.siret ?? ''},fournisseur_nom.eq.${providerKey.nom ?? ''}`)
-    .limit(1)
-    .maybeSingle();
+    .eq('entreprise_id', entrepriseId);
+  
+  if (siret) {
+    query = query.eq('siret', siret);
+  } else if (nom) {
+    query = query.eq('fournisseur_nom', nom);
+  }
+  
+  const { data } = await query.limit(1).maybeSingle();
   return data ?? null;
 }
 
-export async function upsertTemplate(entrepriseId: string, payload: { fournisseur_nom?:string; siret?:string; anchors:any; field_positions?: any }) {
+export async function saveTemplate(payload: {
+  entrepriseId: string;
+  fournisseur_nom?: string;
+  siret?: string;
+  anchors: any;
+  field_positions?: any;
+}): Promise<void> {
   const record = {
-    entreprise_id: entrepriseId,
+    entreprise_id: payload.entrepriseId,
     fournisseur_nom: payload.fournisseur_nom || '',
     siret: payload.siret,
     anchors: payload.anchors,

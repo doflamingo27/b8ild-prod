@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { extractFromFile } from '@/lib/extract/extractor';
+import { extractAuto } from '@/lib/extract/extractor';
 import { saveExtraction } from '@/services/extractionService';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -38,9 +38,9 @@ export default function AutoExtractUploader({ module, entrepriseId, onSaved }: P
         throw new Error('Fichier trop volumineux (max 20 Mo).');
       }
       
-      console.log('[UPLOAD] Calling extractFromFile...');
-      let res = await extractFromFile(f, entrepriseId);
-      console.log('[UPLOAD] Local extraction result:', res);
+      console.log('[UPLOAD] Calling extractAuto...');
+      const res = await extractAuto(f, entrepriseId);
+      console.log('[UPLOAD] Extraction result:', res);
       
       // Fallback AI si confiance trop faible
       if (res.confidence < 0.30) {
