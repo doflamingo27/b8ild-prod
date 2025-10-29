@@ -12,10 +12,11 @@ import { supabase } from '@/integrations/supabase/client';
 type Props = {
   module: 'ao' | 'factures' | 'frais';
   entrepriseId: string;
+  chantierId?: string;  // Optionnel - si absent, la facture sera en attente d'affectation
   onSaved?: (id: string) => void;
 };
 
-export default function AutoExtractUploader({ module, entrepriseId, onSaved }: Props) {
+export default function AutoExtractUploader({ module, entrepriseId, chantierId, onSaved }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extraction, setExtraction] = useState<any>(null);
@@ -75,7 +76,8 @@ export default function AutoExtractUploader({ module, entrepriseId, onSaved }: P
         }
         
         payload = { 
-          ...payload, 
+          ...payload,
+          chantier_id: chantierId || null,  // Utiliser la prop si fournie, sinon NULL
           montant_ht: montant_ht, 
           montant_ttc: montant_ttc,
           tva_pct: res.fields.tvaPct, 

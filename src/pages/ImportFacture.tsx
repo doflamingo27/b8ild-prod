@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import AutoExtractUploader from '@/components/AutoExtractUploader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Receipt } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Receipt, Info } from 'lucide-react';
 
 export default function ImportFacturePage() {
   const { user } = useAuth();
@@ -28,6 +29,14 @@ export default function ImportFacturePage() {
           <p className="text-muted-foreground">PDF ou image. Extraction 100% automatique.</p>
         </div>
       </div>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Les factures importées ici seront en attente d'affectation. 
+          Vous pourrez les affecter à un chantier depuis la vue "Factures" ou depuis le détail d'un chantier.
+        </AlertDescription>
+      </Alert>
+      
       <Card>
         <CardHeader>
           <CardTitle>Document</CardTitle>

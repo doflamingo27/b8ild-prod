@@ -364,7 +364,7 @@ export type Database = {
       factures_fournisseurs: {
         Row: {
           categorie: string
-          chantier_id: string
+          chantier_id: string | null
           confiance: number | null
           created_at: string | null
           created_by: string | null
@@ -383,7 +383,7 @@ export type Database = {
         }
         Insert: {
           categorie: string
-          chantier_id: string
+          chantier_id?: string | null
           confiance?: number | null
           created_at?: string | null
           created_by?: string | null
@@ -402,7 +402,7 @@ export type Database = {
         }
         Update: {
           categorie?: string
-          chantier_id?: string
+          chantier_id?: string | null
           confiance?: number | null
           created_at?: string | null
           created_by?: string | null
