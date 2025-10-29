@@ -1,9 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configuration du worker pdfjs
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-}
+// Configuration du worker pdfjs (local)
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
 
 export type TextItem = { 
   str: string; 
