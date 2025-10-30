@@ -98,6 +98,13 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
           }
         }
         
+        // ✅ 4) Déterminer le statut d'extraction
+        let extraction_status = 'complete';
+        if (!montant_ttc && !montant_ht) {
+          console.warn('[UPLOAD] Aucun montant extrait, insertion avec statut incomplete');
+          extraction_status = 'incomplete';
+        }
+        
         const nomFournisseur = res.fields.fournisseur || res.fields.siret || 'Fournisseur inconnu';
         
         console.log('[UPLOAD] Facture extraction après sanity:', {
@@ -116,14 +123,15 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
         payload = { 
           ...payload,
           chantier_id: chantierId || null,
-          montant_ht: montant_ht, 
-          montant_ttc: montant_ttc,
-          tva_pct: tva_pct, 
-          tva_montant: tva_montant,
-          siret: res.fields.siret, 
-          date_facture: res.fields.dateDoc, 
+          montant_ht: montant_ht ?? null,        // ✅ Explicitement NULL si undefined
+          montant_ttc: montant_ttc ?? null,      // ✅ Idem
+          tva_pct: tva_pct ?? null, 
+          tva_montant: tva_montant ?? null,
+          siret: res.fields.siret ?? null,       // ✅ NOUVEAU
+          date_facture: res.fields.dateDoc ?? null,  // ✅ NOUVEAU
           categorie: 'Autres', 
-          fournisseur: nomFournisseur
+          fournisseur: nomFournisseur,
+          extraction_status  // ✅ NOUVEAU
         };
         
         console.log('[UPLOAD] Final payload:', payload);

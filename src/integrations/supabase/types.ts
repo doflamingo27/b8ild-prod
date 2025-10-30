@@ -371,10 +371,11 @@ export type Database = {
           date_facture: string | null
           entreprise_id: string | null
           extraction_json: Json | null
+          extraction_status: string | null
           fichier_url: string | null
           fournisseur: string | null
           id: string
-          montant_ht: number
+          montant_ht: number | null
           montant_ttc: number | null
           pages_count: number | null
           siret: string | null
@@ -391,10 +392,11 @@ export type Database = {
           date_facture?: string | null
           entreprise_id?: string | null
           extraction_json?: Json | null
+          extraction_status?: string | null
           fichier_url?: string | null
           fournisseur?: string | null
           id?: string
-          montant_ht?: number
+          montant_ht?: number | null
           montant_ttc?: number | null
           pages_count?: number | null
           siret?: string | null
@@ -411,10 +413,11 @@ export type Database = {
           date_facture?: string | null
           entreprise_id?: string | null
           extraction_json?: Json | null
+          extraction_status?: string | null
           fichier_url?: string | null
           fournisseur?: string | null
           id?: string
-          montant_ht?: number
+          montant_ht?: number | null
           montant_ttc?: number | null
           pages_count?: number | null
           siret?: string | null
