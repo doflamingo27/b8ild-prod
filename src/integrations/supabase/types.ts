@@ -1124,10 +1124,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      insert_extraction_service: {
-        Args: { p_data: Json; p_entreprise_id: string; p_table: string }
-        Returns: string
-      }
+      insert_extraction_service:
+        | {
+            Args: { p_data: Json; p_entreprise_id: string; p_table: string }
+            Returns: string
+          }
+        | {
+            Args: { p_data: Json; p_entreprise_id: string; p_table: string }
+            Returns: string
+          }
       jwt_role: { Args: never; Returns: string }
       safe_num_fr: { Args: { p_max?: number; p_text: string }; Returns: number }
       safe_pct_fr: { Args: { p_text: string }; Returns: number }

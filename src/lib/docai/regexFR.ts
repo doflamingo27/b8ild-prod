@@ -1,0 +1,16 @@
+export const R = {
+  HT: /(?:(?:total|montant|sous[\s\-]?total)\s*(?:h\.?t\.?|hors\s*taxes))\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/i,
+  TVA_PCT: /tva\s*(?:\([\w\s]*\))?\s*[:\-]?\s*(\d{1,2}[\.,]\d{1,2}|\d{1,2})\s*%/i,
+  TVA_AMT: /tva\s*(?:\([\w\s]*\))?\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/i,
+  TTC: /(?:(?:total|montant)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?))\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/i,
+  NET: /(net\s*(?:à|a)\s*payer(?:\s*t\.?t\.?c\.?)?)\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/i,
+  SIRET: /\b\d{3}\s?\d{3}\s?\d{3}\s?\d{5}\b/ig,
+  NUM_FACT: /(n[°o]\s*[:\-]?\s*|facture\s*[:\-]?)\s*([A-Z0-9\-\/]+)/i,
+  DATE: /\b([0-3]?\d[\/\-\.][01]?\d[\/\-\.]\d{2,4})\b/g,
+  EUR: /€/,
+  AO_DEADLINE: /(date\s*limite|date\s*de\s*remise|dépôt\s*des\s*offres)\s*.*?([0-3]?\d[\/\-\.][01]?\d[\/\-\.]\d{2,4})/i,
+  AO_CP: /\b(0[1-9]|[1-8]\d|9[0-5])\d{3}\b/g,
+  AO_BUDGET: /(montant|budget)\s*(?:global|estim[ée])\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/i,
+  AO_REF: /(réf\.|référence)\s*[:\-]?\s*([A-Z0-9\-\/]+)/i,
+  AO_ORGA: /(organisme|acheteur|maître\s*d['']ouvrage|pouvoir\s*adjudicateur)\s*[:\-]?\s*(.+)/i,
+};

@@ -1,23 +1,22 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export async function saveExtraction(
-  table: 'factures_fournisseurs'|'frais_chantier'|'tenders',
+  table: 'factures_fournisseurs' | 'frais_chantier' | 'tenders',
   entrepriseId: string,
   payload: any
-) {
+): Promise<string> {
   try {
     console.log('[saveExtraction]', { table, entrepriseId, payload });
     
     const { data, error } = await supabase.rpc('insert_extraction_service', {
       p_table: table,
       p_data: payload,
-      p_entreprise_id: entrepriseId
+      p_entreprise_id: entrepriseId,
     });
     
     if (error) {
       console.error('[saveExtraction] RPC error:', error);
       
-      // Messages d'erreur améliorés
       if (error.message?.includes('row-level security') || error.message?.includes('policy')) {
         throw new Error('Accès non autorisé. Vérifiez vos permissions.');
       }
@@ -32,7 +31,7 @@ export async function saveExtraction(
     }
     
     console.log('[saveExtraction] Success:', data);
-    return data;
+    return data as string;
   } catch (err: any) {
     console.error('[saveExtraction] Exception:', err);
     throw err;
