@@ -1,186 +1,179 @@
 import React, { useState } from 'react';
-import { extractAuto } from '@/lib/docai/extractor';
-import { saveExtraction } from '@/services/extractionService';
 import { useToast } from '@/hooks/use-toast';
+import { extractWithOcrSpace } from '@/services/ocrspace';
+import { parseFrenchDocument } from '@/lib/parseFR';
+import { saveExtraction } from '@/services/extractionService';
+import AutoFillRecap from './AutoFillRecap';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Loader2, AlertCircle, Info } from 'lucide-react';
-import AutoFillRecap from './AutoFillRecap';
+import { Upload, Loader2, AlertCircle } from 'lucide-react';
 
 type Props = {
   module: 'ao' | 'factures' | 'frais';
   entrepriseId: string;
-  chantierId?: string;  // Optionnel - si absent, la facture sera en attente d'affectation
+  chantierId?: string;
   onSaved?: (id: string) => void;
 };
 
 export default function AutoExtractUploader({ module, entrepriseId, chantierId, onSaved }: Props) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [extraction, setExtraction] = useState<any>(null);
+  const [extraction, setExtraction] = useState<any | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     setLoading(true);
     setError(null);
     setExtraction(null);
     setSavedId(null);
 
-    console.log('[DocAI] Starting extraction for:', f.name, 'Type:', f.type, 'Size:', f.size);
-
     try {
-      if (f.size > 20 * 1024 * 1024) {
-        throw new Error('Fichier trop volumineux (max 20 Mo).');
-      }
+      console.log('[OCR] Starting extraction with OCR.space...', { module, file: file.name });
+      
+      // 1️⃣ OCR.space
+      const { text, confidence: ocrConfidence, provider } = await extractWithOcrSpace(file);
+      console.log('[OCR] Success:', { provider, textLength: text.length, ocrConfidence });
 
-      console.log('[DocAI] Calling extractAuto...');
-      const res = await extractAuto(f, entrepriseId);
-      console.log('[DocAI] Extraction result:', res);
+      // 2️⃣ Parser français
+      const fields = parseFrenchDocument(text, module);
+      console.log('[Parser] Extracted fields:', fields);
 
-      setExtraction(res);
+      // 3️⃣ Calcul confiance finale
+      let finalConfidence = ocrConfidence;
+      if (fields.totalsOk) finalConfidence += 0.15;
+      if (fields.siret) finalConfidence += 0.1;
+      finalConfidence = Math.min(1, finalConfidence);
 
-      let table: 'tenders' | 'factures_fournisseurs' | 'frais_chantier' = 'frais_chantier';
-      let payload: any = {
-        extraction_json: res,
-        confiance: res.confidence,
-        pages_count: res.textPages.length,
+      // 4️⃣ Mapping table + payload
+      let table: 'tenders' | 'factures_fournisseurs' | 'frais_chantier';
+      let payload: any = { 
+        extraction_provider: provider,
+        extraction_json: { text, fields, confidence: finalConfidence },
+        confiance: finalConfidence 
       };
 
       if (module === 'ao') {
         table = 'tenders';
-        const title = res.fields.aoRef ? `AO ${res.fields.aoRef}` : "Appel d'offres";
         payload = {
           ...payload,
-          title,
-          buyer: res.fields.aoOrga ?? 'Organisme',
-          city: res.fields.aoVille,
-          postal_code: res.fields.aoCP,
-          deadline: res.fields.aoDeadline,
-          budget_min: res.fields.aoBudget,
-          source: 'Import',
+          title: fields.aoRef ? `AO ${fields.aoRef}` : 'Appel d\'offres',
+          buyer: fields.aoOrga ?? null,
+          city: null,
+          postal_code: fields.aoCP ?? null,
+          deadline: fields.aoDeadline ?? null,
+          budget_min: fields.aoBudget ?? null,
         };
       } else if (module === 'factures') {
         table = 'factures_fournisseurs';
 
-        let montant_ttc = res.fields.net ?? res.fields.ttc ?? null;
-        let montant_ht = res.fields.ht ?? null;
-        let tva_pct = res.fields.tvaPct ?? null;
-        let tva_montant = res.fields.tvaAmt ?? null;
+        // Sanity HT/TTC
+        let montant_ht = fields.ht ?? null;
+        let montant_ttc = fields.net ?? fields.ttc ?? null;
 
-        // Sanity rules
-        const MAX_AMOUNT = 999999999999.99;
-        if (montant_ht && Math.abs(montant_ht) > MAX_AMOUNT) {
-          console.warn('[DocAI] montant_ht trop grand, mis à NULL:', montant_ht);
-          montant_ht = null;
-        }
-        if (montant_ttc && Math.abs(montant_ttc) > MAX_AMOUNT) {
-          console.warn('[DocAI] montant_ttc trop grand, mis à NULL:', montant_ttc);
-          montant_ttc = null;
-        }
-        if (tva_montant && Math.abs(tva_montant) > MAX_AMOUNT) {
-          console.warn('[DocAI] tva_montant trop grand, mis à NULL:', tva_montant);
-          tva_montant = null;
+        // Si HT > TTC, inverser (erreur d'extraction probable)
+        if (montant_ht != null && montant_ttc != null && montant_ht > montant_ttc) {
+          console.warn('[Sanity] HT > TTC, swapping', { montant_ht, montant_ttc });
+          [montant_ht, montant_ttc] = [montant_ttc, montant_ht];
         }
 
+        // Borner TVA %
+        let tva_pct = fields.tvaPct ?? null;
         if (tva_pct != null) {
-          if (tva_pct > 100) tva_pct = 100;
-          if (tva_pct < 0) tva_pct = 0;
+          tva_pct = Math.max(0, Math.min(100, tva_pct));
         }
 
-        if (montant_ht && montant_ttc && tva_pct != null) {
-          if (montant_ttc < montant_ht) {
-            console.warn('[DocAI] TTC < HT, probable inversion, swap');
-            [montant_ht, montant_ttc] = [montant_ttc, montant_ht];
-          }
-        }
-
-        let extraction_status = 'complete';
-        if (!montant_ttc && !montant_ht) {
-          console.warn('[DocAI] Aucun montant extrait, statut incomplete');
-          extraction_status = 'incomplete';
-        }
-
-        const nomFournisseur = res.fields.siret || 'Fournisseur inconnu';
+        // Borner montants
+        const MAX = 999999999999.99;
+        if (montant_ht != null && (montant_ht < 0 || montant_ht > MAX)) montant_ht = null;
+        if (montant_ttc != null && (montant_ttc < 0 || montant_ttc > MAX)) montant_ttc = null;
 
         payload = {
           ...payload,
-          chantier_id: chantierId || null,
-          montant_ht: montant_ht ?? null,
-          montant_ttc: montant_ttc ?? null,
-          tva_pct: tva_pct ?? null,
-          tva_montant: tva_montant ?? null,
-          siret: res.fields.siret ?? null,
-          date_facture: res.fields.dateDoc ?? null,
+          fournisseur: 'Non renseigné',
+          montant_ht,
+          tva_pct,
+          tva_montant: fields.tvaAmt ?? null,
+          montant_ttc,
+          siret: fields.siret ?? null,
+          date_facture: fields.dateDoc ?? null,
           categorie: 'Autres',
-          fournisseur: nomFournisseur,
-          extraction_status,
+          chantier_id: chantierId ?? null,
         };
+
+        // Définir extraction_status
+        if (!montant_ht && !montant_ttc) {
+          payload.extraction_status = 'incomplete';
+        } else {
+          payload.extraction_status = 'complete';
+        }
+
       } else {
+        table = 'frais_chantier';
         payload = {
           ...payload,
+          chantier_id: chantierId ?? null,
           type_frais: 'Autres',
-          montant_total: res.fields.net ?? res.fields.ttc ?? res.fields.ht,
+          montant_total: fields.net ?? fields.ttc ?? fields.ht ?? null,
+          fournisseur_nom: 'Non renseigné',
+          siret: fields.siret ?? null,
+          date_frais: fields.dateDoc ?? null,
         };
       }
 
-      console.log('[DocAI] Saving to table:', table);
+      // 5️⃣ Sauvegarde DB
+      console.log('[AutoExtract] Saving to DB:', { table, payload });
       const id = await saveExtraction(table, entrepriseId, payload);
-      console.log('[DocAI] Saved successfully with ID:', id);
+      console.log('[AutoExtract] Saved with ID:', id);
 
       setSavedId(id);
+      setExtraction({ fields, confidence: finalConfidence });
 
-      const confidencePct = Math.round(res.confidence * 100);
-      const hasMontants = !!(res.fields.net || res.fields.ttc || res.fields.ht);
-
-      if (!hasMontants && module === 'factures') {
+      // 6️⃣ Toast
+      if (finalConfidence >= 0.8) {
         toast({
-          title: '⚠️ Extraction incomplète',
-          description: 'Aucun montant détecté. Vérifiez le document.',
-          variant: 'destructive',
+          title: "✅ Extraction réussie",
+          description: `Confiance: ${Math.round(finalConfidence * 100)}%`,
         });
-      } else if (res.confidence >= 0.8) {
+      } else if (finalConfidence >= 0.6) {
         toast({
-          title: "✅ Extraction terminée — c'est prêt",
-          description: `Confiance : ${confidencePct}%`,
-        });
-      } else if (res.confidence >= 0.6) {
-        toast({
-          title: '⚠️ Extraction terminée — vérifiez',
-          description: `Confiance : ${confidencePct}%`,
+          title: "⚠️ Extraction réussie",
+          description: "Vérifiez rapidement les montants extraits.",
         });
       } else {
         toast({
-          title: '⚠️ Extraction terminée — qualité faible',
-          description: `Confiance : ${confidencePct}%`,
+          title: "⚠️ Qualité faible",
+          description: "Pensez à vérifier les champs extraits.",
+          variant: "destructive",
         });
       }
 
       onSaved?.(id);
-    } catch (e: any) {
-      console.error('[DocAI] ERROR:', e);
-      setError(e.message || 'Erreur extraction');
-
-      let userMessage = e.message;
-
-      if (e.message?.includes('PDF')) {
-        userMessage = 'Erreur lecture PDF. Essayez avec un fichier non protégé.';
-      } else if (e.message?.includes('OCR')) {
-        userMessage = 'OCR impossible. Photo trop floue ou fichier corrompu.';
-      } else if (e.message?.includes('RPC') || e.message?.includes('not authorized')) {
-        userMessage = 'Erreur de sauvegarde. Vérifiez vos permissions.';
+    } catch (err: any) {
+      console.error('[OCR] Error:', err);
+      
+      // Messages d'erreur contextuels
+      let userMessage = err.message;
+      if (err.message.includes('5 Mo')) {
+        userMessage = 'Fichier trop volumineux. Max 5 Mo pour le plan gratuit OCR.space.';
+      } else if (err.message.includes('illisible')) {
+        userMessage = 'Document illisible. Essayez avec une photo plus nette ou un scan de meilleure qualité.';
+      } else if (err.message.includes('exceeded')) {
+        userMessage = 'Quota journalier OCR.space atteint (500/jour). Réessayez demain.';
       }
 
+      setError(userMessage);
       toast({
-        title: "Erreur d'extraction",
+        title: "Erreur extraction",
         description: userMessage,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
+      e.currentTarget.value = '';
     }
   }
 
@@ -189,7 +182,7 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
       <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
         <Input
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
+          accept=".pdf,.jpg,.jpeg,.png"
           onChange={onFile}
           className="hidden"
           id={`upload-${module}`}
@@ -199,18 +192,18 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
           {loading ? (
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-sm font-medium">Analyse en cours…</p>
+              <p className="text-sm font-medium">Analyse OCR en cours…</p>
               <p className="text-xs text-muted-foreground">
-                OCR + extraction automatique (10-30s)
+                Extraction automatique (2-5s)
               </p>
             </>
           ) : (
             <>
               <Upload className="h-12 w-12 text-muted-foreground" />
               <p className="font-medium text-lg">Cliquer pour uploader un document</p>
-              <p className="text-sm text-muted-foreground">PDF, JPG, PNG, CSV, XLSX (max 20 Mo)</p>
+              <p className="text-sm text-muted-foreground">PDF, JPG, PNG (max 5 Mo)</p>
               <p className="text-xs text-muted-foreground mt-2">
-                Extraction 100% automatique — Aucune saisie manuelle
+                API OCR.space gratuite • 500 requêtes/jour
               </p>
             </>
           )}
