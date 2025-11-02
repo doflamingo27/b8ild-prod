@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useCalculations } from "@/hooks/useCalculations";
+import { useChantierMetrics } from "@/hooks/useChantierMetrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,8 @@ import InvoiceManager from "@/components/project/InvoiceManager";
 import TeamAssignment from "@/components/project/TeamAssignment";
 import ExpensesManager from "@/components/project/ExpensesManager";
 import ExportManager from "@/components/ExportManager";
+import ChantierKpis from "@/components/ChantierKpis";
+import ChantierCharts from "@/components/ChantierCharts";
 
 interface Chantier {
   id: string;
@@ -41,6 +44,9 @@ const ProjectDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Hook temps réel pour les métriques
+  const { metrics, loading: metricsLoading } = useChantierMetrics(id || '');
   
   const [chantier, setChantier] = useState<Chantier | null>(null);
   const [devis, setDevis] = useState<any>(null);
@@ -293,125 +299,20 @@ const ProjectDetail = () => {
         </div>
       </div>
 
-      {/* KPIs principaux */}
-      <div className="grid gap-6 md:grid-cols-5">
-        <Card className="card-premium hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Budget Devis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black font-mono text-gradient-primary">
-              {(devis?.montant_ttc || 0).toLocaleString()} €
-            </p>
+      {/* Métriques temps réel */}
+      {!metricsLoading && metrics && (
+        <>
+          <ChantierKpis metrics={metrics} />
+          <ChantierCharts chantierId={id!} />
+        </>
+      )}
+
+      {metricsLoading && (
+        <Card className="card-premium">
+          <CardContent className="pt-16 pb-16 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Chargement des métriques...</p>
           </CardContent>
-        </Card>
-
-        <Card className="card-premium hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Coûts Engagés
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black font-mono">
-              {coutsFixes.toLocaleString()} €
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Rentabilité
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-3xl font-black font-mono ${
-              calculations.rentabilite_pct >= 20 ? "text-success" :
-              calculations.rentabilite_pct >= 10 ? "text-warning" :
-              calculations.rentabilite_pct > 0 ? "text-alert" :
-              "text-danger"
-            }`}>
-              {calculations.rentabilite_pct.toFixed(1)}%
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Jours restants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-3xl font-black font-mono ${
-              calculations.jours_restants_avant_deficit <= 3 ? "text-danger" : 
-              calculations.jours_restants_avant_deficit <= 7 ? "text-warning" :
-              "text-success"
-            }`}>
-              {calculations.jours_restants_avant_deficit}j
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-premium hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Jour critique
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-black font-mono text-warning">
-              J{Math.floor(calculations.jour_critique)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Seuil de déficit
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Barre de progression */}
-      <Card className="card-premium">
-        <CardHeader>
-          <CardTitle className="text-xl font-black flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Progression budgétaire
-          </CardTitle>
-          <CardDescription className="text-base mt-2">
-            Budget disponible : <span className="font-black text-gradient-primary">{calculations.budget_disponible.toLocaleString()} €</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Progress 
-            value={Math.min(100, (coutsFixes / (devis?.montant_ttc || 1)) * 100)} 
-            className="h-4"
-          />
-          <p className="text-sm text-muted-foreground mt-3 text-center">
-            {((coutsFixes / (devis?.montant_ttc || 1)) * 100).toFixed(1)}% du budget utilisé
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Alertes */}
-      {calculations.jours_restants_avant_deficit <= 7 && (
-        <Card className="card-premium border-alert bg-alert/10 hover-lift animate-scale-in">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-alert text-xl font-black">
-              <AlertTriangle className="h-6 w-6 animate-pulse" />
-              {calculations.jours_restants_avant_deficit <= 1 ? "⚠️ ALERTE CRITIQUE" : "⚠️ Attention requise"}
-            </CardTitle>
-            <CardDescription className="text-alert text-base font-semibold mt-2">
-              {calculations.jours_restants_avant_deficit <= 1 
-                ? "Le chantier est en déficit ou proche du déficit ! Action immédiate requise." 
-                : `Plus que ${calculations.jours_restants_avant_deficit} jours avant le seuil critique. Surveillez vos coûts.`}
-            </CardDescription>
-          </CardHeader>
         </Card>
       )}
 

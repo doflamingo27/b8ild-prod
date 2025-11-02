@@ -55,9 +55,80 @@ export type Database = {
           },
         ]
       }
+      chantier_metrics_realtime: {
+        Row: {
+          chantier_id: string
+          metrics: Json
+          updated_at: string | null
+        }
+        Insert: {
+          chantier_id: string
+          metrics: Json
+          updated_at?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          metrics?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantier_metrics_realtime_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: true
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chantier_snapshots: {
+        Row: {
+          budget_ht: number | null
+          chantier_id: string
+          cout_main_oeuvre: number | null
+          couts_fixes: number | null
+          created_at: string | null
+          d: string
+          id: string
+          marge_a_date: number | null
+          profitability_pct: number | null
+        }
+        Insert: {
+          budget_ht?: number | null
+          chantier_id: string
+          cout_main_oeuvre?: number | null
+          couts_fixes?: number | null
+          created_at?: string | null
+          d: string
+          id?: string
+          marge_a_date?: number | null
+          profitability_pct?: number | null
+        }
+        Update: {
+          budget_ht?: number | null
+          chantier_id?: string
+          cout_main_oeuvre?: number | null
+          couts_fixes?: number | null
+          created_at?: string | null
+          d?: string
+          id?: string
+          marge_a_date?: number | null
+          profitability_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chantier_snapshots_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chantiers: {
         Row: {
           adresse: string | null
+          budget_ht: number | null
           client: string
           created_at: string | null
           date_creation: string | null
@@ -65,6 +136,7 @@ export type Database = {
           date_fin_prevue: string | null
           description: string | null
           duree_estimee: number | null
+          duree_estimee_jours: number | null
           entreprise_id: string
           id: string
           nom_chantier: string
@@ -73,6 +145,7 @@ export type Database = {
         }
         Insert: {
           adresse?: string | null
+          budget_ht?: number | null
           client: string
           created_at?: string | null
           date_creation?: string | null
@@ -80,6 +153,7 @@ export type Database = {
           date_fin_prevue?: string | null
           description?: string | null
           duree_estimee?: number | null
+          duree_estimee_jours?: number | null
           entreprise_id: string
           id?: string
           nom_chantier: string
@@ -88,6 +162,7 @@ export type Database = {
         }
         Update: {
           adresse?: string | null
+          budget_ht?: number | null
           client?: string
           created_at?: string | null
           date_creation?: string | null
@@ -95,6 +170,7 @@ export type Database = {
           date_fin_prevue?: string | null
           description?: string | null
           duree_estimee?: number | null
+          duree_estimee_jours?: number | null
           entreprise_id?: string
           id?: string
           nom_chantier?: string
@@ -581,7 +657,9 @@ export type Database = {
         Row: {
           actif: boolean | null
           charges_patronales: number
+          charges_patronales_pct: number | null
           charges_salariales: number
+          charges_salariales_pct: number | null
           created_at: string | null
           entreprise_id: string
           id: string
@@ -595,7 +673,9 @@ export type Database = {
         Insert: {
           actif?: boolean | null
           charges_patronales?: number
+          charges_patronales_pct?: number | null
           charges_salariales?: number
+          charges_salariales_pct?: number | null
           created_at?: string | null
           entreprise_id: string
           id?: string
@@ -609,7 +689,9 @@ export type Database = {
         Update: {
           actif?: boolean | null
           charges_patronales?: number
+          charges_patronales_pct?: number | null
           charges_salariales?: number
+          charges_salariales_pct?: number | null
           created_at?: string | null
           entreprise_id?: string
           id?: string
@@ -1116,6 +1198,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_chantier_metrics: { Args: { p_chantier: string }; Returns: Json }
       get_current_entreprise: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -1136,6 +1219,7 @@ export type Database = {
       jwt_role: { Args: never; Returns: string }
       safe_num_fr: { Args: { p_max?: number; p_text: string }; Returns: number }
       safe_pct_fr: { Args: { p_text: string }; Returns: number }
+      snapshot_chantier_daily: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "chef" | "ouvrier"
