@@ -23,11 +23,18 @@ export function useChantierMetrics(chantierId: string) {
   const [error, setError] = useState<string | null>(null);
 
   async function fetchMetrics() {
+    if (!chantierId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      // Vérifier si les métriques existent déjà
+      console.log('[useChantierMetrics] 🔍 Fetching metrics for:', chantierId);
+
+      // 1. Essayer de récupérer depuis chantier_metrics_realtime
       const { data, error: fetchError } = await supabase
         .from('chantier_metrics_realtime')
         .select('metrics')
@@ -35,24 +42,40 @@ export function useChantierMetrics(chantierId: string) {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('[useChantierMetrics] Error fetching:', fetchError);
+        console.error('[useChantierMetrics] ❌ Error fetching:', fetchError);
         setError(fetchError.message);
       } else if (data?.metrics) {
+        console.log('[useChantierMetrics] ✅ Metrics found:', data.metrics);
         setMetrics(data.metrics as unknown as ChantierMetrics);
       } else {
-        // Pas encore de métriques, on les calcule
+        // 2. Pas de métriques → les calculer via RPC
+        console.log('[useChantierMetrics] 🔄 No metrics found, computing...');
         const { data: calcData, error: calcError } = await supabase
           .rpc('compute_chantier_metrics', { p_chantier: chantierId });
 
         if (calcError) {
-          console.error('[useChantierMetrics] Error computing:', calcError);
+          console.error('[useChantierMetrics] ❌ Error computing:', calcError);
           setError(calcError.message);
         } else if (calcData) {
+          console.log('[useChantierMetrics] ✅ Computed metrics:', calcData);
           setMetrics(calcData as unknown as ChantierMetrics);
+          
+          // 3. Les stocker pour le Realtime
+          const { error: upsertError } = await supabase
+            .from('chantier_metrics_realtime')
+            .upsert({
+              chantier_id: chantierId,
+              metrics: calcData,
+              updated_at: new Date().toISOString()
+            });
+
+          if (upsertError) {
+            console.error('[useChantierMetrics] ⚠️ Error upserting:', upsertError);
+          }
         }
       }
     } catch (err: any) {
-      console.error('[useChantierMetrics] Exception:', err);
+      console.error('[useChantierMetrics] 💥 Exception:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -65,6 +88,7 @@ export function useChantierMetrics(chantierId: string) {
     fetchMetrics();
 
     // S'abonner aux changements en temps réel
+    console.log('[useChantierMetrics] 🔌 Subscribing to realtime updates...');
     const channel = supabase
       .channel(`chantier_metrics:${chantierId}`)
       .on(
@@ -76,16 +100,20 @@ export function useChantierMetrics(chantierId: string) {
           filter: `chantier_id=eq.${chantierId}`,
         },
         (payload) => {
-          console.log('[useChantierMetrics] Realtime update:', payload);
+          console.log('[useChantierMetrics] 🔴 Realtime update received:', payload);
           const newMetrics = (payload.new as any)?.metrics;
           if (newMetrics) {
+            console.log('[useChantierMetrics] ✅ Updating metrics from realtime:', newMetrics);
             setMetrics(newMetrics as unknown as ChantierMetrics);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useChantierMetrics] 📡 Subscription status:', status);
+      });
 
     return () => {
+      console.log('[useChantierMetrics] 🔌 Unsubscribing from channel');
       supabase.removeChannel(channel);
     };
   }, [chantierId]);

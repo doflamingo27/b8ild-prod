@@ -6,16 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, FileText, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { FastFixUI } from "@/components/document/FastFixUI";
 import { useDocumentExtraction } from "@/hooks/useDocumentExtraction";
-import { useSecureInsert } from "@/hooks/useSecureInsert";
 import { useTemplateManager } from "@/hooks/useTemplateManager";
-import { labels, placeholders, toasts, modals, tooltips } from "@/lib/content";
+import { labels, toasts, tooltips } from "@/lib/content";
 
 interface InvoiceManagerProps {
   chantierId: string;
@@ -26,7 +24,6 @@ interface InvoiceManagerProps {
 const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps) => {
   const { toast } = useToast();
   const { extractDocument, isExtracting } = useDocumentExtraction();
-  const { secureInsert } = useSecureInsert();
   const { saveTemplate } = useTemplateManager();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -127,7 +124,7 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     setLoading(true);
 
     try {
-      // Récupérer entreprise_id
+      // Récupérer entreprise_id et user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Non authentifié");
 
@@ -141,7 +138,7 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
 
       let fichier_url = null;
 
-      // Upload du fichier avec préfixe entreprise_id
+      // Upload du fichier
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${entreprise.id}/factures/${Date.now()}.${fileExt}`;
@@ -158,23 +155,28 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
         fichier_url = publicUrl;
       }
 
-      // Utiliser la RPC sécurisée
-      const newId = await secureInsert({
-        table: 'factures_fournisseurs',
-        data: {
+      // Insertion DIRECTE dans la table (les triggers vont recalculer automatiquement)
+      const { data: newFacture, error: insertError } = await supabase
+        .from('factures_fournisseurs')
+        .insert({
           chantier_id: chantierId,
+          entreprise_id: entreprise.id,
+          created_by: user.id,
           fournisseur: formData.fournisseur,
           montant_ht: formData.montant_ht,
           categorie: formData.categorie,
           date_facture: formData.date_facture,
           fichier_url,
-        },
-        entrepriseId: entreprise.id
-      });
+        })
+        .select()
+        .single();
 
-      if (!newId) {
-        throw new Error("Échec de l'insertion");
-      }
+      if (insertError) throw insertError;
+
+      toast({
+        title: "✅ Facture ajoutée",
+        description: "Les métriques vont se mettre à jour automatiquement",
+      });
 
       setOpen(false);
       setFormData({
@@ -184,10 +186,12 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
         date_facture: new Date().toISOString().split('T')[0],
       });
       setFile(null);
-      onUpdate();
+      setExtractedData(null);
+      setShowFallback(false);
+      onUpdate(); // Recharger la liste
+
     } catch (error: any) {
       console.error('[InvoiceManager] Insert error:', error);
-      
       toast({
         title: "Erreur",
         description: error.message || "Impossible d'enregistrer la facture.",

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -34,6 +35,8 @@ interface Chantier {
   adresse: string;
   description: string;
   duree_estimee: number;
+  duree_estimee_jours?: number;
+  budget_ht?: number;
   statut: string;
   date_creation: string;
   date_debut: string | null;
@@ -61,6 +64,8 @@ const ProjectDetail = () => {
     client: "",
     adresse: "",
     duree_estimee: 30,
+    duree_estimee_jours: 30,
+    budget_ht: 0,
     description: "",
     statut: "actif",
   });
@@ -223,6 +228,8 @@ const ProjectDetail = () => {
         client: chantier.client,
         adresse: chantier.adresse,
         duree_estimee: chantier.duree_estimee,
+        duree_estimee_jours: chantier.duree_estimee_jours || 30,
+        budget_ht: chantier.budget_ht || 0,
         description: chantier.description || "",
         statut: chantier.statut,
       });
@@ -298,6 +305,19 @@ const ProjectDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Alerte si budget manquant */}
+      {(!chantier.budget_ht || !chantier.duree_estimee_jours) && (
+        <Alert className="border-warning bg-warning/10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            ⚠️ <strong>Configuration incomplète</strong> : Veuillez renseigner le budget HT et la durée estimée du chantier pour activer le suivi de rentabilité en temps réel.
+            <Button variant="outline" size="sm" className="ml-4" onClick={openEditDialog}>
+              Configurer maintenant
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Métriques temps réel */}
       {!metricsLoading && metrics && (
@@ -399,13 +419,36 @@ const ProjectDetail = () => {
                   required
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-duree">Durée estimée (jours)</Label>
+                  <Input
+                    id="edit-duree"
+                    type="number"
+                    value={editFormData.duree_estimee}
+                    onChange={(e) => setEditFormData({ ...editFormData, duree_estimee: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-duree-jours">Durée réelle (jours)</Label>
+                  <Input
+                    id="edit-duree-jours"
+                    type="number"
+                    value={editFormData.duree_estimee_jours}
+                    onChange={(e) => setEditFormData({ ...editFormData, duree_estimee_jours: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-duree">Durée estimée (jours)</Label>
+                <Label htmlFor="edit-budget">Budget HT (€)</Label>
                 <Input
-                  id="edit-duree"
+                  id="edit-budget"
                   type="number"
-                  value={editFormData.duree_estimee}
-                  onChange={(e) => setEditFormData({ ...editFormData, duree_estimee: parseInt(e.target.value) })}
+                  step="0.01"
+                  value={editFormData.budget_ht}
+                  onChange={(e) => setEditFormData({ ...editFormData, budget_ht: parseFloat(e.target.value) })}
                   required
                 />
               </div>
