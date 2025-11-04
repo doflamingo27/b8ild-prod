@@ -97,8 +97,8 @@ const ExportManager = ({
 
   const exportToPDF = async () => {
     try {
-      const { jsPDF } = await import('jspdf');
-      const autoTable = (await import('jspdf-autotable')).default;
+      const jsPDF = (await import('jspdf')).default;
+      await import('jspdf-autotable');
       
       const doc = new jsPDF();
       
@@ -134,12 +134,12 @@ const ExportManager = ({
       
       // Équipe (tableau)
       const equipeData = membres.map(m => [
-        `${m.prenom} ${m.nom}`,
-        m.poste,
+        `${m.prenom || ''} ${m.nom || ''}`,
+        m.poste || 'Non renseigné',
         `${calculations.calculerCoutJournalierMembre(m).toFixed(2)} €`
       ]);
       
-      autoTable(doc, {
+      (doc as any).autoTable({
         head: [['Nom', 'Poste', 'Coût journalier']],
         body: equipeData,
         startY: 155,
@@ -148,7 +148,7 @@ const ExportManager = ({
       });
       
       // Factures (nouvelle page si nécessaire)
-      const finalY = (doc as any).lastAutoTable.finalY || 155;
+      const finalY = (doc as any).lastAutoTable?.finalY || 155;
       if (finalY > 200) {
         doc.addPage();
         doc.setFontSize(14);
@@ -162,12 +162,12 @@ const ExportManager = ({
       
       const facturesData = factures.map(f => [
         f.fournisseur || "Non renseigné",
-        f.categorie,
-        `${f.montant_ht} €`,
+        f.categorie || "Autres",
+        `${f.montant_ht ?? 0} €`,
         f.date_facture || "Non renseignée"
       ]);
       
-      autoTable(doc, {
+      (doc as any).autoTable({
         head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
         body: facturesData,
         startY: finalY > 200 ? 30 : finalY + 20,

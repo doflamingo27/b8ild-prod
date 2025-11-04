@@ -10,10 +10,9 @@ import { Plus, Trash2, FileText, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { FastFixUI } from "@/components/document/FastFixUI";
-import { useDocumentExtraction } from "@/hooks/useDocumentExtraction";
-import { useTemplateManager } from "@/hooks/useTemplateManager";
-import { labels, toasts, tooltips } from "@/lib/content";
+import { labels, toasts } from "@/lib/content";
+import AutoExtractUploader from "@/components/AutoExtractUploader";
+import { useQuery } from "@tanstack/react-query";
 
 interface InvoiceManagerProps {
   chantierId: string;
@@ -23,22 +22,32 @@ interface InvoiceManagerProps {
 
 const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps) => {
   const { toast } = useToast();
-  const { extractDocument, isExtracting } = useDocumentExtraction();
-  const { saveTemplate } = useTemplateManager();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [showFallback, setShowFallback] = useState(false);
-  const [extractedData, setExtractedData] = useState<any>(null);
-  const [extractionConfidence, setExtractionConfidence] = useState<number>(0);
-  const [extractionDebug, setExtractionDebug] = useState<any>(null);
   const [formData, setFormData] = useState({
     fournisseur: "",
     montant_ht: 0,
     categorie: "Matériaux",
     date_facture: new Date().toISOString().split('T')[0],
+  });
+
+  // Récupérer entrepriseId pour AutoExtractUploader
+  const { data: entreprise } = useQuery({
+    queryKey: ['entreprise'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié");
+      
+      const { data } = await supabase
+        .from('entreprises')
+        .select('id')
+        .eq('proprietaire_user_id', user.id)
+        .single();
+      
+      return data;
+    }
   });
 
   const categories = [
@@ -48,76 +57,6 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
     "Autres",
   ];
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    setFile(selectedFile);
-    
-    // Créer URL pour le fallback
-    const url = URL.createObjectURL(selectedFile);
-    setFileUrl(url);
-
-    // Extraire les données
-    const result = await extractDocument(selectedFile, 'facture');
-    
-    setExtractionConfidence(result.confidence || 0);
-    setExtractionDebug(result.data?.debug);
-    
-    if (result.needsFallback) {
-      setExtractedData(result.partialData);
-      setShowFallback(true);
-    } else if (result.success && result.data) {
-      // Pré-remplir le formulaire
-      setFormData(prev => ({
-        ...prev,
-        fournisseur: result.data.fournisseur_nom || result.data.fournisseur || prev.fournisseur,
-        montant_ht: result.data.montant_ht || prev.montant_ht,
-        date_facture: result.data.date_document_iso || prev.date_facture,
-      }));
-      setExtractedData(result.data);
-    }
-  };
-
-  const handleFallbackSave = async (data: any) => {
-    setExtractedData(data);
-    setFormData(prev => ({
-      ...prev,
-      fournisseur: data.fournisseur_nom || data.fournisseur || prev.fournisseur,
-      montant_ht: data.montant_ht || prev.montant_ht,
-      date_facture: data.date_document_iso || prev.date_facture,
-    }));
-    setShowFallback(false);
-    
-    // Optionnel: proposer d'enregistrer un template si SIRET détecté
-    if (data.siret && data.fournisseur_nom) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: entreprise } = await supabase
-          .from('entreprises')
-          .select('id')
-          .eq('proprietaire_user_id', user.id)
-          .single();
-        
-        if (entreprise) {
-          await saveTemplate({
-            fournisseur_nom: data.fournisseur_nom,
-            siret: data.siret,
-            anchors: [],
-            field_positions: {
-              montant_ht: [{ label: 'Total HT' }],
-              montant_ttc: [{ label: 'Total TTC' }]
-            }
-          }, entreprise.id);
-        }
-      }
-    }
-    
-    toast({
-      title: "Données validées",
-      description: "Vous pouvez maintenant enregistrer la facture."
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,8 +142,6 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
         date_facture: new Date().toISOString().split('T')[0],
       });
       setFile(null);
-      setExtractedData(null);
-      setShowFallback(false);
       onUpdate(); // Recharger la liste
 
     } catch (error: any) {
@@ -262,93 +199,113 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
                   Ajouter une facture
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <form onSubmit={handleSubmit}>
-                  <DialogHeader>
-                    <DialogTitle>Ajouter une facture fournisseur</DialogTitle>
-                    <DialogDescription>
-                      Uploadez la facture et saisissez les informations
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="file">Fichier (PDF, Image)</Label>
-                    <Input
-                      id="file"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                      disabled={loading || isExtracting}
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Ajouter une facture fournisseur</DialogTitle>
+                  <DialogDescription>
+                    Uploadez une facture pour extraction automatique (OCR.space)
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {entreprise?.id && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <p className="text-sm font-semibold mb-3">Option 1 : Upload automatique (recommandé)</p>
+                    <AutoExtractUploader 
+                      module="factures"
+                      entrepriseId={entreprise.id}
+                      chantierId={chantierId}
+                      onSaved={(id) => {
+                        toast({
+                          title: "✅ Facture enregistrée",
+                          description: "L'extraction OCR a réussi",
+                        });
+                        setOpen(false);
+                        onUpdate();
+                      }}
                     />
-                    {isExtracting && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        ✨ {tooltips.uploadOCR}
-                      </p>
-                    )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="fournisseur">Fournisseur</Label>
-                      <Input
-                        id="fournisseur"
-                        value={formData.fournisseur}
-                        onChange={(e) => setFormData({ ...formData, fournisseur: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="categorie">Catégorie</Label>
-                      <Select
-                        value={formData.categorie}
-                        onValueChange={(value) => setFormData({ ...formData, categorie: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="montant_ht">Montant HT (€)</Label>
-                        <Input
-                          id="montant_ht"
-                          type="number"
-                          step="0.01"
-                          value={formData.montant_ht}
-                          onChange={(e) => setFormData({ ...formData, montant_ht: parseFloat(e.target.value) })}
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="date_facture">Date</Label>
-                        <Input
-                          id="date_facture"
-                          type="date"
-                          value={formData.date_facture}
-                          onChange={(e) => setFormData({ ...formData, date_facture: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
                   </div>
+                )}
+                
+                <div className="text-center text-sm text-muted-foreground my-4">
+                  — ou —
+                </div>
+                
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-4">
+                    <p className="text-sm font-semibold">Option 2 : Saisie manuelle</p>
 
-                  <DialogFooter>
-                    <Button type="submit" disabled={loading} aria-label={labels.actions.add}>
-                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-                      {labels.actions.add}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
+                      <div className="space-y-2">
+                        <Label htmlFor="file">Fichier (optionnel)</Label>
+                        <Input
+                          id="file"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => setFile(e.target.files?.[0] || null)}
+                          disabled={loading}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="fournisseur">Fournisseur</Label>
+                        <Input
+                          id="fournisseur"
+                          value={formData.fournisseur}
+                          onChange={(e) => setFormData({ ...formData, fournisseur: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="categorie">Catégorie</Label>
+                        <Select
+                          value={formData.categorie}
+                          onValueChange={(value) => setFormData({ ...formData, categorie: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="montant_ht">Montant HT (€)</Label>
+                          <Input
+                            id="montant_ht"
+                            type="number"
+                            step="0.01"
+                            value={formData.montant_ht}
+                            onChange={(e) => setFormData({ ...formData, montant_ht: parseFloat(e.target.value) })}
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="date_facture">Date</Label>
+                          <Input
+                            id="date_facture"
+                            type="date"
+                            value={formData.date_facture}
+                            onChange={(e) => setFormData({ ...formData, date_facture: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button type="submit" disabled={loading} aria-label={labels.actions.add}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                        {labels.actions.add}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
@@ -405,26 +362,6 @@ const InvoiceManager = ({ chantierId, factures, onUpdate }: InvoiceManagerProps)
           )}
         </CardContent>
       </Card>
-
-      {/* Fallback UI pour extraction manuelle */}
-      <Dialog open={showFallback} onOpenChange={setShowFallback}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
-          {fileUrl && (
-            <FastFixUI
-              documentUrl={fileUrl}
-              partialData={extractedData}
-              documentType="facture"
-              confidence={extractionConfidence}
-              debug={extractionDebug}
-              onSave={handleFallbackSave}
-              onCancel={() => {
-                setShowFallback(false);
-                setFileUrl(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}

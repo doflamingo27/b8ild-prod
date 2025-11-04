@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, FileText, Loader2 } from "lucide-react";
+import { Plus, FileText, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import AutoExtractUploader from "@/components/AutoExtractUploader";
+import { useQuery } from "@tanstack/react-query";
 
 interface QuoteManagerProps {
   chantierId: string;
@@ -18,7 +20,6 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [extracting, setExtracting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     montant_ht: devis?.montant_ht || 0,
@@ -26,71 +27,23 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
     montant_ttc: devis?.montant_ttc || 0,
   });
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    setFile(selectedFile);
-    setExtracting(true);
-
-    try {
-      // Upload temporaire pour OCR avec signed URL
-      const fileExt = selectedFile.name.split('.').pop();
-      const tempFileName = `temp-${Math.random()}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('devis')
-        .upload(tempFileName, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      // Créer une signed URL valide 60 secondes
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('devis')
-        .createSignedUrl(uploadData.path, 60);
-
-      if (signedError) throw signedError;
-
-      // Appel à l'edge function d'extraction avec signed URL
-      const { data: extractedData, error: extractError } = await supabase.functions
-        .invoke('extract-document-data', {
-          body: { fileUrl: signedData.signedUrl, documentType: 'quote' }
-        });
-
-      if (extractError) {
-        console.error('Erreur Edge Function:', extractError);
-        throw new Error(`Extraction failed: ${extractError.message || 'Unknown error'}`);
-      }
-
-      if (!extractedData) {
-        throw new Error('Aucune donnée extraite du document');
-      }
-
-      // Pré-remplir le formulaire avec les données extraites
-      if (extractedData) {
-        setFormData({
-          montant_ht: extractedData.montant_ht || 0,
-          tva: extractedData.tva || 20,
-          montant_ttc: extractedData.montant_ttc || 0,
-        });
-        toast({
-          title: "Extraction réussie",
-          description: "Les données ont été extraites automatiquement",
-        });
-      }
-
-      // Supprimer le fichier temporaire
-      await supabase.storage.from('devis').remove([tempFileName]);
-    } catch (error) {
-      console.error('Erreur extraction OCR:', error);
-      toast({
-        title: "Extraction impossible",
-        description: "Veuillez remplir manuellement les informations",
-        variant: "destructive",
-      });
-    } finally {
-      setExtracting(false);
+  // Récupérer entrepriseId pour AutoExtractUploader
+  const { data: entreprise } = useQuery({
+    queryKey: ['entreprise'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié");
+      
+      const { data } = await supabase
+        .from('entreprises')
+        .select('id')
+        .eq('proprietaire_user_id', user.id)
+        .single();
+      
+      return data;
     }
-  };
+  });
+
 
   const calculateTTC = (ht: number, tva: number) => {
     return ht * (1 + tva / 100);
@@ -186,79 +139,133 @@ const QuoteManager = ({ chantierId, devis, onUpdate }: QuoteManagerProps) => {
                 {devis ? "Modifier" : <><Plus className="mr-2 h-4 w-4" />Ajouter</>}
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>{devis ? "Modifier" : "Ajouter"} un devis</DialogTitle>
-                  <DialogDescription>
-                    Uploadez votre devis et saisissez les montants
-                  </DialogDescription>
-                </DialogHeader>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{devis ? "Modifier" : "Ajouter"} un devis</DialogTitle>
+                <DialogDescription>
+                  Uploadez votre devis pour extraction automatique (OCR.space)
+                </DialogDescription>
+              </DialogHeader>
 
-                <div className="grid gap-4 py-4">
+              {entreprise?.id && (
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <p className="text-sm font-semibold mb-3">Option 1 : Upload automatique (recommandé)</p>
+                  <AutoExtractUploader 
+                    module="factures"
+                    entrepriseId={entreprise.id}
+                    chantierId={chantierId}
+                    onSaved={async (factureId) => {
+                      // Récupérer la facture créée
+                      const { data: facture } = await supabase
+                        .from('factures_fournisseurs')
+                        .select('*')
+                        .eq('id', factureId)
+                        .single();
+                      
+                      if (facture) {
+                        // Créer/Mettre à jour le devis à partir de la facture
+                        const devisData = {
+                          chantier_id: chantierId,
+                          montant_ht: facture.montant_ht || 0,
+                          tva: facture.tva_pct || 20,
+                          montant_ttc: facture.montant_ttc || 0,
+                        };
+                        
+                        if (devis?.id) {
+                          await supabase
+                            .from('devis')
+                            .update(devisData)
+                            .eq('id', devis.id);
+                        } else {
+                          await supabase
+                            .from('devis')
+                            .insert(devisData);
+                        }
+                        
+                        // Supprimer la facture temporaire
+                        await supabase
+                          .from('factures_fournisseurs')
+                          .delete()
+                          .eq('id', factureId);
+                        
+                        toast({
+                          title: "✅ Devis enregistré",
+                          description: "L'extraction OCR a réussi",
+                        });
+                        setOpen(false);
+                        onUpdate();
+                      }
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div className="text-center text-sm text-muted-foreground my-4">
+                — ou —
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold">Option 2 : Saisie manuelle</p>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="file">Fichier (PDF, Image)</Label>
+                    <Label htmlFor="file">Fichier (optionnel)</Label>
                     <Input
                       id="file"
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                      disabled={loading || extracting}
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                      disabled={loading}
                     />
-                    {extracting && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        ✨ Extraction automatique en cours...
-                      </p>
-                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="montant_ht">Montant HT (€)</Label>
-                      <Input
-                        id="montant_ht"
-                        type="number"
-                        step="0.01"
-                        value={formData.montant_ht}
-                        onChange={(e) => handleHTChange(e.target.value)}
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="montant_ht">Montant HT (€)</Label>
+                        <Input
+                          id="montant_ht"
+                          type="number"
+                          step="0.01"
+                          value={formData.montant_ht}
+                          onChange={(e) => handleHTChange(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="tva">TVA (%)</Label>
+                        <Input
+                          id="tva"
+                          type="number"
+                          step="0.01"
+                          value={formData.tva}
+                          onChange={(e) => handleTVAChange(e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="tva">TVA (%)</Label>
+                      <Label htmlFor="montant_ttc">Montant TTC (€)</Label>
                       <Input
-                        id="tva"
+                        id="montant_ttc"
                         type="number"
                         step="0.01"
-                        value={formData.tva}
-                        onChange={(e) => handleTVAChange(e.target.value)}
-                        required
+                        value={formData.montant_ttc}
+                        readOnly
+                        className="bg-muted"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="montant_ttc">Montant TTC (€)</Label>
-                    <Input
-                      id="montant_ttc"
-                      type="number"
-                      step="0.01"
-                      value={formData.montant_ttc}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Enregistrer
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
+                  <DialogFooter>
+                    <Button type="submit" disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Enregistrer
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
