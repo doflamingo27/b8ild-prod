@@ -16,20 +16,34 @@ export async function extractWithOcrSpace(file: File): Promise<{
   form.append('scale', 'true');            // Améliore la qualité OCR
   form.append('OCREngine', '2');           // Engine 2 = meilleur pour français
 
+  const apiKey = import.meta.env.VITE_OCRSPACE_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('Clé API OCR.space manquante. Veuillez configurer VITE_OCRSPACE_API_KEY dans les variables d\'environnement.');
+  }
+
   const response = await fetch('https://api.ocr.space/parse/image', {
     method: 'POST',
     headers: { 
-      apikey: import.meta.env.VITE_OCRSPACE_API_KEY || '' 
+      apikey: apiKey
     },
     body: form
   });
 
+  if (!response.ok) {
+    throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+  }
+
   const json = await response.json();
 
   // Gestion erreurs
-  if (!response.ok || json.IsErroredOnProcessing) {
-    const errorMsg = json.ErrorMessage?.[0] || json.ErrorDetails || 'OCR failed';
+  if (json.IsErroredOnProcessing) {
+    const errorMsg = json.ErrorMessage?.[0] || json.ErrorDetails || 'Erreur lors du traitement OCR';
     throw new Error(`OCR.space : ${errorMsg}`);
+  }
+  
+  if (!json.ParsedResults || json.ParsedResults.length === 0) {
+    throw new Error('Aucun résultat OCR retourné. Vérifiez que le document est lisible.');
   }
 
   // Extraction du texte
