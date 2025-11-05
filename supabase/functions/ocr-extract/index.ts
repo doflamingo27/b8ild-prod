@@ -34,7 +34,7 @@ serve(async (req) => {
     // Préparer le FormData pour OCR.space
     const ocrForm = new FormData();
     ocrForm.append('file', file);
-    ocrForm.append('language', 'fre,eng');
+    ocrForm.append('language', 'fra,eng');
     ocrForm.append('isCreateSearchablePdf', 'false');
     ocrForm.append('scale', 'true');
     ocrForm.append('OCREngine', '2'); // Meilleur pour français

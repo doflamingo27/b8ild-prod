@@ -16,8 +16,8 @@ export const useSecureInsert = () => {
       
       const { data: result, error } = await supabase.rpc('insert_extraction_service', {
         p_table: table,
-        p_data: data,
-        p_entreprise_id: entrepriseId
+        p_entreprise_id: entrepriseId,
+        p_data: data
       });
 
       if (error) {
