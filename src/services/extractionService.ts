@@ -10,8 +10,8 @@ export async function saveExtraction(
     
     const { data, error } = await supabase.rpc('insert_extraction_service', {
       p_table: table,
-      p_data: payload,
       p_entreprise_id: entrepriseId,
+      p_data: payload,
     });
     
     if (error) {
