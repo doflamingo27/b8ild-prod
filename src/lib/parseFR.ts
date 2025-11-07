@@ -24,6 +24,9 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     const siretMatch = text.match(R.SIRET)?.[0];
     if (siretMatch) fields.siret = siretMatch;
 
+    const fournisseurMatch = R.FOURNISSEUR.exec(text)?.[1];
+    if (fournisseurMatch) fields.fournisseur = fournisseurMatch.trim();
+
     const numFactMatch = R.NUM_FACT.exec(text)?.[2];
     if (numFactMatch) fields.numFacture = numFactMatch;
 

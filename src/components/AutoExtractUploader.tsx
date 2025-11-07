@@ -40,7 +40,14 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
 
       // 2️⃣ Parser français
       const fields = parseFrenchDocument(text, module);
-      console.log('[Parser] Extracted fields:', fields);
+      console.log('[Parser] Extracted fields:', {
+        fournisseur: fields.fournisseur,
+        montant_ht: fields.ht,
+        montant_ttc: fields.ttc ?? fields.net,
+        tva_pct: fields.tvaPct,
+        siret: fields.siret,
+        date: fields.dateDoc
+      });
 
       // 3️⃣ Calcul confiance finale
       let finalConfidence = ocrConfidence;
@@ -93,7 +100,7 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
 
         payload = {
           ...payload,
-          fournisseur: 'Non renseigné',
+          fournisseur: fields.fournisseur ?? 'Non renseigné',
           montant_ht,
           tva_pct,
           tva_montant: fields.tvaAmt ?? null,

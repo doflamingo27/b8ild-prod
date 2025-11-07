@@ -29,5 +29,5 @@ export const R = {
   AO_BUDGET: /(?:montant|budget)\s*(?:global|estim[ée]|total)?\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
   AO_REF: /(?:réf\.|référence)\s*[:\-]?\s*([A-Z0-9\-\/]+)/gi,
   AO_ORGA: /(?:organisme|acheteur|maître\s*d['']ouvrage|pouvoir\s*adjudicateur)\s*[:\-]?\s*(.+)/gi,
-  FOURNISSEUR: /(?:société|entreprise|SA|SARL|SAS|EURL)\s+([A-Z][A-Za-z\s\-&]+)/gi,
+  FOURNISSEUR: /(?:(?:société|entreprise|SA|SARL|SAS|EURL)\s+)?([A-Z][A-Za-z\s\-&'\.]+(?:\s+(?:SA|SARL|SAS|EURL))?)/gi,
 };
