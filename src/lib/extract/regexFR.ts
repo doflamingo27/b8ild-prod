@@ -1,18 +1,18 @@
 export const R = {
-  // ✅ HT : accepter variantes de libellés
-  HT: /(?:(?:total|montant|sous[\s\-]?total|base)\s*(?:h\.?t\.?|hors\s*taxes?))\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
+  // ✅ HT : accepter pipes des tableaux + espaces multiples
+  HT: /(?:\|?\s*)?(?:(?:total|montant|sous[\s\-]?total|base)\s*(?:h\.?t\.?|hors\s*taxes?))\s*[:\-\|]?\s*([0-9\s\.,]+)\s*€?/gi,
   
-  // ✅ TVA % : accepter "TVA 20", "TVA: 20%", "T.V.A 20 %", "TVA (20%)"
-  TVA_PCT: /t\.?v\.?a\.?\s*(?:\([^\)]*\))?\s*[:\-]?\s*(\d{1,2}[\.,]?\d{0,2})\s*%?/gi,
+  // ✅ TVA % : accepter "TVA à 20%", "TVA 20", "TVA: 20%", pipes + espaces
+  TVA_PCT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*(?:\([^\)]*\))?\s*[:\-\|]?\s*(\d{1,2}[\.,]?\d{0,2})\s*%?/gi,
   
-  // ✅ TVA montant : très large
-  TVA_AMT: /t\.?v\.?a\.?\s*(?:\([^\)]*\))?\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
+  // ✅ TVA montant : accepter pipes + espaces multiples
+  TVA_AMT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*\d{1,2}\s*%?\s*[:\-\|]?\s*([0-9\s\.,]+)\s*€?/gi,
   
-  // ✅ TTC : accepter variantes
-  TTC: /(?:(?:total|montant|net)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?))\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
+  // ✅ TTC : accepter pipes + espaces multiples
+  TTC: /(?:\|?\s*)?(?:(?:total|montant|net)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?))\s*[:\-\|]?\s*([0-9\s\.,]+)\s*€?/gi,
   
-  // ✅ Net à payer : très large
-  NET: /(?:net\s*(?:à|a)\s*payer(?:\s*t\.?t\.?c\.?)?)\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
+  // ✅ Net à payer : accepter pipes + espaces multiples
+  NET: /(?:\|?\s*)?(?:net\s*(?:à|a)\s*payer(?:\s*t\.?t\.?c\.?)?)\s*[:\-\|]?\s*([0-9\s\.,]+)\s*€?/gi,
   
   SIRET: /\b\d{3}\s?\d{3}\s?\d{3}\s?\d{5}\b/gi,
   SIREN: /\b\d{3}\s?\d{3}\s?\d{3}\b/gi,
