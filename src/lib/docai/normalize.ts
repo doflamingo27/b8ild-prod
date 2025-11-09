@@ -29,8 +29,20 @@ export function normalizeNumberFR(raw?: string | null): number | null {
   // Heuristique OCR : si nombre > 10000 sans séparateur décimal, probable erreur OCR
   if (!raw.includes(',') && !raw.includes('.') && n > 10000 && n < 1000000) {
     const candidate = n / 100;
-    console.warn(`[normalizeNumberFR] Nombre suspect: "${raw}" → ${n}, correction proposée: ${candidate}`);
+    console.warn(`[normalizeNumberFR] Nombre suspect sans séparateur: "${raw}" → ${n}, correction proposée: ${candidate}`);
     n = candidate;
+  }
+  
+  // Détection erreur x10 : si le nombre semble multiplié par 10 (e.g., 3297 au lieu de 329.7)
+  if (raw.includes(',') && n > 100 && n % 10 === 0) {
+    const lastCommaPos = raw.lastIndexOf(',');
+    const afterComma = raw.substring(lastCommaPos + 1).replace(/[^0-9]/g, '');
+    if (afterComma.length === 2) {
+      // Le nombre devrait avoir 2 décimales, pas 1
+      const candidate = n / 10;
+      console.warn(`[normalizeNumberFR] Possible erreur x10: "${raw}" → ${n}, correction proposée: ${candidate}`);
+      // On ne corrige pas automatiquement, juste un warning
+    }
   }
   
   // Bornes sûres

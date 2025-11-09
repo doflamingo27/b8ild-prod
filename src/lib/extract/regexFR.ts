@@ -23,11 +23,11 @@ export const R = {
   DATE: /\b([0-3]?\d[\/\-\.][01]?\d[\/\-\.]\d{2,4})\b/g,
   EUR: /€/,
   
-  // ✅ AO : variantes élargies
+  // ✅ AO : variantes élargies (correction des indices de capture)
   AO_DEADLINE: /(?:date\s*limite|date\s*de\s*remise|dépôt\s*des\s*offres)\s*[:\-]?\s*([0-3]?\d[\/\-\.][01]?\d[\/\-\.]\d{2,4})/gi,
   AO_CP: /\b(0[1-9]|[1-8]\d|9[0-5])\d{3}\b/g,
   AO_BUDGET: /(?:montant|budget)\s*(?:global|estim[ée]|total)?\s*[:\-]?\s*([0-9\s\.,]+)\s*€?/gi,
   AO_REF: /(?:réf\.|référence)\s*[:\-]?\s*([A-Z0-9\-\/]+)/gi,
-  AO_ORGA: /(?:organisme|acheteur|maître\s*d['']ouvrage|pouvoir\s*adjudicateur)\s*[:\-]?\s*(.+)/gi,
+  AO_ORGA: /(?:organisme|acheteur|maître\s*d['']ouvrage|pouvoir\s*adjudicateur)\s*[:\-]?\s*([^\n]+)/gi,
   FOURNISSEUR: /(?:(?:société|entreprise|SA|SARL|SAS|EURL)\s+)?([A-Z][A-Za-z\s\-&'\.]+(?:\s+(?:SA|SARL|SAS|EURL))?)/gi,
 };

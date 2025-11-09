@@ -51,16 +51,30 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
         console.log('[Parser] All TTC matches:', [...text.matchAll(R.TTC)].map(m => m[1]));
         console.log('[Parser] All TVA % matches:', [...text.matchAll(R.TVA_PCT)].map(m => m[1]));
         console.log('[Parser] All TVA amount matches:', [...text.matchAll(R.TVA_AMT)].map(m => m[1]));
+        
+        // Extraire tous les montants pour l'extraction par proximité
+        const allAmounts = [...text.matchAll(/([0-9\s]+[,\.]\d{2})\s*€/g)].map((m, i) => ({
+          index: i,
+          value: m[1],
+          position: m.index
+        }));
+        console.log('[Parser] All amounts detected:', allAmounts);
       }
       
-      console.log('[Parser] Final extracted fields:', {
+      const finalFields = {
         fournisseur: fields.fournisseur,
         montant_ht: fields.ht,
         montant_ttc: fields.ttc ?? fields.net,
         tva_pct: fields.tvaPct,
         tva_montant: fields.tvaAmt,
         siret: fields.siret,
-        date: fields.dateDoc
+        date_facture: fields.dateDoc,
+      };
+      
+      console.log('[Parser] Final extracted fields:', finalFields);
+      console.log('[Parser] Validation:', {
+        totalsOk: fields.totalsOk,
+        htVsTtc: fields.ht && fields.ttc ? `HT: ${fields.ht}, TTC: ${fields.ttc}, ratio: ${(fields.ttc / fields.ht).toFixed(2)}` : 'N/A'
       });
       
       // Alertes si extraction incomplète
