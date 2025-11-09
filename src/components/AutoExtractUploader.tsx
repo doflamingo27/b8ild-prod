@@ -41,10 +41,19 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
       // 2️⃣ Parser français
       const fields = parseFrenchDocument(text, module);
       
-      // Debug: Afficher texte OCR brut (500 premiers caractères)
-      console.log('[Parser] Raw OCR text (first 500 chars):', text.substring(0, 500));
+      // Debug: Afficher texte OCR brut (1000 premiers caractères)
+      console.log('[Parser] Raw OCR text (first 1000 chars):', text.substring(0, 1000));
       
-      console.log('[Parser] Extracted fields:', {
+      // Debug: Afficher tous les matches pour diagnostiquer
+      if (module === 'factures' || module === 'frais') {
+        const { R } = await import('@/lib/extract/regexFR');
+        console.log('[Parser] All HT matches:', [...text.matchAll(R.HT)].map(m => m[1]));
+        console.log('[Parser] All TTC matches:', [...text.matchAll(R.TTC)].map(m => m[1]));
+        console.log('[Parser] All TVA % matches:', [...text.matchAll(R.TVA_PCT)].map(m => m[1]));
+        console.log('[Parser] All TVA amount matches:', [...text.matchAll(R.TVA_AMT)].map(m => m[1]));
+      }
+      
+      console.log('[Parser] Final extracted fields:', {
         fournisseur: fields.fournisseur,
         montant_ht: fields.ht,
         montant_ttc: fields.ttc ?? fields.net,

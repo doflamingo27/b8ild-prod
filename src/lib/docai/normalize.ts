@@ -23,8 +23,15 @@ export function normalizeNumberFR(raw?: string | null): number | null {
   s = s.replace(/[^0-9\.\-]/g, '');
   if (!s || s === '-' || s === '.' || s === '-.') return null;
   
-  const n = Number(s);
+  let n = Number(s);
   if (!Number.isFinite(n)) return null;
+  
+  // Heuristique OCR : si nombre > 10000 sans séparateur décimal, probable erreur OCR
+  if (!raw.includes(',') && !raw.includes('.') && n > 10000 && n < 1000000) {
+    const candidate = n / 100;
+    console.warn(`[normalizeNumberFR] Nombre suspect: "${raw}" → ${n}, correction proposée: ${candidate}`);
+    n = candidate;
+  }
   
   // Bornes sûres
   if (Math.abs(n) > 999999999999.99) return null;

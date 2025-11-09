@@ -1,4 +1,4 @@
-import { R } from '@/lib/docai/regexFR';
+import { R } from '@/lib/extract/regexFR';
 import { normalizeNumberFR, normalizePercentFR, normalizeDateFR, checkTotals } from '@/lib/docai/normalize';
 
 export function parseFrenchDocument(text: string, module: 'factures' | 'frais' | 'ao') {
@@ -9,11 +9,23 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     const htMatch = R.HT.exec(text)?.[1];
     if (htMatch) fields.ht = normalizeNumberFR(htMatch);
 
-    const ttcMatch = R.TTC.exec(text)?.[1];
-    if (ttcMatch) fields.ttc = normalizeNumberFR(ttcMatch);
-
-    const netMatch = R.NET.exec(text)?.[2];
+    const netMatch = R.NET.exec(text)?.[1];
     if (netMatch) fields.net = normalizeNumberFR(netMatch);
+
+    // Extraction TTC avec stratégie multi-match et cohérence
+    R.TTC.lastIndex = 0; // Reset regex
+    const ttcMatches = [...text.matchAll(R.TTC)].map(m => normalizeNumberFR(m[1])).filter(n => n != null);
+    if (ttcMatches.length > 0) {
+      if (fields.ht && fields.tvaPct) {
+        const expectedTTC = fields.ht * (1 + fields.tvaPct / 100);
+        const closestMatch = ttcMatches.reduce((prev, curr) =>
+          Math.abs(curr - expectedTTC) < Math.abs(prev - expectedTTC) ? curr : prev
+        );
+        fields.ttc = closestMatch;
+      } else {
+        fields.ttc = ttcMatches[0];
+      }
+    }
 
     const tvaPctMatch = R.TVA_PCT.exec(text)?.[1];
     if (tvaPctMatch) fields.tvaPct = normalizePercentFR(tvaPctMatch);
