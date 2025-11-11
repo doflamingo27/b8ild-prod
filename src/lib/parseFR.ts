@@ -102,10 +102,10 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
       }
     }
 
-    // TVA montant : priorité à la proximité
-    R.TVA_AMT.lastIndex = 0;
-    const tvaAmtMatch = R.TVA_AMT.exec(text)?.[1];
-    fields.tvaAmt = proximityExtraction.tvaAmt ?? (tvaAmtMatch ? normalizeNumberFR(tvaAmtMatch) : null);
+    // TVA montant : NE PAS extraire ici, sera recalculé plus tard pour garantir cohérence
+    // L'extraction directe du montant TVA cause souvent des erreurs (réutilisation de montants HT/TTC)
+    // On laisse ce champ null pour forcer le recalcul
+    fields.tvaAmt = null;
 
     // SIRET
     R.SIRET.lastIndex = 0;
@@ -168,11 +168,13 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
       console.log('[parseFR] Montants inversés:', { ht: fields.ht, ttc: fields.ttc });
     }
 
-    // Recalculer TOUJOURS le montant de TVA pour garantir la cohérence (APRÈS l'inversion)
+    // ✅ CALCUL OBLIGATOIRE du montant de TVA (APRÈS inversion HT/TTC)
+    // On ne se fie JAMAIS à l'extraction OCR pour le montant TVA car elle est souvent incorrecte
     if (fields.ht && fields.tvaPct) {
-      const expectedTvaAmt = fields.ht * (fields.tvaPct / 100);
-      console.log('[parseFR] Montant TVA recalculé:', expectedTvaAmt, '(HT:', fields.ht, '× TVA%:', fields.tvaPct, ')');
-      fields.tvaAmt = expectedTvaAmt;
+      fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+      console.log('[parseFR] ✅ Montant TVA calculé:', fields.tvaAmt, '(HT:', fields.ht, '× TVA%:', fields.tvaPct, '%)');
+    } else {
+      console.warn('[parseFR] ⚠️ Impossible de calculer TVA montant:', { ht: fields.ht, tvaPct: fields.tvaPct });
     }
 
     // Vérification cohérence finale
