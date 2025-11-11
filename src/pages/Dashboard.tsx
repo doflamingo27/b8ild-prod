@@ -320,7 +320,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="duree_estimee_jours" className="font-semibold">{labels.forms.projectDuration}</Label>
+                      <Label htmlFor="duree_estimee_jours" className="font-semibold">Durée estimée (jours travaillés)</Label>
                       <Input
                         id="duree_estimee_jours"
                         type="number"
