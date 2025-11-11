@@ -173,6 +173,10 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     if (fields.ht && fields.tvaPct) {
       fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
       console.log('[parseFR] ✅ Montant TVA calculé:', fields.tvaAmt, '(HT:', fields.ht, '× TVA%:', fields.tvaPct, '%)');
+      
+      // ✅ CALCUL OBLIGATOIRE du TTC = HT + montant TVA
+      fields.ttc = fields.ht + fields.tvaAmt;
+      console.log('[parseFR] ✅ TTC recalculé:', fields.ttc, '(HT:', fields.ht, '+ TVA:', fields.tvaAmt, ')');
     } else {
       console.warn('[parseFR] ⚠️ Impossible de calculer TVA montant:', { ht: fields.ht, tvaPct: fields.tvaPct });
     }
