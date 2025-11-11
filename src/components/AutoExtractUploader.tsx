@@ -113,15 +113,11 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
       } else if (module === 'factures') {
         table = 'factures_fournisseurs';
 
-        // Sanity HT/TTC
-        let montant_ht = fields.ht ?? null;
-        let montant_ttc = fields.net ?? fields.ttc ?? null;
-
-        // Si HT > TTC, inverser (erreur d'extraction probable)
-        if (montant_ht != null && montant_ttc != null && montant_ht > montant_ttc) {
-          console.warn('[Sanity] HT > TTC, swapping', { montant_ht, montant_ttc });
-          [montant_ht, montant_ttc] = [montant_ttc, montant_ht];
-        }
+        // ✅ FAIRE CONFIANCE aux calculs de parseFR.ts - NE PAS modifier après coup
+        // parseFR.ts a déjà géré l'inversion HT/TTC et recalculé TVA + TTC correctement
+        const montant_ht = fields.ht ?? null;
+        const montant_ttc = fields.ttc ?? null; // ✅ Utiliser TTC recalculé, pas NET
+        const tva_montant = fields.tvaAmt ?? null;
 
         // Borner TVA %
         let tva_pct = fields.tvaPct ?? null;
@@ -129,18 +125,26 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
           tva_pct = Math.max(0, Math.min(100, tva_pct));
         }
 
-        // Borner montants
+        // Borner montants (sécurité DB uniquement)
         const MAX = 999999999999.99;
-        if (montant_ht != null && (montant_ht < 0 || montant_ht > MAX)) montant_ht = null;
-        if (montant_ttc != null && (montant_ttc < 0 || montant_ttc > MAX)) montant_ttc = null;
+        const safe_ht = (montant_ht != null && montant_ht >= 0 && montant_ht <= MAX) ? montant_ht : null;
+        const safe_ttc = (montant_ttc != null && montant_ttc >= 0 && montant_ttc <= MAX) ? montant_ttc : null;
+        const safe_tva = (tva_montant != null && tva_montant >= 0 && tva_montant <= MAX) ? tva_montant : null;
+
+        console.log('[AutoExtract] Using calculated values from parseFR:', { 
+          montant_ht: safe_ht, 
+          tva_pct, 
+          tva_montant: safe_tva, 
+          montant_ttc: safe_ttc 
+        });
 
         payload = {
           ...payload,
           fournisseur: fields.fournisseur ?? 'Non renseigné',
-          montant_ht,
+          montant_ht: safe_ht,
           tva_pct,
-          tva_montant: fields.tvaAmt ?? null,
-          montant_ttc,
+          tva_montant: safe_tva,
+          montant_ttc: safe_ttc,
           siret: fields.siret ?? null,
           date_facture: fields.dateDoc ?? null,
           categorie: 'Autres',
