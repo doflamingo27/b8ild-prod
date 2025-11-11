@@ -1,16 +1,14 @@
 import { R } from '@/lib/extract/regexFR';
 import { normalizeNumberFR, normalizePercentFR, normalizeDateFR, checkTotals } from '@/lib/docai/normalize';
 
-// Extraction par proximité pour formats tabulaires (derniers 50% du document)
+// Extraction par proximité pour formats tabulaires (TOUT le document)
 function extractAmountsWithContext(text: string) {
-  // ✅ Analyser SEULEMENT la section récapitulative (derniers 50% du document)
-  const recapStartIndex = Math.floor(text.length * 0.5);
-  const recapText = text.substring(recapStartIndex);
+  // ✅ Analyser TOUT le document pour éviter de rater le tableau récapitulatif
+  const recapText = text;
+  const recapStartIndex = 0;
   
-  console.log('[extractAmounts] Analyse de la section récapitulative (derniers 50%)');
-  console.log('[extractAmounts] Position de départ:', recapStartIndex, '/', text.length);
-  console.log('[extractAmounts] Texte analysé (premiers 300 chars):', recapText.substring(0, 300));
-  console.log('[extractAmounts] Section analysée complète:', recapText.substring(0, 500));
+  console.log('[extractAmounts] Analyse du document COMPLET');
+  console.log('[extractAmounts] Texte analysé (premiers 500 chars):', recapText.substring(0, 500));
   
   // ✅ Capturer uniquement espaces horizontaux (pas de sauts de ligne)
   // Utiliser [ \t] au lieu de \h (qui n'existe pas en JavaScript)

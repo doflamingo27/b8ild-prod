@@ -1,15 +1,15 @@
 export const R = {
-  // ✅ HT : accepter pipes + espaces (format tableau)
-  HT: /(?:total|montant|sous[\s\-]?total|base)\s*(?:h\.?t\.?|hors\s*taxes?)[\s\|]+([0-9\s\.,]+)\s*€?/gi,
+  // ✅ HT : accepter pipes + espaces + sauts de ligne (format tableau)
+  HT: /(?:total|montant|sous[\s\-]?total|base)\s*(?:h\.?t\.?|hors\s*taxes?)[\s\|\n]+([0-9\s\.,]+)\s*€?/gi,
   
   // ✅ TVA % : accepter "TVA à 20%", "TVA 20", "TVA: 20%", pipes + espaces
   TVA_PCT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*(?:\([^\)]*\))?\s*[\|\s]+(\d{1,2}[\.,]?\d{0,2})\s*%?/gi,
   
-  // ✅ TVA montant : accepter pipes + espaces (format tableau)
-  TVA_AMT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*\d{1,2}\s*%?\s*[\|\s]+([0-9\s\.,]+)\s*€?/gi,
+  // ✅ TVA montant : accepter pipes + espaces + sauts de ligne (format tableau)
+  TVA_AMT: /t\.?v\.?a\.?\s*(?:à|a)?\s*\d{1,2}\s*%?[\s\|\n]+([0-9\s\.,]+)\s*€?/gi,
   
-  // ✅ TTC : accepter pipes + espaces (format tableau)
-  TTC: /(?:total|montant|net)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?)[\s\|]+([0-9\s\.,]+)\s*€?/gi,
+  // ✅ TTC : accepter pipes + espaces + sauts de ligne (format tableau)
+  TTC: /(?:total|montant|net)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?)[\s\|\n]+([0-9\s\.,]+)\s*€?/gi,
   
   // ✅ Net à payer : accepter pipes + espaces (format tableau)
   NET: /(?:\|?\s*)?(?:net\s*(?:à|a)\s*payer(?:\s*t\.?t\.?c\.?)?)\s*[\|\s]+([0-9\s\.,]+)\s*€?/gi,
