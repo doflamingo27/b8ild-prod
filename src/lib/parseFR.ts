@@ -156,24 +156,7 @@ export function parseFrenchDocument(
       console.log('[parseFR] ✅ TVA% extrait depuis tableau récapitulatif (DERNIER match):', fields.tvaPct);
     }
 
-    // ✅ Priorité 2 : Extraction par proximité (si pas trouvé en tableau)
-    if (!fields.ht) {
-      fields.ht = proximityExtraction.ht;
-    }
-    if (!fields.ttc) {
-      fields.ttc = proximityExtraction.ttc;
-    }
-
-    // ✅ Priorité 3 : Extraction TVA % par regex générique (si pas trouvé en tableau)
-    if (!fields.tvaPct) {
-      R.TVA_PCT.lastIndex = 0;
-      const tvaPctMatch = R.TVA_PCT.exec(text);
-      if (tvaPctMatch?.[1]) {
-        fields.tvaPct = normalizePercentFR(tvaPctMatch[1]);
-      }
-    }
-
-    // ✅ Priorité 4 : Extraction HT par regex générique - DERNIER MATCH
+    // ✅ Priorité 2 : Extraction HT par regex générique - DERNIER MATCH
     if (!fields.ht) {
       const htMatches = Array.from(text.matchAll(R.HT));
       if (htMatches.length > 0) {
@@ -182,7 +165,7 @@ export function parseFrenchDocument(
         const matchPosition = lastMatch.index || 0;
         const positionPercent = (matchPosition / text.length) * 100;
         
-        console.log('[parseFR] HT extrait par regex générique (DERNIER match):', fields.ht);
+        console.log('[parseFR] ✅ HT extrait par regex générique (DERNIER match):', fields.ht);
         console.log('[parseFR] Nombre de matches HT trouvés:', htMatches.length);
         console.log('[parseFR] Position du HT extrait :', positionPercent.toFixed(1), '% du document');
         
@@ -201,10 +184,29 @@ export function parseFrenchDocument(
         const matchPosition = lastMatch.index || 0;
         const positionPercent = (matchPosition / text.length) * 100;
         
-        console.log('[parseFR] TTC extrait par regex générique (DERNIER match):', fields.ttc);
+        console.log('[parseFR] ✅ TTC extrait par regex générique (DERNIER match):', fields.ttc);
         console.log('[parseFR] Nombre de matches TTC trouvés:', ttcMatches.length);
         console.log('[parseFR] Position du TTC extrait :', positionPercent.toFixed(1), '% du document');
       }
+    }
+
+    // ✅ Priorité 3 : Extraction TVA % par regex générique (si pas trouvé en tableau)
+    if (!fields.tvaPct) {
+      R.TVA_PCT.lastIndex = 0;
+      const tvaPctMatch = R.TVA_PCT.exec(text);
+      if (tvaPctMatch?.[1]) {
+        fields.tvaPct = normalizePercentFR(tvaPctMatch[1]);
+      }
+    }
+
+    // ✅ Priorité 4 : Extraction par proximité (DERNIER RECOURS UNIQUEMENT)
+    if (!fields.ht) {
+      fields.ht = proximityExtraction.ht;
+      console.log('[parseFR] ⚠️ HT extrait par proximité (fallback):', fields.ht);
+    }
+    if (!fields.ttc) {
+      fields.ttc = proximityExtraction.ttc;
+      console.log('[parseFR] ⚠️ TTC extrait par proximité (fallback):', fields.ttc);
     }
 
     // NET à payer (fallback pour TTC)
