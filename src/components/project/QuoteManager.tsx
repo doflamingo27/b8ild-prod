@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileText, Loader2, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
+import { Plus, FileText, Loader2, CheckCircle2, Clock, Send, XCircle, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AutoExtractUploader from "@/components/AutoExtractUploader";
@@ -22,8 +23,10 @@ interface QuoteManagerProps {
 const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [editingDevis, setEditingDevis] = useState<any>(null);
   const [formData, setFormData] = useState({
     montant_ht: 0,
     tva: 20,
@@ -163,6 +166,77 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       toast({
         title: "Succès",
         description: "Devis actif mis à jour",
+      });
+
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenEdit = (d: any) => {
+    setEditingDevis(d);
+    setFormData({
+      montant_ht: d.montant_ht,
+      tva: d.tva,
+      montant_ttc: d.montant_ttc,
+      statut: d.statut,
+    });
+    setEditOpen(true);
+  };
+
+  const handleUpdateDevis = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("devis")
+        .update({
+          montant_ht: formData.montant_ht,
+          tva: formData.tva,
+          montant_ttc: formData.montant_ttc,
+          statut: formData.statut,
+        })
+        .eq("id", editingDevis.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Devis modifié avec succès",
+      });
+
+      setEditOpen(false);
+      setEditingDevis(null);
+      onUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDevis = async (devisId: string) => {
+    try {
+      const { error } = await supabase
+        .from("devis")
+        .delete()
+        .eq("id", devisId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Devis supprimé avec succès",
       });
 
       onUpdate();
@@ -375,13 +449,46 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
                       </Button>
                     </TableCell>
                     <TableCell>
-                      {d.fichier_url && (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={d.fichier_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4" />
-                          </a>
+                      <div className="flex gap-2">
+                        {d.fichier_url && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={d.fichier_url} target="_blank" rel="noopener noreferrer">
+                              <FileText className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleOpenEdit(d)}
+                        >
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer le devis {d.version} ? Cette action est irréversible.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteDevis(d.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Supprimer
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -400,6 +507,84 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
           </div>
         )}
       </CardContent>
+
+      {/* Dialog d'édition */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le devis {editingDevis?.version}</DialogTitle>
+            <DialogDescription>
+              Modifiez les montants et le statut du devis
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateDevis}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_statut">Statut</Label>
+                <Select 
+                  value={formData.statut} 
+                  onValueChange={(value) => setFormData({ ...formData, statut: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="brouillon">Brouillon</SelectItem>
+                    <SelectItem value="envoye">Envoyé</SelectItem>
+                    <SelectItem value="accepte">Accepté</SelectItem>
+                    <SelectItem value="refuse">Refusé</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_montant_ht">Montant HT (€)</Label>
+                  <Input
+                    id="edit_montant_ht"
+                    type="number"
+                    step="0.01"
+                    value={formData.montant_ht}
+                    onChange={(e) => handleHTChange(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit_tva">TVA (%)</Label>
+                  <Input
+                    id="edit_tva"
+                    type="number"
+                    step="0.01"
+                    value={formData.tva}
+                    onChange={(e) => handleTVAChange(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_montant_ttc">Montant TTC (€)</Label>
+                <Input
+                  id="edit_montant_ttc"
+                  type="number"
+                  step="0.01"
+                  value={formData.montant_ttc.toFixed(2)}
+                  readOnly
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
