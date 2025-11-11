@@ -104,40 +104,20 @@ export function parseFrenchDocument(
     // ✅ DIAGNOSTIC : Tracer TOUS les matches trouvés dans le document
     console.log('[parseFR] ===== DIAGNOSTIC COMPLET DES MONTANTS =====');
     
-    // Diagnostic RECAP_HT
     const allRecapHtMatches = Array.from(text.matchAll(R.RECAP_HT));
     console.log(`[parseFR] Nombre de matches RECAP_HT trouvés : ${allRecapHtMatches.length}`);
     allRecapHtMatches.forEach((match, idx) => {
       const normalized = normalizeNumberFR(match[1]);
       const position = ((match.index || 0) / text.length * 100).toFixed(1);
-      console.log(`  [${idx + 1}] RECAP_HT = ${normalized} € (position: ${position}%, raw: "${match[1]}")`);
+      console.log(`  [${idx + 1}] HT = ${normalized} € (position: ${position}%)`);
     });
 
-    // Diagnostic RECAP_TTC
     const allRecapTtcMatches = Array.from(text.matchAll(R.RECAP_TTC));
     console.log(`[parseFR] Nombre de matches RECAP_TTC trouvés : ${allRecapTtcMatches.length}`);
     allRecapTtcMatches.forEach((match, idx) => {
       const normalized = normalizeNumberFR(match[1]);
       const position = ((match.index || 0) / text.length * 100).toFixed(1);
-      console.log(`  [${idx + 1}] RECAP_TTC = ${normalized} € (position: ${position}%, raw: "${match[1]}")`);
-    });
-
-    // Diagnostic R.HT générique
-    const allHtMatches = Array.from(text.matchAll(R.HT));
-    console.log(`[parseFR] Nombre de matches R.HT trouvés : ${allHtMatches.length}`);
-    allHtMatches.forEach((match, idx) => {
-      const normalized = normalizeNumberFR(match[1]);
-      const position = ((match.index || 0) / text.length * 100).toFixed(1);
-      console.log(`  [${idx + 1}] R.HT = ${normalized} € (position: ${position}%, raw: "${match[1]}")`);
-    });
-
-    // Diagnostic R.TTC générique
-    const allTtcMatches = Array.from(text.matchAll(R.TTC));
-    console.log(`[parseFR] Nombre de matches R.TTC trouvés : ${allTtcMatches.length}`);
-    allTtcMatches.forEach((match, idx) => {
-      const normalized = normalizeNumberFR(match[1]);
-      const position = ((match.index || 0) / text.length * 100).toFixed(1);
-      console.log(`  [${idx + 1}] R.TTC = ${normalized} € (position: ${position}%, raw: "${match[1]}")`);
+      console.log(`  [${idx + 1}] TTC = ${normalized} € (position: ${position}%)`);
     });
 
     console.log('[parseFR] ====================================');
