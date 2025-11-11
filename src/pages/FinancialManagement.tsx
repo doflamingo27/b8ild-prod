@@ -3,42 +3,52 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Building, Receipt, Users, DollarSign, Eye } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Building } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useChantierMetrics } from "@/hooks/useChantierMetrics";
+import ProfitabilityView from "@/components/project/ProfitabilityView";
+import QuoteManager from "@/components/project/QuoteManager";
+import TeamAssignment from "@/components/project/TeamAssignment";
+import InvoiceManager from "@/components/project/InvoiceManager";
+import ExpensesManager from "@/components/project/ExpensesManager";
+import { useCalculations } from "@/hooks/useCalculations";
 
-interface ChantierFinances {
+interface Chantier {
   id: string;
   nom_chantier: string;
   client: string;
-  budget_ht: number;
-  total_factures: number;
-  total_frais: number;
-  total_equipe: number;
-  marge: number;
-  rentabilite_pct: number;
-  statut: string;
 }
 
 const FinancialManagement = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [chantiers, setChantiers] = useState<ChantierFinances[]>([]);
+  const [chantiers, setChantiers] = useState<Chantier[]>([]);
+  const [selectedChantierId, setSelectedChantierId] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [devis, setDevis] = useState<any>(null);
+  const [factures, setFactures] = useState<any[]>([]);
+  const [membres, setMembres] = useState<any[]>([]);
+  const [frais, setFrais] = useState<any[]>([]);
+
+  const { metrics, loading: metricsLoading } = useChantierMetrics(selectedChantierId || '');
 
   useEffect(() => {
     if (user) {
-      loadFinancialData();
+      loadChantiers();
     }
   }, [user]);
 
-  const loadFinancialData = async () => {
+  useEffect(() => {
+    if (selectedChantierId) {
+      loadChantierData();
+    }
+  }, [selectedChantierId]);
+
+  const loadChantiers = async () => {
     try {
       setLoading(true);
-
-      // Récupérer l'entreprise
       const { data: entreprise } = await supabase
         .from('entreprises')
         .select('id')
@@ -47,121 +57,116 @@ const FinancialManagement = () => {
 
       if (!entreprise) return;
 
-      // Récupérer tous les chantiers avec leurs métriques
       const { data: chantiersData } = await supabase
         .from('chantiers')
-        .select(`
-          id,
-          nom_chantier,
-          client,
-          budget_ht,
-          statut
-        `)
-        .eq('entreprise_id', entreprise.id);
+        .select('id, nom_chantier, client')
+        .eq('entreprise_id', entreprise.id)
+        .order('created_at', { ascending: false });
 
-      if (!chantiersData) return;
-
-      // Pour chaque chantier, calculer les totaux
-      const chantiersWithFinances = await Promise.all(
-        chantiersData.map(async (chantier) => {
-          // Total factures
-          const { data: factures } = await supabase
-            .from('factures_fournisseurs')
-            .select('montant_ht')
-            .eq('chantier_id', chantier.id);
-          const total_factures = factures?.reduce((sum, f) => sum + Number(f.montant_ht || 0), 0) || 0;
-
-          // Total frais
-          const { data: frais } = await supabase
-            .from('frais_chantier')
-            .select('montant_total')
-            .eq('chantier_id', chantier.id);
-          const total_frais = frais?.reduce((sum, f) => sum + Number(f.montant_total || 0), 0) || 0;
-
-          // Total équipe (calculé à partir des jours travaillés et taux des membres)
-          const { data: equipe } = await supabase
-            .from('equipe_chantier')
-            .select('jours_travailles, membres_equipe(taux_horaire)')
-            .eq('chantier_id', chantier.id);
-          
-          const total_equipe = equipe?.reduce((sum, e) => {
-            const jours = Number(e.jours_travailles || 0);
-            const tauxHoraire = Number(e.membres_equipe?.taux_horaire || 0);
-            // Estimation : 8h par jour
-            const coutJournalier = tauxHoraire * 8;
-            return sum + (jours * coutJournalier);
-          }, 0) || 0;
-
-          const couts_totaux = total_factures + total_frais + total_equipe;
-          const budget = Number(chantier.budget_ht || 0);
-          const marge = budget - couts_totaux;
-          const rentabilite_pct = budget > 0 ? (marge / budget) * 100 : 0;
-
-          let statut = 'success';
-          if (rentabilite_pct < 0) statut = 'danger';
-          else if (rentabilite_pct < 10) statut = 'alert';
-          else if (rentabilite_pct < 20) statut = 'warning';
-
-          return {
-            id: chantier.id,
-            nom_chantier: chantier.nom_chantier,
-            client: chantier.client,
-            budget_ht: budget,
-            total_factures,
-            total_frais,
-            total_equipe,
-            marge,
-            rentabilite_pct,
-            statut,
-          };
-        })
-      );
-
-      setChantiers(chantiersWithFinances);
+      if (chantiersData && chantiersData.length > 0) {
+        setChantiers(chantiersData);
+        setSelectedChantierId(chantiersData[0].id);
+      }
     } catch (error) {
-      console.error("Erreur chargement données financières:", error);
+      console.error("Erreur chargement chantiers:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (statut: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      success: "default",
-      warning: "secondary",
-      alert: "outline",
-      danger: "destructive",
-    };
-    
-    const labels: Record<string, string> = {
-      success: "Excellent",
-      warning: "Bon",
-      alert: "Attention",
-      danger: "Déficit",
-    };
+  const loadChantierData = async () => {
+    try {
+      // Charger le devis
+      const { data: devisData } = await supabase
+        .from("devis")
+        .select("*")
+        .eq("chantier_id", selectedChantierId)
+        .maybeSingle();
+      setDevis(devisData);
 
-    return <Badge variant={variants[statut]}>{labels[statut]}</Badge>;
+      // Charger les factures
+      const { data: facturesData } = await supabase
+        .from("factures_fournisseurs")
+        .select("*")
+        .eq("chantier_id", selectedChantierId);
+      setFactures(facturesData || []);
+
+      // Charger les membres
+      const { data: equipeData } = await supabase
+        .from("equipe_chantier")
+        .select("*, membres_equipe(*)")
+        .eq("chantier_id", selectedChantierId);
+      
+      const membresAffectes = equipeData?.map(e => ({
+        ...e.membres_equipe,
+        jours_travailles: e.jours_travailles || 0
+      })) || [];
+      setMembres(membresAffectes);
+
+      // Charger les frais
+      const { data: fraisData } = await supabase
+        .from("frais_chantier")
+        .select("*")
+        .eq("chantier_id", selectedChantierId);
+      setFrais(fraisData || []);
+    } catch (error) {
+      console.error("Erreur chargement données chantier:", error);
+    }
   };
 
-  // Calculs globaux
-  const totalBudget = chantiers.reduce((sum, c) => sum + c.budget_ht, 0);
-  const totalCouts = chantiers.reduce((sum, c) => sum + c.total_factures + c.total_frais + c.total_equipe, 0);
-  const margeGlobale = totalBudget - totalCouts;
-  const rentabiliteGlobale = totalBudget > 0 ? (margeGlobale / totalBudget) * 100 : 0;
+  const totalFactures = factures.reduce((sum, f) => sum + Number(f.montant_ht), 0);
+  const totalFrais = frais.reduce((sum, f) => sum + Number(f.montant_total), 0);
+  const coutsFixes = totalFactures + totalFrais;
+
+  const calculations = useCalculations({
+    membres,
+    budget_devis: devis?.montant_ttc || 0,
+    couts_fixes: coutsFixes,
+    date_debut: null,
+  });
+
+  const selectedChantier = chantiers.find(c => c.id === selectedChantierId);
 
   if (loading) {
     return (
       <div className="space-y-8 animate-fade-up">
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
-            <DollarSign className="h-9 w-9 text-primary" />
+            <Building className="h-9 w-9 text-primary" />
             Gestion financière
           </h1>
         </div>
         <Card className="card-premium">
           <CardContent className="pt-16 pb-16 text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground text-lg font-medium">Chargement des données financières...</p>
+            <p className="text-muted-foreground text-lg font-medium">Chargement des données...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (chantiers.length === 0) {
+    return (
+      <div className="space-y-8 animate-fade-up">
+        <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
+            <Building className="h-9 w-9 text-primary" />
+            Gestion financière
+          </h1>
+        </div>
+        <Card className="card-premium">
+          <CardContent className="pt-16 pb-16 text-center">
+            <Building className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-xl font-semibold text-muted-foreground mb-2">
+              Aucun chantier disponible
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Créez votre premier chantier pour commencer le suivi financier
+            </p>
+            <Button onClick={() => navigate("/projects")}>
+              Aller aux chantiers
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -171,205 +176,100 @@ const FinancialManagement = () => {
   return (
     <div className="space-y-8 animate-fade-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
-            <DollarSign className="h-9 w-9 text-primary" />
-            Gestion financière
-          </h1>
-          <p className="text-muted-foreground text-lg mt-2">
-            Vue d'ensemble de la santé financière de tous vos chantiers
-          </p>
+      <div>
+        <Button onClick={() => navigate("/projects")} variant="ghost" className="mb-6 hover-lift">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour aux chantiers
+        </Button>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-black text-gradient-primary">
+              Gestion financière
+            </h1>
+            {selectedChantier && (
+              <p className="text-muted-foreground text-lg mt-2">
+                {selectedChantier.client}
+              </p>
+            )}
+          </div>
+          <div className="w-80">
+            <Select value={selectedChantierId} onValueChange={setSelectedChantierId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner un chantier" />
+              </SelectTrigger>
+              <SelectContent>
+                {chantiers.map((chantier) => (
+                  <SelectItem key={chantier.id} value={chantier.id}>
+                    {chantier.nom_chantier}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* KPIs Globaux */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="card-premium">
-          <CardHeader>
-            <CardDescription>Budget Total</CardDescription>
-            <CardTitle className="text-3xl font-black text-primary">
-              {totalBudget.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="card-premium">
-          <CardHeader>
-            <CardDescription>Coûts Totaux</CardDescription>
-            <CardTitle className="text-3xl font-black text-orange-600">
-              {totalCouts.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="card-premium">
-          <CardHeader>
-            <CardDescription>Marge Globale</CardDescription>
-            <CardTitle className={`text-3xl font-black ${margeGlobale >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-              {margeGlobale.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="card-premium">
-          <CardHeader>
-            <CardDescription>Rentabilité Globale</CardDescription>
-            <CardTitle className={`text-3xl font-black ${rentabiliteGlobale >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-              {rentabiliteGlobale.toFixed(1)} %
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Tableau des chantiers */}
+      {/* Tabs avec 5 sous-onglets */}
       <Card className="card-premium">
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="h-14 bg-muted/50 p-1">
-            <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              Tous les chantiers ({chantiers.length})
+        <Tabs defaultValue="profitability" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 h-14 bg-muted/50 p-1">
+            <TabsTrigger value="profitability" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              📊 Rentabilité
             </TabsTrigger>
-            <TabsTrigger value="profitable" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              Rentables ({chantiers.filter(c => c.rentabilite_pct >= 0).length})
+            <TabsTrigger value="quote" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              📄 Devis
             </TabsTrigger>
-            <TabsTrigger value="risk" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              À risque ({chantiers.filter(c => c.rentabilite_pct < 0).length})
+            <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              👥 Équipe
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              💳 Factures
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              📦 Coûts annexes
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="mt-6">
-            <CardContent>
-              {chantiers.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Chantier</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead className="text-right">Budget HT</TableHead>
-                      <TableHead className="text-right">Factures</TableHead>
-                      <TableHead className="text-right">Frais</TableHead>
-                      <TableHead className="text-right">Équipe</TableHead>
-                      <TableHead className="text-right">Marge</TableHead>
-                      <TableHead className="text-right">Rentabilité</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {chantiers.map((chantier) => (
-                      <TableRow key={chantier.id}>
-                        <TableCell className="font-semibold">{chantier.nom_chantier}</TableCell>
-                        <TableCell className="text-muted-foreground">{chantier.client}</TableCell>
-                        <TableCell className="text-right font-mono">{chantier.budget_ht.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                        <TableCell className="text-right font-mono text-orange-600">{chantier.total_factures.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                        <TableCell className="text-right font-mono text-orange-600">{chantier.total_frais.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                        <TableCell className="text-right font-mono text-orange-600">{chantier.total_equipe.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                        <TableCell className={`text-right font-mono font-semibold ${chantier.marge >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                          {chantier.marge.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-                        </TableCell>
-                        <TableCell className={`text-right font-mono font-semibold ${chantier.rentabilite_pct >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                          {chantier.rentabilite_pct.toFixed(1)} %
-                        </TableCell>
-                        <TableCell>{getStatusBadge(chantier.statut)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${chantier.id}`)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-16">
-                  <Building className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-xl font-semibold text-muted-foreground mb-2">
-                    Aucun chantier pour le moment
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Créez votre premier chantier pour commencer le suivi financier
-                  </p>
-                </div>
-              )}
-            </CardContent>
+          <TabsContent value="profitability" className="mt-6">
+            <ProfitabilityView 
+              metrics={metrics} 
+              loading={metricsLoading} 
+              chantierId={selectedChantierId} 
+            />
           </TabsContent>
 
-          <TabsContent value="profitable" className="mt-6">
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Chantier</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="text-right">Budget HT</TableHead>
-                    <TableHead className="text-right">Marge</TableHead>
-                    <TableHead className="text-right">Rentabilité</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {chantiers.filter(c => c.rentabilite_pct >= 0).map((chantier) => (
-                    <TableRow key={chantier.id}>
-                      <TableCell className="font-semibold">{chantier.nom_chantier}</TableCell>
-                      <TableCell className="text-muted-foreground">{chantier.client}</TableCell>
-                      <TableCell className="text-right font-mono">{chantier.budget_ht.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                      <TableCell className="text-right font-mono font-semibold text-green-600">
-                        {chantier.marge.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-semibold text-green-600">
-                        {chantier.rentabilite_pct.toFixed(1)} %
-                      </TableCell>
-                      <TableCell>{getStatusBadge(chantier.statut)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${chantier.id}`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <TabsContent value="quote" className="mt-6">
+            <QuoteManager 
+              chantierId={selectedChantierId} 
+              devis={devis} 
+              onUpdate={loadChantierData} 
+            />
           </TabsContent>
 
-          <TabsContent value="risk" className="mt-6">
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Chantier</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="text-right">Budget HT</TableHead>
-                    <TableHead className="text-right">Marge</TableHead>
-                    <TableHead className="text-right">Rentabilité</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {chantiers.filter(c => c.rentabilite_pct < 0).map((chantier) => (
-                    <TableRow key={chantier.id}>
-                      <TableCell className="font-semibold">{chantier.nom_chantier}</TableCell>
-                      <TableCell className="text-muted-foreground">{chantier.client}</TableCell>
-                      <TableCell className="text-right font-mono">{chantier.budget_ht.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</TableCell>
-                      <TableCell className="text-right font-mono font-semibold text-destructive">
-                        {chantier.marge.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-semibold text-destructive">
-                        {chantier.rentabilite_pct.toFixed(1)} %
-                      </TableCell>
-                      <TableCell>{getStatusBadge(chantier.statut)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${chantier.id}`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+          <TabsContent value="team" className="mt-6">
+            <TeamAssignment 
+              chantierId={selectedChantierId} 
+              membres={membres} 
+              onUpdate={loadChantierData}
+              coutJournalier={calculations.cout_journalier_equipe}
+            />
+          </TabsContent>
+
+          <TabsContent value="invoices" className="mt-6">
+            <InvoiceManager 
+              chantierId={selectedChantierId} 
+              factures={factures} 
+              onUpdate={loadChantierData} 
+            />
+          </TabsContent>
+
+          <TabsContent value="expenses" className="mt-6">
+            <ExpensesManager 
+              chantierId={selectedChantierId} 
+              frais={frais} 
+              onUpdate={loadChantierData} 
+            />
           </TabsContent>
         </Tabs>
       </Card>
@@ -378,3 +278,4 @@ const FinancialManagement = () => {
 };
 
 export default FinancialManagement;
+
