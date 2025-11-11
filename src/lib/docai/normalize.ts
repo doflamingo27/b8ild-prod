@@ -1,38 +1,22 @@
 export function normalizeNumberFR(raw?: string | null): number | null {
   if (!raw) return null;
   
-  const original = String(raw).trim();
-  
-  // ✅ Stratégie de normalisation améliorée pour format français
-  let s = original
+  // ✅ Supprimer TOUS les espaces Unicode + sauts de ligne AVANT la normalisation
+  const cleaned = String(raw)
+    .replace(/[\s\u00A0\u202F\u2009\n\r\t]/g, '') // Espaces insécables, tabs, newlines
     .replace(/€/g, '')
-    .replace(/[\n\r\t]/g, '') // Supprimer sauts de ligne et tabs
     .trim();
   
-  // Détecter le format : virgule = décimale française, espaces/points = séparateurs milliers
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
+  let s = cleaned;
   
-  if (hasComma && hasDot) {
-    // Format mixte : "1.234,56" → virgule = décimale, point = milliers
+  // Si contient à la fois . et , → . = milliers, , = décimale
+  if (s.includes('.') && s.includes(',')) {
     s = s.replace(/\./g, '').replace(/,/, '.');
-  } else if (hasComma) {
-    // Format français : "4 800,00" ou "4800,00"
-    // Supprimer tous les espaces (milliers), virgule → point (décimale)
-    s = s.replace(/[\s\u00A0\u202F\u2009]/g, '').replace(/,/, '.');
-  } else if (hasDot) {
-    // Format avec points : peut être milliers ou décimale
-    const parts = s.split('.');
-    if (parts.length === 2 && parts[1].length <= 2) {
-      // "4800.00" → point = décimale
-      s = s.replace(/[\s\u00A0\u202F\u2009]/g, '');
-    } else {
-      // "4.800" → point = milliers
-      s = s.replace(/[\s\u00A0\u202F\u2009]/g, '').replace(/\./g, '');
-    }
   } else {
-    // Pas de séparateur décimal : "4 800" ou "4800"
-    s = s.replace(/[\s\u00A0\u202F\u2009]/g, '');
+    // Si seule virgule et 1-2 décimales: remplacer virgule par point
+    s = s.replace(/,(?=\d{1,2}$)/, '.');
+    // Sinon supprimer points-milliers
+    s = s.replace(/\.(?=\d{3}\b)/g, '');
   }
   
   // Garder chiffres, signe, point
@@ -42,11 +26,23 @@ export function normalizeNumberFR(raw?: string | null): number | null {
   let n = Number(s);
   if (!Number.isFinite(n)) return null;
   
-  // Heuristique OCR : si nombre > 100000 sans séparateur décimal dans l'original, diviser par 100
-  if (!original.includes(',') && !original.includes('.') && n > 100000) {
+  // Heuristique OCR : si nombre > 10000 sans séparateur décimal, probable erreur OCR
+  if (!raw.includes(',') && !raw.includes('.') && n > 10000 && n < 1000000) {
     const candidate = n / 100;
-    console.warn(`[normalizeNumberFR] Nombre suspect sans séparateur: "${original}" → ${n}, correction: ${candidate}`);
+    console.warn(`[normalizeNumberFR] Nombre suspect sans séparateur: "${raw}" → ${n}, correction proposée: ${candidate}`);
     n = candidate;
+  }
+  
+  // Détection erreur x10 : si le nombre semble multiplié par 10 (e.g., 3297 au lieu de 329.7)
+  if (raw.includes(',') && n > 100 && n % 10 === 0) {
+    const lastCommaPos = raw.lastIndexOf(',');
+    const afterComma = raw.substring(lastCommaPos + 1).replace(/[^0-9]/g, '');
+    if (afterComma.length === 2) {
+      // Le nombre devrait avoir 2 décimales, pas 1
+      const candidate = n / 10;
+      console.warn(`[normalizeNumberFR] Possible erreur x10: "${raw}" → ${n}, correction proposée: ${candidate}`);
+      // On ne corrige pas automatiquement, juste un warning
+    }
   }
   
   // Bornes sûres

@@ -11,14 +11,12 @@ function extractAmountsWithContext(text: string) {
   console.log('[extractAmounts] Position de départ:', recapStartIndex, '/', text.length);
   console.log('[extractAmounts] Texte analysé (premiers 300 chars):', recapText.substring(0, 300));
   
-  // ✅ Capturer uniquement espaces horizontaux (pas de sauts de ligne)
-  const amountRegex = /([\d]+([\h\u00A0\u202F\u2009]+[\d]+)*[,\.]\d{2})\s*€/g;
+  const amountRegex = /([0-9\s]+[,\.]\d{2})\s*€/g;
   const amounts: Array<{value: string, index: number}> = [];
   let match;
   
   // ✅ Capturer les montants DANS la section récapitulative uniquement
   while ((match = amountRegex.exec(recapText)) !== null) {
-    console.log('[extractAmounts] Montant brut capturé:', JSON.stringify(match[1]));
     amounts.push({
       value: match[1],
       index: match.index + recapStartIndex // Ajuster l'index pour le document complet
