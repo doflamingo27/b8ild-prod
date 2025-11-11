@@ -71,7 +71,24 @@ const Projects = () => {
         .order("date_creation", { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
+
+      // Charger les métriques pour chaque chantier
+      const projectsWithMetrics = await Promise.all(
+        (data || []).map(async (project) => {
+          const { data: metricsData } = await supabase
+            .from("chantier_metrics_realtime")
+            .select("metrics")
+            .eq("chantier_id", project.id)
+            .single();
+
+          return {
+            ...project,
+            metrics: metricsData?.metrics as any,
+          };
+        })
+      );
+
+      setProjects(projectsWithMetrics);
     } catch (error: any) {
       console.error("Erreur chargement chantiers:", error);
     }
@@ -386,18 +403,26 @@ const Projects = () => {
         />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              id={project.id}
-              nom_chantier={project.nom_chantier}
-              client={project.client}
-              rentabilite={0}
-              jours_restants={project.duree_estimee}
-              etat_chantier={project.etat_chantier}
-              onEdit={() => handleEditState(project)}
-            />
-          ))}
+          {filteredProjects.map((project) => {
+            const metrics = project.metrics || {};
+            const rentabilite = metrics.profitability_pct || 0;
+            const joursRestants = metrics.jours_restants_rentables || project.duree_estimee || 0;
+            
+            return (
+              <ProjectCard
+                key={project.id}
+                id={project.id}
+                nom_chantier={project.nom_chantier}
+                client={project.client}
+                rentabilite={rentabilite}
+                jours_restants={joursRestants}
+                budget_devis={project.budget_ht || 0}
+                couts_engages={(metrics.couts_fixes_engages || 0) + (metrics.cout_main_oeuvre_reel || 0)}
+                etat_chantier={project.etat_chantier}
+                onEdit={() => handleEditState(project)}
+              />
+            );
+          })}
         </div>
       )}
 
