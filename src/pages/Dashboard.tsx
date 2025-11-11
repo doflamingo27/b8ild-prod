@@ -386,6 +386,14 @@ const Dashboard = () => {
                   client={project.client}
                   rentabilite={rentabilite}
                   jours_restants={joursRestants}
+                  etat_chantier={project.etat_chantier}
+                  onEdit={(id) => navigate(`/projects/${id}`)}
+                  onDelete={async (id) => {
+                    if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
+                      await supabase.from("chantiers").delete().eq("id", id);
+                      loadDashboardData();
+                    }
+                  }}
                 />
               );
             })}
