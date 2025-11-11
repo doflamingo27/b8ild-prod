@@ -22,35 +22,26 @@ function extractAmountsWithContext(text: string) {
   const tvaAmtIndex = text.search(/t\.?v\.?a\.?\s*(?:à|a)?\s*\d{1,2}\s*%/i);
   
   const result: any = {};
-  const usedIndices = new Set<number>(); // Tracker les montants déjà utilisés
   
   if (htIndex >= 0) {
     const closest = amounts.reduce((prev, curr) => 
       Math.abs(curr.index - htIndex) < Math.abs(prev.index - htIndex) ? curr : prev
     );
     result.ht = normalizeNumberFR(closest.value);
-    usedIndices.add(closest.index);
   }
   
   if (ttcIndex >= 0) {
-    const availableAmounts = amounts.filter(a => !usedIndices.has(a.index));
-    if (availableAmounts.length > 0) {
-      const closest = availableAmounts.reduce((prev, curr) => 
-        Math.abs(curr.index - ttcIndex) < Math.abs(prev.index - ttcIndex) ? curr : prev
-      );
-      result.ttc = normalizeNumberFR(closest.value);
-      usedIndices.add(closest.index);
-    }
+    const closest = amounts.reduce((prev, curr) => 
+      Math.abs(curr.index - ttcIndex) < Math.abs(prev.index - ttcIndex) ? curr : prev
+    );
+    result.ttc = normalizeNumberFR(closest.value);
   }
   
   if (tvaAmtIndex >= 0) {
-    const availableAmounts = amounts.filter(a => !usedIndices.has(a.index));
-    if (availableAmounts.length > 0) {
-      const closest = availableAmounts.reduce((prev, curr) => 
-        Math.abs(curr.index - tvaAmtIndex) < Math.abs(prev.index - tvaAmtIndex) ? curr : prev
-      );
-      result.tvaAmt = normalizeNumberFR(closest.value);
-    }
+    const closest = amounts.reduce((prev, curr) => 
+      Math.abs(curr.index - tvaAmtIndex) < Math.abs(prev.index - tvaAmtIndex) ? curr : prev
+    );
+    result.tvaAmt = normalizeNumberFR(closest.value);
   }
   
   return result;
@@ -70,123 +61,99 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     const tvaPctMatch = R.TVA_PCT.exec(text)?.[1];
     if (tvaPctMatch) fields.tvaPct = normalizePercentFR(tvaPctMatch);
 
-    // TTC : extraction prioritaire (montant final, généralement plus fiable)
-    R.TTC.lastIndex = 0;
-    const ttcMatch = R.TTC.exec(text)?.[1];
-    const extractedTTC = proximityExtraction.ttc ?? (ttcMatch ? normalizeNumberFR(ttcMatch) : null);
-
-    // HT : extraction comme fallback
+    // HT : priorité à la proximité, fallback regex
     R.HT.lastIndex = 0;
     const htMatch = R.HT.exec(text)?.[1];
-    const extractedHT = proximityExtraction.ht ?? (htMatch ? normalizeNumberFR(htMatch) : null);
+    fields.ht = proximityExtraction.ht ?? (htMatch ? normalizeNumberFR(htMatch) : null);
 
     // NET à payer
     R.NET.lastIndex = 0;
     const netMatch = R.NET.exec(text)?.[1];
     if (netMatch) fields.net = normalizeNumberFR(netMatch);
 
-    console.log('[parseFR] === EXTRACTION BRUTE ===', {
-      proximityTTC: proximityExtraction.ttc,
-      proximityHT: proximityExtraction.ht,
-      proximityTVAAmt: proximityExtraction.tvaAmt,
-      regexTTC: ttcMatch,
-      regexHT: htMatch,
-      regexTVAPct: tvaPctMatch,
-      extractedTTC,
-      extractedHT,
-      extractedTVAPct: fields.tvaPct,
-    });
+    // TTC : stratégie multi-match avec proximité
+    R.TTC.lastIndex = 0;
+    const ttcMatches = [...text.matchAll(R.TTC)].map(m => normalizeNumberFR(m[1])).filter(n => n != null);
+    
+    if (proximityExtraction.ttc) {
+      fields.ttc = proximityExtraction.ttc;
+    } else if (ttcMatches.length > 0) {
+      if (fields.ht && fields.tvaPct) {
+        const expectedTTC = fields.ht * (1 + fields.tvaPct / 100);
+        const closestMatch = ttcMatches.reduce((prev, curr) =>
+          Math.abs(curr - expectedTTC) < Math.abs(prev - expectedTTC) ? curr : prev
+        );
+        fields.ttc = closestMatch;
+      } else {
+        fields.ttc = ttcMatches[0];
+      }
+    }
 
-    // ✅ STRATÉGIE PRIORITAIRE : Rétro-calcul depuis TTC (plus fiable que HT)
-    if (extractedTTC && fields.tvaPct) {
-      fields.ttc = extractedTTC;
-      fields.ht = extractedTTC / (1 + fields.tvaPct / 100);
-      fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+    // TVA montant : priorité à la proximité
+    R.TVA_AMT.lastIndex = 0;
+    const tvaAmtMatch = R.TVA_AMT.exec(text)?.[1];
+    fields.tvaAmt = proximityExtraction.tvaAmt ?? (tvaAmtMatch ? normalizeNumberFR(tvaAmtMatch) : null);
+
+    // SIRET
+    R.SIRET.lastIndex = 0;
+    const siretMatch = R.SIRET.exec(text)?.[0];
+    if (siretMatch) fields.siret = siretMatch;
+
+    // Fournisseur : recherche dans les 500 premiers caractères
+    const headerText = text.substring(0, 500);
+    R.FOURNISSEUR.lastIndex = 0;
+    const fournisseurMatch = R.FOURNISSEUR.exec(headerText)?.[1];
+    if (fournisseurMatch) {
+      const blacklist = ['france', 'avenue', 'rue', 'boulevard', 'chemin', 'bis', 'ter', 'quartier'];
+      const isValid = !blacklist.some(word => 
+        fournisseurMatch.toLowerCase().includes(word)
+      );
       
-      console.log('[parseFR] ✅ Rétro-calcul prioritaire depuis TTC:', {
-        ttc: fields.ttc,
-        ht: fields.ht,
-        tvaAmt: fields.tvaAmt
-      });
-    } 
-    // ⚠️ FALLBACK : Calcul avant depuis HT si TTC non disponible
-    else if (extractedHT && fields.tvaPct) {
-      fields.ht = extractedHT;
-      fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+      if (isValid) {
+        fields.fournisseur = fournisseurMatch.trim();
+      }
+    }
+
+    // Fallback fournisseur : chercher après "Facture"
+    if (!fields.fournisseur) {
+      const invoiceHeaderMatch = text.match(/facture[^\n]*\n+([A-Z][A-Za-z\s&]+)/i);
+      if (invoiceHeaderMatch) {
+        fields.fournisseur = invoiceHeaderMatch[1].trim();
+      }
+    }
+
+    // N° facture
+    R.NUM_FACT.lastIndex = 0;
+    const numFactMatch = R.NUM_FACT.exec(text)?.[1];
+    if (numFactMatch) fields.numFacture = numFactMatch;
+
+    // Date
+    R.DATE.lastIndex = 0;
+    const dateMatch = R.DATE.exec(text)?.[1];
+    if (dateMatch) fields.dateDoc = normalizeDateFR(dateMatch);
+
+    // Validation croisée et recalcul si nécessaire
+    if (fields.ht && fields.tvaPct && !fields.ttc) {
       fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
-      
-      console.log('[parseFR] ⚠️ Calcul avant depuis HT (fallback):', {
-        ht: fields.ht,
-        tvaAmt: fields.tvaAmt,
-        ttc: fields.ttc
-      });
-    }
-    // ⚠️ FALLBACK FINAL : Extraction brute si aucun calcul possible
-    else {
-      if (extractedTTC) fields.ttc = extractedTTC;
-      if (extractedHT) fields.ht = extractedHT;
-      
-      // Essayer de recalculer les valeurs manquantes
-      if (fields.ht && fields.ttc && !fields.tvaPct) {
-        fields.tvaPct = ((fields.ttc / fields.ht) - 1) * 100;
-        fields.tvaAmt = fields.ttc - fields.ht;
-        console.log('[parseFR] TVA% et montant recalculés depuis HT/TTC:', {
-          tvaPct: fields.tvaPct,
-          tvaAmt: fields.tvaAmt
-        });
-      }
-      
-      if (fields.ht && fields.tvaPct && !fields.ttc) {
-        fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
-        fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
-        console.log('[parseFR] TTC et TVA montant recalculés depuis HT:', {
-          ttc: fields.ttc,
-          tvaAmt: fields.tvaAmt
-        });
-      }
-      
-      if (fields.ttc && fields.tvaPct && !fields.ht) {
-        fields.ht = fields.ttc / (1 + fields.tvaPct / 100);
-        fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
-        console.log('[parseFR] HT et TVA montant recalculés depuis TTC:', {
-          ht: fields.ht,
-          tvaAmt: fields.tvaAmt
-        });
-      }
+      console.log('[parseFR] TTC recalculé:', fields.ttc);
     }
 
-    // ✅ VALIDATION CROISÉE STRICTE : Vérifier cohérence HT/TTC et corriger automatiquement
-    if (fields.ht && fields.ttc) {
-      if (fields.ht > fields.ttc) {
-        console.warn('[parseFR] ❌ HT > TTC détecté, inversion automatique');
-        [fields.ht, fields.ttc] = [fields.ttc, fields.ht];
-        
-        // Recalculer TVA% et montant TVA basé sur HT et TTC corrigés
-        if (fields.tvaPct) {
-          fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
-        } else {
-          fields.tvaPct = ((fields.ttc / fields.ht) - 1) * 100;
-          fields.tvaAmt = fields.ttc - fields.ht;
-        }
-        
-        console.log('[parseFR] Montants corrigés après inversion:', {
-          ht: fields.ht,
-          ttc: fields.ttc,
-          tvaPct: fields.tvaPct,
-          tvaAmt: fields.tvaAmt
-        });
-      }
+    if (fields.ht && fields.ttc && !fields.tvaPct) {
+      fields.tvaPct = ((fields.ttc / fields.ht) - 1) * 100;
+      console.log('[parseFR] TVA% recalculée:', fields.tvaPct);
     }
 
-    console.log('[parseFR] === VALEURS FINALES (APRÈS RECALCUL) ===', {
-      ht: fields.ht,
-      tvaPct: fields.tvaPct,
-      tvaAmt: fields.tvaAmt,
-      ttc: fields.ttc,
-      calculManuel: fields.ht && fields.tvaPct 
-        ? `${fields.ht?.toFixed(2)} × ${(1 + (fields.tvaPct || 0) / 100).toFixed(2)} = ${(fields.ht * (1 + (fields.tvaPct || 0) / 100)).toFixed(2)}` 
-        : 'N/A'
-    });
+    if (fields.ttc && fields.tvaPct && !fields.ht) {
+      fields.ht = fields.ttc / (1 + fields.tvaPct / 100);
+      console.log('[parseFR] HT recalculé:', fields.ht);
+    }
+
+    // Vérifier cohérence HT/TTC (si HT >= TTC, probable erreur)
+    if (fields.ht && fields.ttc && fields.ht >= fields.ttc) {
+      console.warn('[parseFR] HT >= TTC détecté, inversion probable !');
+      [fields.ht, fields.ttc] = [fields.ttc, fields.ht];
+      console.log('[parseFR] Montants inversés:', { ht: fields.ht, ttc: fields.ttc });
+    }
 
     // Vérification cohérence finale
     const totalsOk = checkTotals(

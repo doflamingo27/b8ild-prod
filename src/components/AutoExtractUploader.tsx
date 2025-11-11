@@ -72,13 +72,6 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
       };
       
       console.log('[Parser] Final extracted fields:', finalFields);
-      console.log('[AutoExtract] Montants finaux après validation:', {
-        ht: fields.ht,
-        tvaPct: fields.tvaPct,
-        tvaAmt: fields.tvaAmt,
-        ttc: fields.ttc,
-        calcul: fields.ht && fields.tvaPct ? `${fields.ht} × ${fields.tvaPct}% = ${fields.ht * (fields.tvaPct / 100)}` : 'N/A'
-      });
       console.log('[Parser] Validation:', {
         totalsOk: fields.totalsOk,
         htVsTtc: fields.ht && fields.ttc ? `HT: ${fields.ht}, TTC: ${fields.ttc}, ratio: ${(fields.ttc / fields.ht).toFixed(2)}` : 'N/A'
