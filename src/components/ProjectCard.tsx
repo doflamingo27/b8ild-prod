@@ -100,18 +100,14 @@ const ProjectCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(id)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Modifier
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem onClick={() => onDelete(id)} className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Supprimer
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => onEdit?.(id)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
