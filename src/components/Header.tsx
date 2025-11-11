@@ -40,7 +40,7 @@ const Header = () => {
     { path: "/dashboard", label: labels.nav.dashboard, icon: Home },
     { path: "/team", label: labels.nav.team, icon: Users },
     { path: "/projects", label: labels.nav.projects, icon: FolderKanban },
-    { path: "/financial", label: "Gestion financière", icon: DollarSign },
+    { path: "/rentabilite", label: "Rentabilité", icon: DollarSign },
     { path: "/reports", label: labels.nav.reports, icon: FileText },
     { path: "/profile", label: labels.nav.profile, icon: User },
     { path: "/subscription", label: labels.nav.billing, icon: CreditCard },

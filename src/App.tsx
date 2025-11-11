@@ -19,6 +19,7 @@ import Subscription from "./pages/Subscription";
 import AuditHistory from "./pages/AuditHistory";
 import NotFound from "./pages/NotFound";
 import FinancialManagement from "./pages/FinancialManagement";
+import Rentabilite from "./pages/Rentabilite";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/rentabilite" element={<Rentabilite />} />
                 <Route path="/financial" element={<FinancialManagement />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/audit" element={<AuditHistory />} />
