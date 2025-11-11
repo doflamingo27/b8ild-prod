@@ -70,10 +70,15 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     const tvaPctMatch = R.TVA_PCT.exec(text)?.[1];
     if (tvaPctMatch) fields.tvaPct = normalizePercentFR(tvaPctMatch);
 
-    // HT : priorité à la proximité, fallback regex
+    // TTC : extraction prioritaire (montant final, généralement plus fiable)
+    R.TTC.lastIndex = 0;
+    const ttcMatch = R.TTC.exec(text)?.[1];
+    const extractedTTC = proximityExtraction.ttc ?? (ttcMatch ? normalizeNumberFR(ttcMatch) : null);
+
+    // HT : extraction comme fallback
     R.HT.lastIndex = 0;
     const htMatch = R.HT.exec(text)?.[1];
-    fields.ht = proximityExtraction.ht ?? (htMatch ? normalizeNumberFR(htMatch) : null);
+    const extractedHT = proximityExtraction.ht ?? (htMatch ? normalizeNumberFR(htMatch) : null);
 
     // NET à payer
     R.NET.lastIndex = 0;
@@ -81,77 +86,96 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
     if (netMatch) fields.net = normalizeNumberFR(netMatch);
 
     console.log('[parseFR] === EXTRACTION BRUTE ===', {
-      proximityHT: proximityExtraction.ht,
       proximityTTC: proximityExtraction.ttc,
+      proximityHT: proximityExtraction.ht,
       proximityTVAAmt: proximityExtraction.tvaAmt,
+      regexTTC: ttcMatch,
       regexHT: htMatch,
       regexTVAPct: tvaPctMatch,
-      extractedHT: fields.ht,
+      extractedTTC,
+      extractedHT,
       extractedTVAPct: fields.tvaPct,
     });
 
-    // ✅ STRATÉGIE NOUVELLE : Recalcul systématique prioritaire
-    // Si HT et TVA% sont disponibles, on RECALCULE toujours (plus fiable que l'OCR)
-    if (fields.ht && fields.tvaPct) {
-      // Recalculer le montant de TVA
+    // ✅ STRATÉGIE PRIORITAIRE : Rétro-calcul depuis TTC (plus fiable que HT)
+    if (extractedTTC && fields.tvaPct) {
+      fields.ttc = extractedTTC;
+      fields.ht = extractedTTC / (1 + fields.tvaPct / 100);
       fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
-      console.log('[parseFR] ✅ Montant TVA recalculé (prioritaire):', fields.tvaAmt);
       
-      // Recalculer le TTC
+      console.log('[parseFR] ✅ Rétro-calcul prioritaire depuis TTC:', {
+        ttc: fields.ttc,
+        ht: fields.ht,
+        tvaAmt: fields.tvaAmt
+      });
+    } 
+    // ⚠️ FALLBACK : Calcul avant depuis HT si TTC non disponible
+    else if (extractedHT && fields.tvaPct) {
+      fields.ht = extractedHT;
+      fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
       fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
-      console.log('[parseFR] ✅ TTC recalculé (prioritaire):', fields.ttc);
-    } else {
-      // ⚠️ FALLBACK : Si HT ou TVA% manquants, essayer l'extraction par proximité
-      // (mais avec un avertissement de faible confiance)
       
-      if (!fields.ttc && proximityExtraction.ttc) {
-        fields.ttc = proximityExtraction.ttc;
-        console.warn('[parseFR] ⚠️ TTC extrait par proximité (faible confiance):', fields.ttc);
-      } else if (!fields.ttc) {
-        // Fallback final : extraction par regex
-        R.TTC.lastIndex = 0;
-        const ttcMatch = R.TTC.exec(text)?.[1];
-        if (ttcMatch) {
-          fields.ttc = normalizeNumberFR(ttcMatch);
-          console.warn('[parseFR] ⚠️ TTC extrait par regex (faible confiance):', fields.ttc);
-        }
-      }
-
-      if (!fields.tvaAmt && proximityExtraction.tvaAmt) {
-        fields.tvaAmt = proximityExtraction.tvaAmt;
-        console.warn('[parseFR] ⚠️ TVA montant extrait par proximité (faible confiance):', fields.tvaAmt);
-      } else if (!fields.tvaAmt) {
-        // Fallback final : extraction par regex
-        R.TVA_AMT.lastIndex = 0;
-        const tvaAmtMatch = R.TVA_AMT.exec(text)?.[1];
-        if (tvaAmtMatch) {
-          fields.tvaAmt = normalizeNumberFR(tvaAmtMatch);
-          console.warn('[parseFR] ⚠️ TVA montant extrait par regex (faible confiance):', fields.tvaAmt);
-        }
-      }
-
-      // Validation croisée et recalcul si nécessaire (fallback)
-      if (fields.ht && fields.tvaPct && !fields.ttc) {
-        fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
-        console.log('[parseFR] TTC recalculé (fallback):', fields.ttc);
-      }
-
+      console.log('[parseFR] ⚠️ Calcul avant depuis HT (fallback):', {
+        ht: fields.ht,
+        tvaAmt: fields.tvaAmt,
+        ttc: fields.ttc
+      });
+    }
+    // ⚠️ FALLBACK FINAL : Extraction brute si aucun calcul possible
+    else {
+      if (extractedTTC) fields.ttc = extractedTTC;
+      if (extractedHT) fields.ht = extractedHT;
+      
+      // Essayer de recalculer les valeurs manquantes
       if (fields.ht && fields.ttc && !fields.tvaPct) {
         fields.tvaPct = ((fields.ttc / fields.ht) - 1) * 100;
-        console.log('[parseFR] TVA% recalculée (fallback):', fields.tvaPct);
+        fields.tvaAmt = fields.ttc - fields.ht;
+        console.log('[parseFR] TVA% et montant recalculés depuis HT/TTC:', {
+          tvaPct: fields.tvaPct,
+          tvaAmt: fields.tvaAmt
+        });
       }
-
+      
+      if (fields.ht && fields.tvaPct && !fields.ttc) {
+        fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
+        fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+        console.log('[parseFR] TTC et TVA montant recalculés depuis HT:', {
+          ttc: fields.ttc,
+          tvaAmt: fields.tvaAmt
+        });
+      }
+      
       if (fields.ttc && fields.tvaPct && !fields.ht) {
         fields.ht = fields.ttc / (1 + fields.tvaPct / 100);
-        console.log('[parseFR] HT recalculé (fallback):', fields.ht);
+        fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+        console.log('[parseFR] HT et TVA montant recalculés depuis TTC:', {
+          ht: fields.ht,
+          tvaAmt: fields.tvaAmt
+        });
       }
     }
 
-    // Vérifier cohérence HT/TTC (si HT >= TTC, probable erreur)
-    if (fields.ht && fields.ttc && fields.ht >= fields.ttc) {
-      console.warn('[parseFR] HT >= TTC détecté, inversion probable !');
-      [fields.ht, fields.ttc] = [fields.ttc, fields.ht];
-      console.log('[parseFR] Montants inversés:', { ht: fields.ht, ttc: fields.ttc });
+    // ✅ VALIDATION CROISÉE STRICTE : Vérifier cohérence HT/TTC et corriger automatiquement
+    if (fields.ht && fields.ttc) {
+      if (fields.ht > fields.ttc) {
+        console.warn('[parseFR] ❌ HT > TTC détecté, inversion automatique');
+        [fields.ht, fields.ttc] = [fields.ttc, fields.ht];
+        
+        // Recalculer TVA% et montant TVA basé sur HT et TTC corrigés
+        if (fields.tvaPct) {
+          fields.tvaAmt = fields.ht * (fields.tvaPct / 100);
+        } else {
+          fields.tvaPct = ((fields.ttc / fields.ht) - 1) * 100;
+          fields.tvaAmt = fields.ttc - fields.ht;
+        }
+        
+        console.log('[parseFR] Montants corrigés après inversion:', {
+          ht: fields.ht,
+          ttc: fields.ttc,
+          tvaPct: fields.tvaPct,
+          tvaAmt: fields.tvaAmt
+        });
+      }
     }
 
     console.log('[parseFR] === VALEURS FINALES (APRÈS RECALCUL) ===', {
