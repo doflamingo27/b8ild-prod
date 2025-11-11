@@ -185,6 +185,27 @@ export function parseFrenchDocument(text: string, module: 'factures' | 'frais' |
       }
     }
 
+    // Recalcul automatique du TTC si manquant
+    if (fields.ht && fields.tvaPct && !fields.ttc) {
+      fields.ttc = fields.ht * (1 + fields.tvaPct / 100);
+      console.log('[parseFR] TTC recalculé:', fields.ttc);
+    }
+
+    // Correction si TTC extrait semble incorrect
+    if (fields.ht && fields.tvaPct && fields.ttc) {
+      const expectedTTC = fields.ht * (1 + fields.tvaPct / 100);
+      const tolerance = 0.02; // Tolérance de 2%
+      
+      if (Math.abs(fields.ttc - expectedTTC) / expectedTTC > tolerance) {
+        console.warn('[parseFR] TTC incohérent détecté:', {
+          extrait: fields.ttc,
+          attendu: expectedTTC
+        });
+        fields.ttc = expectedTTC;
+        console.log('[parseFR] TTC corrigé:', fields.ttc);
+      }
+    }
+
     // Vérification cohérence finale
     const totalsOk = checkTotals(
       fields.ht ?? null,
