@@ -25,8 +25,7 @@ import InvoiceManager from "@/components/project/InvoiceManager";
 import TeamAssignment from "@/components/project/TeamAssignment";
 import ExpensesManager from "@/components/project/ExpensesManager";
 import ExportManager from "@/components/ExportManager";
-import ChantierKpis from "@/components/ChantierKpis";
-import ChantierCharts from "@/components/ChantierCharts";
+import ProfitabilityView from "@/components/project/ProfitabilityView";
 
 interface Chantier {
   id: string;
@@ -323,51 +322,37 @@ const ProjectDetail = () => {
         </Alert>
       )}
 
-      {/* Métriques temps réel */}
-      {!metricsLoading && metrics && (
-        <>
-          <ChantierKpis metrics={metrics} />
-          <ChantierCharts chantierId={id!} />
-        </>
-      )}
-
-      {metricsLoading && (
-        <Card className="card-premium">
-          <CardContent className="pt-16 pb-16 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement des métriques...</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tabs de gestion */}
+      {/* Onglet Gestion financière avec sous-onglets */}
       <Card className="card-premium">
-        <Tabs defaultValue="quote" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-14 bg-muted/50 p-1">
-            <TabsTrigger value="quote" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              <FileText className="h-5 w-5 mr-2" />
-              Devis
+        <Tabs defaultValue="profitability" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 h-14 bg-muted/50 p-1">
+            <TabsTrigger value="profitability" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              📊 Rentabilité
             </TabsTrigger>
-            <TabsTrigger value="invoices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              <Receipt className="h-5 w-5 mr-2" />
-              Factures
+            <TabsTrigger value="quote" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              📄 Devis
             </TabsTrigger>
             <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              <Users className="h-5 w-5 mr-2" />
-              Équipe
+              👥 Équipe
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              💳 Factures
             </TabsTrigger>
             <TabsTrigger value="expenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-              <Receipt className="h-5 w-5 mr-2" />
-              Frais
+              📦 Coûts annexes
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="quote" className="mt-6">
-            <QuoteManager chantierId={id!} devis={devis} onUpdate={loadProjectData} />
+          <TabsContent value="profitability" className="mt-6">
+            <ProfitabilityView 
+              metrics={metrics} 
+              loading={metricsLoading} 
+              chantierId={id!} 
+            />
           </TabsContent>
 
-          <TabsContent value="invoices" className="mt-6">
-            <InvoiceManager chantierId={id!} factures={factures} onUpdate={loadProjectData} />
+          <TabsContent value="quote" className="mt-6">
+            <QuoteManager chantierId={id!} devis={devis} onUpdate={loadProjectData} />
           </TabsContent>
 
           <TabsContent value="team" className="mt-6">
@@ -377,6 +362,10 @@ const ProjectDetail = () => {
               onUpdate={loadProjectData}
               coutJournalier={calculations.cout_journalier_equipe}
             />
+          </TabsContent>
+
+          <TabsContent value="invoices" className="mt-6">
+            <InvoiceManager chantierId={id!} factures={factures} onUpdate={loadProjectData} />
           </TabsContent>
 
           <TabsContent value="expenses" className="mt-6">
