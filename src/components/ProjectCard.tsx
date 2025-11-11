@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { Building, Calendar, AlertTriangle, MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
+import { Building, Calendar, AlertTriangle, MoreVertical, Edit, Trash2 } from "lucide-react";
 
 interface ProjectCardProps {
   id: string;
@@ -100,10 +100,6 @@ const ProjectCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/projects/${id}`)}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Voir détails
-                </DropdownMenuItem>
                 {onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(id)}>
                     <Edit className="h-4 w-4 mr-2" />
