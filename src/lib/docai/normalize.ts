@@ -3,12 +3,14 @@ export function normalizeNumberFR(raw?: string | null): number | null {
   
   const originalRaw = raw;
   let s = String(raw)
-    .replace(/\u00A0/g, ' ')
+    .replace(/\u00A0/g, '') // Espace insécable
+    .replace(/\u202F/g, '') // Espace insécable fine (narrow no-break space)
+    .replace(/\u2009/g, '') // Espace fine (thin space)
+    .replace(/\s+/g, '')    // Tous les autres espaces
     .replace(/€/g, '')
     .trim();
   
-  // Supprimer tous les espaces
-  s = s.replace(/\s+/g, '');
+  console.log(`[normalizeNumberFR] Input: "${originalRaw}" → After space removal: "${s}"`);
   
   // ✅ Logique renforcée pour virgule/point en français
   // Si contient à la fois . et , → . = milliers, , = décimale

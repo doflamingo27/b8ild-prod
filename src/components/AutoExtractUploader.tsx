@@ -207,6 +207,20 @@ export default function AutoExtractUploader({ module, entrepriseId, chantierId, 
         };
       }
 
+      // ✅ Alerte visuelle si extraction suspecte détectée
+      if (module === 'factures' || module === 'devis') {
+        if (fields.ht && fields.ttc) {
+          const ratio = fields.ttc / fields.ht;
+          if (ratio < 1.0 || ratio > 1.5) {
+            toast({
+              variant: "destructive",
+              title: "⚠️ Extraction suspecte détectée",
+              description: `Le TTC (${fields.ttc}€) semble incohérent avec le HT (${fields.ht}€). Vérifiez les valeurs extraites.`,
+            });
+          }
+        }
+      }
+
       // 5️⃣ Sauvegarde DB
       console.log('[AutoExtractUploader] ===== PAYLOAD FINAL ENVOYÉ À LA DB =====');
       console.log('[AutoExtractUploader] Table:', table);

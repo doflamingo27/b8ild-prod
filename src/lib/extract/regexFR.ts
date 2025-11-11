@@ -1,4 +1,9 @@
 export const R = {
+  // ✅ Nouvelle regex : Format tableau récapitulatif avec pipes
+  RECAP_HT: /\|\s*(?:total|montant\s+total)\s*h\.?t\.?\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
+  RECAP_TTC: /\|\s*(?:total|montant\s+total)\s*t\.?t\.?c\.?\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
+  RECAP_TVA: /\|\s*t\.?v\.?a\.?\s*(?:à|a)?\s*(\d{1,2})\s*%\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
+  
   // ✅ HT : ajouter variantes devis (Montant total HT, Total général HT)
   HT: /(?:\|?\s*)?(?:(?:total|montant|sous[\s\-]?total|base|montant\s+total|total\s+g[ée]n[ée]ral)\s*(?:h\.?t\.?|hors\s*taxes?))\s*[\|\s:]+([0-9\s\.,]+)\s*€?/gi,
   
