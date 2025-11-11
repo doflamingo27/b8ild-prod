@@ -99,12 +99,17 @@ const Projects = () => {
     setLoading(true);
 
     try {
+      // Nettoyer les dates vides en les convertissant en null
+      const cleanedData = {
+        ...formData,
+        date_fin_estimee: formData.date_fin_estimee || null,
+        date_fin_reelle: formData.date_fin_reelle || null,
+        entreprise_id: entrepriseId,
+      };
+
       const { error } = await supabase
         .from("chantiers")
-        .insert({
-          ...formData,
-          entreprise_id: entrepriseId,
-        });
+        .insert(cleanedData);
 
       if (error) throw error;
 
@@ -127,9 +132,10 @@ const Projects = () => {
       });
       loadProjects();
     } catch (error: any) {
+      console.error("Erreur création chantier:", error);
       toast({
         title: "Erreur",
-        description: toasts.errorGeneric,
+        description: error.message || toasts.errorGeneric,
         variant: "destructive",
       });
     } finally {
@@ -199,7 +205,13 @@ const Projects = () => {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="gap-2 font-bold" aria-label={labels.actions.create} title={labels.actions.create}>
+            <Button 
+              size="lg" 
+              className="gap-2 font-bold" 
+              disabled={!entrepriseId}
+              aria-label={labels.actions.create} 
+              title={labels.actions.create}
+            >
               <Plus className="h-5 w-5" aria-hidden="true" />
               {emptyStates.projects.primary}
             </Button>
