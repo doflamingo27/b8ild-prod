@@ -2,19 +2,33 @@ export function normalizeNumberFR(raw?: string | null): number | null {
   if (!raw) return null;
   
   const originalRaw = raw;
-  
-  // ✅ Supprimer TOUS les types d'espaces Unicode + sauts de ligne + €
   let s = String(raw)
-    .replace(/[\s\u00A0\u202F\u2009\n\r\t]/g, '') // Espaces classiques, insécables, sauts de ligne, tabs
+    .replace(/\u00A0/g, '') // Espace insécable
+    .replace(/\u202F/g, '') // Espace insécable fine (narrow no-break space)
+    .replace(/\u2009/g, '') // Espace fine (thin space)
+    .replace(/\s+/g, '')    // Tous les autres espaces
     .replace(/€/g, '')
     .trim();
   
   console.log(`[normalizeNumberFR] Input: "${originalRaw}" → After space removal: "${s}"`);
   
-  // ✅ Supprimer séparateurs de milliers (point) et convertir virgule décimale
-  s = s
-    .replace(/\./g, '')  // Supprimer tous les points (séparateurs de milliers)
-    .replace(/,/g, '.');  // Virgule décimale → point
+  // ✅ Logique renforcée pour virgule/point en français
+  // Si contient à la fois . et , → . = milliers, , = décimale
+  if (s.includes('.') && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(/,/, '.');
+  } 
+  // Si UNIQUEMENT virgule → c'est forcément une décimale en français
+  else if (s.includes(',')) {
+    s = s.replace(/,/, '.');
+  }
+  // Si UNIQUEMENT point ET 1-2 chiffres après → c'est une décimale
+  else if (s.match(/\.\d{1,2}$/)) {
+    // Garder le point tel quel (déjà un séparateur décimal)
+  }
+  // Sinon (point avec 3+ chiffres après) → c'est un séparateur de milliers
+  else if (s.includes('.')) {
+    s = s.replace(/\./g, '');
+  }
   
   // Garder chiffres, signe, point
   s = s.replace(/[^0-9\.\-]/g, '');
@@ -28,6 +42,8 @@ export function normalizeNumberFR(raw?: string | null): number | null {
     console.log(`[normalizeNumberFR] Input: "${originalRaw}" → Rejected (not finite)`);
     return null;
   }
+  
+  // ✅ SUPPRESSION des heuristiques OCR problématiques (pas de division automatique par 100 ou 10)
   
   // Bornes sûres
   if (Math.abs(n) > 999999999999.99) {

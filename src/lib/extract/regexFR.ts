@@ -1,15 +1,11 @@
 export const R = {
-  // ✅ PRIORITÉ 1 : Format tabulaire simple (page 2 des devis)
-  HT_TABULAR: /total\s+h\.?t\.?\s+([0-9\s\.,]+)\s*€?/gi,
-  TTC_TABULAR: /total\s+t\.?t\.?c\.?\s+([0-9\s\.,]+)\s*€?/gi,
-  
   // ✅ Nouvelle regex : Format tableau récapitulatif avec pipes
   RECAP_HT: /\|\s*(?:total|montant\s+total)\s*h\.?t\.?\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
   RECAP_TTC: /\|\s*(?:total|montant\s+total)\s*t\.?t\.?c\.?\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
   RECAP_TVA: /\|\s*t\.?v\.?a\.?\s*(?:à|a)?\s*(\d{1,2})\s*%\s*\|\s*([0-9\s\.,]+)\s*€?\s*\|/gi,
   
-  // ✅ HT : ajouter variantes devis (Montant total HT, Total général HT) + espaces multiples
-  HT: /(?:\|?\s*)?(?:(?:total|montant|sous[\s\-]?total|base|montant\s+total|total\s+g[ée]n[ée]ral)\s*(?:h\.?t\.?|hors\s*taxes?))\s+([0-9\s\.,]+)\s*€?/gi,
+  // ✅ HT : ajouter variantes devis (Montant total HT, Total général HT)
+  HT: /(?:\|?\s*)?(?:(?:total|montant|sous[\s\-]?total|base|montant\s+total|total\s+g[ée]n[ée]ral)\s*(?:h\.?t\.?|hors\s*taxes?))\s*[\|\s:]+([0-9\s\.,]+)\s*€?/gi,
   
   // ✅ TVA % : accepter "TVA à 20%", "TVA 20", "TVA: 20%", pipes + espaces
   TVA_PCT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*(?:\([^\)]*\))?\s*[\|\s]+(\d{1,2}[\.,]?\d{0,2})\s*%?/gi,
@@ -17,8 +13,8 @@ export const R = {
   // ✅ TVA montant : accepter pipes + espaces (format tableau)
   TVA_AMT: /(?:\|?\s*)?t\.?v\.?a\.?\s*(?:à|a)?\s*\d{1,2}\s*%?\s*[\|\s]+([0-9\s\.,]+)\s*€?/gi,
   
-  // ✅ TTC : ajouter variantes devis (Montant total TTC, Total général TTC) + espaces multiples
-  TTC: /(?:\|?\s*)?(?:(?:total|montant|net|montant\s+total|total\s+g[ée]n[ée]ral)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?))\s+([0-9\s\.,]+)\s*€?/gi,
+  // ✅ TTC : ajouter variantes devis (Montant total TTC, Total général TTC)
+  TTC: /(?:\|?\s*)?(?:(?:total|montant|net|montant\s+total|total\s+g[ée]n[ée]ral)\s*(?:t\.?t\.?c\.?|toutes?\s*taxes\s*comprises?))\s*[\|\s:]+([0-9\s\.,]+)\s*€?/gi,
   
   // ✅ Net à payer : accepter pipes + espaces (format tableau)
   NET: /(?:\|?\s*)?(?:net\s*(?:à|a)\s*payer(?:\s*t\.?t\.?c\.?)?)\s*[\|\s]+([0-9\s\.,]+)\s*€?/gi,
