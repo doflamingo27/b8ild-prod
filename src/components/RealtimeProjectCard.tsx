@@ -10,15 +10,18 @@ interface RealtimeProjectCardProps {
 const RealtimeProjectCard = ({ project, onEdit, onDelete }: RealtimeProjectCardProps) => {
   const { metrics, loading } = useChantierMetrics(project.id);
 
+  console.log('[🔴 RealtimeProjectCard MOUNTED v2]', project.nom_chantier);
+
   const rentabilite = metrics?.profitability_pct || 0;
   const joursRestants = metrics?.jours_restants_rentables ?? project.duree_estimee_jours;
 
-  console.log('[RealtimeProjectCard]', project.nom_chantier, {
+  console.log('[📊 RealtimeProjectCard DATA v2]', project.nom_chantier, {
     loading,
     hasMetrics: !!metrics,
     rentabilite,
     joursRestants,
-    rawMetrics: metrics
+    jours_restants_db: metrics?.jours_restants_rentables,
+    duree_estimee: project.duree_estimee_jours
   });
 
   return (
