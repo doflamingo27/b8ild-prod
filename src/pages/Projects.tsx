@@ -216,7 +216,7 @@ const Projects = () => {
               {emptyStates.projects.primary}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-xl">
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black">Créer un nouveau chantier</DialogTitle>
@@ -233,7 +233,6 @@ const Projects = () => {
                     onChange={(e) => setFormData({ ...formData, nom_chantier: e.target.value })}
                     placeholder={placeholders.project.name}
                     required
-                    aria-label={labels.forms.projectName}
                   />
                 </div>
                 <div className="space-y-2">
@@ -244,7 +243,6 @@ const Projects = () => {
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                     placeholder={placeholders.project.client}
                     required
-                    aria-label={labels.forms.projectClient}
                   />
                 </div>
                 <div className="space-y-2">
@@ -255,21 +253,30 @@ const Projects = () => {
                     onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
                     placeholder={placeholders.project.address}
                     required
-                    aria-label={labels.forms.projectAddress}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duree_estimee_jours" className="font-semibold">{labels.forms.projectDuration}</Label>
-                  <Input
-                    id="duree_estimee_jours"
-                    type="number"
-                    value={formData.duree_estimee_jours}
-                    onChange={(e) => setFormData({ ...formData, duree_estimee_jours: parseInt(e.target.value) })}
-                    placeholder={placeholders.project.duration}
-                    required
-                    aria-label={labels.forms.projectDuration}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date_debut_prevue" className="font-semibold">Date de début *</Label>
+                    <Input
+                      id="date_debut_prevue"
+                      type="date"
+                      value={formData.date_debut_prevue}
+                      onChange={(e) => setFormData({ ...formData, date_debut_prevue: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date_fin_estimee" className="font-semibold">Date de fin estimée</Label>
+                    <Input
+                      id="date_fin_estimee"
+                      type="date"
+                      value={formData.date_fin_estimee}
+                      onChange={(e) => setFormData({ ...formData, date_fin_estimee: e.target.value })}
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description" className="font-semibold">{labels.forms.projectDescription}</Label>
                   <Input
@@ -277,7 +284,6 @@ const Projects = () => {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Détails du chantier..."
-                    aria-label={labels.forms.projectDescription}
                   />
                 </div>
                 
@@ -302,27 +308,27 @@ const Projects = () => {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date_debut_prevue" className="font-semibold">Date de début prévue</Label>
-                    <Input
-                      id="date_debut_prevue"
-                      type="date"
-                      value={formData.date_debut_prevue}
-                      onChange={(e) => setFormData({ ...formData, date_debut_prevue: e.target.value })}
-                      aria-label="Date de début prévue"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date_fin_estimee" className="font-semibold">Date de fin estimée</Label>
-                    <Input
-                      id="date_fin_estimee"
-                      type="date"
-                      value={formData.date_fin_estimee}
-                      onChange={(e) => setFormData({ ...formData, date_fin_estimee: e.target.value })}
-                      aria-label="Date de fin estimée"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duree_estimee_jours" className="font-semibold">Durée estimée (jours travaillés)</Label>
+                  <Input
+                    id="duree_estimee_jours"
+                    type="number"
+                    value={formData.duree_estimee_jours}
+                    onChange={(e) => setFormData({ ...formData, duree_estimee_jours: parseInt(e.target.value) })}
+                    placeholder={placeholders.project.duration}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="date_fin_reelle" className="font-semibold">Date de fin réelle</Label>
+                  <Input
+                    id="date_fin_reelle"
+                    type="date"
+                    value={formData.date_fin_reelle}
+                    onChange={(e) => setFormData({ ...formData, date_fin_reelle: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">À remplir à la fin du chantier</p>
                 </div>
               </div>
               <DialogFooter>
