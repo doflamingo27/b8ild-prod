@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import QuoteManager from "@/components/project/QuoteManager";
 import InvoiceManager from "@/components/project/InvoiceManager";
-import TeamAssignment from "@/components/project/TeamAssignment";
+import AffectationsList from "@/components/project/AffectationsList";
 import ExpensesManager from "@/components/project/ExpensesManager";
 import ExportManager from "@/components/ExportManager";
 import ChantierKpis from "@/components/ChantierKpis";
@@ -60,6 +60,7 @@ const ProjectDetail = () => {
   const [factures, setFactures] = useState<any[]>([]);
   const [membres, setMembres] = useState<any[]>([]);
   const [frais, setFrais] = useState<any[]>([]);
+  const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -96,8 +97,20 @@ const ProjectDetail = () => {
   }, [id, user]);
 
   const loadProjectData = async () => {
+    if (!id || !user) return;
+
+    setLoading(true);
     try {
-      setLoading(true);
+      // Load entreprise ID
+      const { data: entrepriseData } = await supabase
+        .from("entreprises")
+        .select("id")
+        .eq("proprietaire_user_id", user.id)
+        .single();
+      
+      if (entrepriseData) {
+        setEntrepriseId(entrepriseData.id);
+      }
 
       // Charger le chantier
       const { data: chantierData, error: chantierError } = await supabase
@@ -374,12 +387,12 @@ const ProjectDetail = () => {
           </TabsContent>
 
           <TabsContent value="team" className="mt-6">
-            <TeamAssignment 
-              chantierId={id!} 
-              membres={membres} 
-              onUpdate={loadProjectData}
-              coutJournalier={calculations.cout_journalier_equipe}
-            />
+            {entrepriseId && (
+              <AffectationsList
+                chantierId={id!}
+                entrepriseId={entrepriseId}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="expenses" className="mt-6">

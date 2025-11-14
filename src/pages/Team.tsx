@@ -15,6 +15,8 @@ import EmptyState from "@/components/EmptyState";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { labels, placeholders, toasts, emptyStates, tooltips, modals, tables } from "@/lib/content";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import TeamManager from "@/components/team/TeamManager";
+import MemberTeamAssignment from "@/components/team/MemberTeamAssignment";
 
 interface Membre {
   id: string;
@@ -26,6 +28,7 @@ interface Membre {
   charges_salariales: number;
   charges_patronales: number;
   actif: boolean;
+  equipe_id?: string | null;
 }
 
 const Team = () => {
@@ -202,6 +205,8 @@ const Team = () => {
 
   return (
     <div className="space-y-8 animate-fade-up">
+      {entrepriseId && <TeamManager entrepriseId={entrepriseId} />}
+      
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -433,6 +438,7 @@ const Team = () => {
                 <TableRow>
                   <TableHead className="font-bold">{tables.team.columns[0]}</TableHead>
                   <TableHead className="font-bold">{tables.team.columns[1]}</TableHead>
+                  <TableHead className="font-bold">Équipe</TableHead>
                   <TableHead className="font-bold">{tables.team.columns[2]}</TableHead>
                   <TableHead className="text-right font-bold">{tables.team.columns[3]}</TableHead>
                   <TableHead className="text-right font-bold">{tables.team.columns[5]}</TableHead>
@@ -443,7 +449,7 @@ const Team = () => {
               <TableBody>
                 {filteredMembres.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-12">
                       <EmptyState
                         icon={Users}
                         title="Aucun membre pour le moment"
@@ -462,6 +468,16 @@ const Team = () => {
                         {membre.prenom} {membre.nom}
                       </TableCell>
                       <TableCell>{membre.poste}</TableCell>
+                      <TableCell>
+                        {entrepriseId && (
+                          <MemberTeamAssignment
+                            membreId={membre.id}
+                            currentEquipeId={membre.equipe_id}
+                            entrepriseId={entrepriseId}
+                            onUpdate={loadMembres}
+                          />
+                        )}
+                      </TableCell>
                       <TableCell>{membre.specialite}</TableCell>
                       <TableCell className="text-right font-mono font-semibold">{membre.taux_horaire.toFixed(2)} €</TableCell>
                       <TableCell className="text-right font-mono font-black text-primary">
