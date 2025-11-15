@@ -265,7 +265,7 @@ const FinancialManagement = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profitability" className="mt-6">
+          <TabsContent value="profitability" className="mt-6 p-6">
             <ProfitabilityView 
               metrics={metrics} 
               loading={metricsLoading} 
@@ -273,7 +273,7 @@ const FinancialManagement = () => {
             />
           </TabsContent>
 
-          <TabsContent value="quote" className="mt-6">
+          <TabsContent value="quote" className="mt-6 p-6">
             <QuoteManager 
               chantierId={selectedChantierId} 
               devis={devis} 
@@ -281,7 +281,7 @@ const FinancialManagement = () => {
             />
           </TabsContent>
 
-          <TabsContent value="team" className="mt-6">
+          <TabsContent value="team" className="mt-6 p-6">
             <TeamAssignment 
               chantierId={selectedChantierId} 
               membres={membres} 
@@ -290,7 +290,7 @@ const FinancialManagement = () => {
             />
           </TabsContent>
 
-          <TabsContent value="invoices" className="mt-6">
+          <TabsContent value="invoices" className="mt-6 p-6">
             <InvoiceManager 
               chantierId={selectedChantierId} 
               factures={factures} 
@@ -298,7 +298,7 @@ const FinancialManagement = () => {
             />
           </TabsContent>
 
-          <TabsContent value="expenses" className="mt-6">
+          <TabsContent value="expenses" className="mt-6 p-6">
             <ExpensesManager 
               chantierId={selectedChantierId} 
               frais={frais} 

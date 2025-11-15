@@ -265,12 +265,9 @@ const Reports = () => {
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Statut</p>
-                      <div>
-                        <Badge className={`${rentabilityBadge.bgColor} ${rentabilityBadge.color} border text-sm font-bold px-3 py-1`}>
-                          {rentabilityBadge.label}
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">{rentabilityBadge.message}</p>
-                      </div>
+                      <Badge className={`${rentabilityBadge.bgColor} ${rentabilityBadge.color} border text-sm font-bold px-3 py-1`}>
+                        {rentabilityBadge.emoji} {rentabilityBadge.label}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
