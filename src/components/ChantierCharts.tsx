@@ -37,6 +37,25 @@ export default function ChantierCharts({ chantierId }: ChantierChartsProps) {
         console.error('[ChantierCharts] Error loading snapshots:', error);
       } else if (data) {
         setSnapshots(data as Snapshot[]);
+        
+        // Si aucun snapshot n'existe, créer un snapshot initial
+        if (data.length === 0) {
+          console.log('[ChantierCharts] No snapshots found, creating initial snapshot');
+          const { error: rpcError } = await supabase.rpc('snapshot_chantier_daily');
+          
+          if (!rpcError) {
+            // Recharger les snapshots après création
+            const { data: newData } = await supabase
+              .from('chantier_snapshots')
+              .select('*')
+              .eq('chantier_id', chantierId)
+              .order('d', { ascending: true });
+            
+            if (newData) {
+              setSnapshots(newData as Snapshot[]);
+            }
+          }
+        }
       }
     } catch (err) {
       console.error('[ChantierCharts] Exception:', err);

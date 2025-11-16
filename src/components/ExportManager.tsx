@@ -40,28 +40,31 @@ const ExportManager = ({
         ["Adresse", chantierData.adresse || "Non renseignée"],
         [""],
         ["Finances"],
-        ["Budget devis HT", devis?.montant_ht || 0],
-        ["Budget devis TTC", devis?.montant_ttc || 0],
-        ["Coût journalier équipe", calculations.cout_journalier_equipe.toFixed(2)],
-        ["Budget disponible", calculations.budget_disponible.toFixed(2)],
-        ["Rentabilité (%)", calculations.rentabilite_pct.toFixed(2)],
-        ["Jour critique", calculations.jour_critique.toFixed(2)],
-        ["Jours restants avant déficit", calculations.jours_restants_avant_deficit],
+        ["Budget devis HT", (devis?.montant_ht || 0).toFixed(2)],
+        ["Budget devis TTC", (devis?.montant_ttc || 0).toFixed(2)],
+        ["Coût journalier équipe", (calculations.cout_journalier_equipe || 0).toFixed(2)],
+        ["Budget disponible", (calculations.budget_disponible || 0).toFixed(2)],
+        ["Rentabilité (%)", (calculations.rentabilite_pct || 0).toFixed(2)],
+        ["Jour critique", isFinite(calculations.jour_critique) ? calculations.jour_critique.toFixed(2) : 'N/A'],
+        ["Jours restants avant déficit", calculations.jours_restants_avant_deficit || 0],
         [""],
         ["Équipe"],
         ["Nom", "Poste", "Coût journalier"],
-        ...membres.map(m => [
-          `${m.prenom} ${m.nom}`,
-          m.poste,
-          (calculations.calculerCoutJournalierMembre(m)).toFixed(2)
-        ]),
+        ...membres.map(m => {
+          const cout = calculations.calculerCoutJournalierMembre(m) || 0;
+          return [
+            `${m.prenom} ${m.nom}`,
+            m.poste,
+            cout.toFixed(2)
+          ];
+        }),
         [""],
         ["Factures fournisseurs"],
         ["Fournisseur", "Catégorie", "Montant HT", "Date"],
         ...factures.map(f => [
           f.fournisseur || "Non renseigné",
           f.categorie,
-          f.montant_ht,
+          (f.montant_ht || 0).toFixed(2),
           f.date_facture || "Non renseignée"
         ]),
       ];
@@ -78,6 +81,7 @@ const ExportManager = ({
         description: "Le fichier a été téléchargé",
       });
     } catch (error) {
+      console.error('Erreur export CSV:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'exporter en CSV",
@@ -125,19 +129,23 @@ const ExportManager = ({
       
       doc.setFontSize(11);
       doc.setTextColor(0, 0, 0);
-      doc.text(`Budget devis HT: ${devis?.montant_ht || 0} €`, 20, 100);
-      doc.text(`Budget devis TTC: ${devis?.montant_ttc || 0} €`, 20, 108);
-      doc.text(`Coût journalier équipe: ${calculations.cout_journalier_equipe.toFixed(2)} €`, 20, 116);
-      doc.text(`Budget disponible: ${calculations.budget_disponible.toFixed(2)} €`, 20, 124);
-      doc.text(`Rentabilité: ${calculations.rentabilite_pct.toFixed(2)} %`, 20, 132);
-      doc.text(`Jour critique: ${calculations.jour_critique.toFixed(2)}`, 20, 140);
+      doc.text(`Budget devis HT: ${(devis?.montant_ht || 0).toFixed(2)} €`, 20, 100);
+      doc.text(`Budget devis TTC: ${(devis?.montant_ttc || 0).toFixed(2)} €`, 20, 108);
+      doc.text(`Coût journalier équipe: ${(calculations.cout_journalier_equipe || 0).toFixed(2)} €`, 20, 116);
+      doc.text(`Budget disponible: ${(calculations.budget_disponible || 0).toFixed(2)} €`, 20, 124);
+      doc.text(`Rentabilité: ${(calculations.rentabilite_pct || 0).toFixed(2)} %`, 20, 132);
+      const jourCritique = isFinite(calculations.jour_critique) ? calculations.jour_critique.toFixed(2) : 'N/A';
+      doc.text(`Jour critique: ${jourCritique}`, 20, 140);
       
       // Équipe (tableau)
-      const equipeData = membres.map(m => [
-        `${m.prenom || ''} ${m.nom || ''}`,
-        m.poste || 'Non renseigné',
-        `${calculations.calculerCoutJournalierMembre(m).toFixed(2)} €`
-      ]);
+      const equipeData = membres.map(m => {
+        const cout = calculations.calculerCoutJournalierMembre(m) || 0;
+        return [
+          `${m.prenom || ''} ${m.nom || ''}`,
+          m.poste || 'Non renseigné',
+          `${cout.toFixed(2)} €`
+        ];
+      });
       
       (doc as any).autoTable({
         head: [['Nom', 'Poste', 'Coût journalier']],
