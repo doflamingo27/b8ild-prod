@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp } from 'lucide-react';
 
 interface ChantierChartsProps {
   chantierId: string;
@@ -74,7 +75,29 @@ export default function ChantierCharts({ chantierId }: ChantierChartsProps) {
   }
 
   if (snapshots.length === 0) {
-    return null; // Ne rien afficher s'il n'y a pas de données
+    return (
+      <Card className="card-premium">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Évolution de la Rentabilité
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+              <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-lg font-semibold text-foreground mb-2">
+              Historique en cours de construction
+            </p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Les données d'évolution seront collectées automatiquement chaque jour pour vous permettre de suivre la rentabilité de votre chantier dans le temps.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const chartData = snapshots.map((s) => ({

@@ -183,8 +183,9 @@ const Reports = () => {
             // Calculs manuels sans hook
             const budget_devis = devis?.montant_ht || 0;
             const cout_journalier_equipe = membres.reduce((total: number, membre: any) => {
-              const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
-              const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+              if (!membre || !membre.taux_horaire) return total;
+              const charges_sal = membre.charges_salariales_pct ?? (membre.charges_salariales ?? 0);
+              const charges_pat = membre.charges_patronales_pct ?? (membre.charges_patronales ?? 0);
               const cout_horaire_reel = membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
               return total + (cout_horaire_reel * 8);
             }, 0);
@@ -229,13 +230,15 @@ const Reports = () => {
                         jours_restants_avant_deficit,
                         statut,
                         calculerCoutHoraireReel: (membre: any) => {
-                          const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
-                          const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+                          if (!membre || !membre.taux_horaire) return 0;
+                          const charges_sal = membre.charges_salariales_pct ?? (membre.charges_salariales ?? 0);
+                          const charges_pat = membre.charges_patronales_pct ?? (membre.charges_patronales ?? 0);
                           return membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
                         },
                         calculerCoutJournalierMembre: (membre: any) => {
-                          const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
-                          const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+                          if (!membre || !membre.taux_horaire) return 0;
+                          const charges_sal = membre.charges_salariales_pct ?? (membre.charges_salariales ?? 0);
+                          const charges_pat = membre.charges_patronales_pct ?? (membre.charges_patronales ?? 0);
                           const cout_horaire_reel = membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
                           return cout_horaire_reel * 8;
                         },
