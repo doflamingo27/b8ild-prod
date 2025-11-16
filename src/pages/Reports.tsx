@@ -183,7 +183,9 @@ const Reports = () => {
             // Calculs manuels sans hook
             const budget_devis = devis?.montant_ht || 0;
             const cout_journalier_equipe = membres.reduce((total: number, membre: any) => {
-              const cout_horaire_reel = membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+              const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
+              const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+              const cout_horaire_reel = membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
               return total + (cout_horaire_reel * 8);
             }, 0);
             const budget_disponible = budget_devis - coutsFixes;
@@ -227,10 +229,14 @@ const Reports = () => {
                         jours_restants_avant_deficit,
                         statut,
                         calculerCoutHoraireReel: (membre: any) => {
-                          return membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+                          const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
+                          const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+                          return membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
                         },
                         calculerCoutJournalierMembre: (membre: any) => {
-                          const cout_horaire_reel = membre.taux_horaire * (1 + membre.charges_salariales / 100 + membre.charges_patronales / 100);
+                          const charges_sal = membre.charges_salariales_pct || membre.charges_salariales || 0;
+                          const charges_pat = membre.charges_patronales_pct || membre.charges_patronales || 0;
+                          const cout_horaire_reel = membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
                           return cout_horaire_reel * 8;
                         },
                       }}

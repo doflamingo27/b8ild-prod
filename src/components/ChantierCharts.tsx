@@ -74,16 +74,7 @@ export default function ChantierCharts({ chantierId }: ChantierChartsProps) {
   }
 
   if (snapshots.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center text-muted-foreground py-12">
-            <p className="text-lg">Aucun historique disponible</p>
-            <p className="text-sm mt-2">Les données seront collectées automatiquement chaque jour</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null; // Ne rien afficher s'il n'y a pas de données
   }
 
   const chartData = snapshots.map((s) => ({
