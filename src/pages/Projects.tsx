@@ -107,18 +107,33 @@ const Projects = () => {
         entreprise_id: entrepriseId,
       };
 
-      const { error } = await supabase
-        .from("chantiers")
-        .insert(cleanedData);
+      if (editingProject) {
+        const { error } = await supabase
+          .from("chantiers")
+          .update(cleanedData)
+          .eq("id", editingProject.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: toasts.created,
-        description: "Le nouveau chantier a été ajouté avec succès.",
-      });
+        toast({
+          title: toasts.updated,
+          description: "Le chantier a été modifié avec succès.",
+        });
+      } else {
+        const { error } = await supabase
+          .from("chantiers")
+          .insert(cleanedData);
+
+        if (error) throw error;
+
+        toast({
+          title: toasts.created,
+          description: "Le nouveau chantier a été ajouté avec succès.",
+        });
+      }
 
       setDialogOpen(false);
+      setEditingProject(null);
       setFormData({
         nom_chantier: "",
         client: "",
@@ -191,6 +206,51 @@ const Projects = () => {
     }
   };
 
+  const handleEditProject = (id: string) => {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+    
+    setFormData({
+      nom_chantier: project.nom_chantier,
+      client: project.client,
+      adresse: project.adresse || "",
+      duree_estimee_jours: project.duree_estimee_jours || 30,
+      description: project.description || "",
+      etat_chantier: project.etat_chantier || "brouillon",
+      date_debut_prevue: project.date_debut_prevue || new Date().toISOString().split('T')[0],
+      date_fin_estimee: project.date_fin_estimee || "",
+      date_fin_reelle: project.date_fin_reelle || "",
+    });
+    setEditingProject(project);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("chantiers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Chantier supprimé",
+        description: "Le chantier a été supprimé avec succès.",
+      });
+      
+      loadProjects();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || toasts.errorGeneric,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-up">
       <div className="flex items-center justify-between">
@@ -203,7 +263,10 @@ const Projects = () => {
             Gérez et suivez tous vos chantiers
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditingProject(null);
+        }}>
           <DialogTrigger asChild>
             <Button 
               size="lg" 
@@ -219,9 +282,11 @@ const Projects = () => {
           <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black">Créer un nouveau chantier</DialogTitle>
+                <DialogTitle className="text-2xl font-black">
+                  {editingProject ? "Modifier le chantier" : "Créer un nouveau chantier"}
+                </DialogTitle>
                 <DialogDescription className="text-base">
-                  Renseignez les informations du chantier
+                  {editingProject ? "Modifiez les informations du chantier" : "Renseignez les informations du chantier"}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -333,7 +398,7 @@ const Projects = () => {
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={loading} size="lg" className="font-bold">
-                  Créer le chantier
+                  {editingProject ? "Modifier le chantier" : "Créer le chantier"}
                 </Button>
               </DialogFooter>
             </form>
@@ -437,7 +502,8 @@ const Projects = () => {
                 budget_devis={project.budget_ht || 0}
                 couts_engages={(metrics.couts_fixes_engages || 0) + (metrics.cout_main_oeuvre_reel || 0)}
                 etat_chantier={project.etat_chantier}
-                onEdit={() => handleEditState(project)}
+                onEdit={handleEditProject}
+                onDelete={handleDeleteProject}
               />
             );
           })}

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Equipe {
   id: string;
@@ -27,6 +28,8 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
   const { toast } = useToast();
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingEquipe, setEditingEquipe] = useState<Equipe | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -102,14 +105,19 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette équipe ?")) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
 
     try {
       const { error } = await supabase
         .from("equipes")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteId);
 
       if (error) throw error;
 
@@ -121,6 +129,9 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setConfirmOpen(false);
+      setDeleteId(null);
     }
   };
 
@@ -135,7 +146,15 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
   };
 
   return (
-    <Card>
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={confirmDelete}
+        variant="delete"
+      />
+      
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -262,6 +281,7 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
         )}
       </CardContent>
     </Card>
+    </>
   );
 };
 
