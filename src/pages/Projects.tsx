@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import ProjectCard from "@/components/ProjectCard";
 import EmptyState from "@/components/EmptyState";
 import { labels, placeholders, toasts, emptyStates } from "@/lib/content";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const Projects = () => {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ const Projects = () => {
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
   const [editStateDialogOpen, setEditStateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nom_chantier: "",
     client: "",
@@ -225,14 +228,19 @@ const Projects = () => {
     setDialogOpen(true);
   };
 
-  const handleDeleteProject = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) return;
+  const handleDeleteProject = (id: string) => {
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
 
     try {
       const { error } = await supabase
         .from("chantiers")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteId);
 
       if (error) throw error;
 
@@ -248,11 +256,21 @@ const Projects = () => {
         description: error.message || toasts.errorGeneric,
         variant: "destructive",
       });
+    } finally {
+      setConfirmOpen(false);
+      setDeleteId(null);
     }
   };
 
   return (
     <div className="space-y-8 animate-fade-up">
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={confirmDelete}
+        variant="delete"
+      />
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
