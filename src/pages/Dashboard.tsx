@@ -184,13 +184,7 @@ const Dashboard = () => {
     }
 
     try {
-      // Supprimer d'abord les métriques realtime liées
-      await supabase
-        .from("chantier_metrics_realtime")
-        .delete()
-        .eq("chantier_id", id);
-
-      // Puis supprimer le chantier
+      // Supprimer le chantier (CASCADE supprimera automatiquement toutes les dépendances)
       const { error } = await supabase
         .from("chantiers")
         .delete()
