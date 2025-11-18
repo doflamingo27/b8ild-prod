@@ -178,6 +178,42 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce chantier définitivement ?")) {
+      return;
+    }
+
+    try {
+      // Supprimer d'abord les métriques realtime liées
+      await supabase
+        .from("chantier_metrics_realtime")
+        .delete()
+        .eq("chantier_id", id);
+
+      // Puis supprimer le chantier
+      const { error } = await supabase
+        .from("chantiers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Chantier supprimé",
+        description: "Le chantier a été supprimé définitivement.",
+      });
+      
+      loadDashboardData();
+    } catch (error: any) {
+      console.error("Erreur suppression chantier:", error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de supprimer le chantier",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-up">
       <div className="flex items-center justify-between">
@@ -377,12 +413,7 @@ const Dashboard = () => {
                 key={project.id}
                 project={project}
                 onEdit={(id) => navigate(`/projects/${id}`)}
-                onDelete={async (id) => {
-                  if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
-                    await supabase.from("chantiers").delete().eq("id", id);
-                    loadDashboardData();
-                  }
-                }}
+                onDelete={handleDeleteProject}
               />
             ))}
           </div>
