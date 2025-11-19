@@ -339,23 +339,6 @@ const ProjectDetail = () => {
         </Alert>
       )}
 
-      {/* Métriques temps réel */}
-      {!metricsLoading && metrics && (
-        <>
-          <ChantierKpis metrics={metrics} />
-          <ChantierCharts chantierId={id!} />
-        </>
-      )}
-
-      {metricsLoading && (
-        <Card className="card-premium">
-          <CardContent className="pt-16 pb-16 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement des métriques...</p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Tabs de gestion */}
       <Card className="card-premium">
         <Tabs defaultValue="quote" className="w-full">
@@ -400,6 +383,23 @@ const ProjectDetail = () => {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Métriques temps réel - En dessous des onglets */}
+      {!metricsLoading && metrics && (
+        <>
+          <ChantierKpis metrics={metrics} />
+          <ChantierCharts chantierId={id!} />
+        </>
+      )}
+
+      {metricsLoading && (
+        <Card className="card-premium">
+          <CardContent className="pt-16 pb-16 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Chargement des métriques...</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dialog de modification */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
