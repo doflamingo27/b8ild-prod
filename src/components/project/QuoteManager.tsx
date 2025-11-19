@@ -402,19 +402,6 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       <CardContent>
         {devisList.length > 0 ? (
           <div className="space-y-4">
-            {/* KPI - Devis actif */}
-            {devisActif && (
-              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">💰 Devis actif ({devisActif.version})</p>
-                    <p className="text-2xl font-bold">{devisActif.montant_ttc?.toLocaleString() || 0} € TTC</p>
-                  </div>
-                  <Badge className="bg-primary text-primary-foreground">ACTIF</Badge>
-                </div>
-              </div>
-            )}
-
             {/* Tableau des devis */}
             <Table>
               <TableHeader>

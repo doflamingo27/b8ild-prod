@@ -384,7 +384,24 @@ const ProjectDetail = () => {
         </Tabs>
       </Card>
 
-      {/* Métriques temps réel - En dessous des onglets */}
+      {/* Récapitulatif Devis Actif */}
+      {devisActif && (
+        <Card className="card-premium">
+          <CardContent className="pt-6">
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">💰 Devis actif ({devisActif.version})</p>
+                  <p className="text-2xl font-bold">{devisActif.montant_ttc?.toLocaleString() || 0} € TTC</p>
+                </div>
+                <Badge className="bg-primary text-primary-foreground">ACTIF</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Métriques temps réel - En dessous du récapitulatif devis */}
       {!metricsLoading && metrics && (
         <>
           <ChantierKpis metrics={metrics} />
