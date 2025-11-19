@@ -205,50 +205,35 @@ const Team = () => {
 
   return (
     <div className="space-y-8 animate-fade-up">
-      {entrepriseId && <TeamManager entrepriseId={entrepriseId} />}
-      
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        onConfirm={confirmDelete}
-        variant="delete"
-      />
-      
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
-            <Users className="h-9 w-9 text-primary" aria-hidden="true" />
-            Mon Équipe
-          </h1>
-          <p className="text-muted-foreground mt-2 text-lg">
-            Gérez vos salariés et leurs coûts
-          </p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button 
-              size="lg" 
-              className="gap-2 font-bold"
-              aria-label="Ajouter un membre"
-              title="Ajouter un membre"
-            >
-              <UserPlus className="h-5 w-5" aria-hidden="true" />
-              Ajouter un membre
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <form onSubmit={handleSubmit}>
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-black">
-                  {editingMembre ? "Modifier le membre" : "Ajouter un membre"}
-                </DialogTitle>
-                <DialogDescription className="text-base">
-                  Renseignez les informations du membre de l'équipe
-                </DialogDescription>
-              </DialogHeader>
+      {entrepriseId && (
+        <TeamManager 
+          entrepriseId={entrepriseId}
+          addMemberButton={
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button 
+                  size="lg" 
+                  className="gap-2 font-bold"
+                  aria-label="Ajouter un membre"
+                  title="Ajouter un membre"
+                >
+                  <UserPlus className="h-5 w-5" aria-hidden="true" />
+                  Ajouter un membre
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <form onSubmit={handleSubmit}>
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-black">
+                      {editingMembre ? "Modifier le membre" : "Ajouter un membre"}
+                    </DialogTitle>
+                    <DialogDescription className="text-base">
+                      Renseignez les informations du membre de l'équipe
+                    </DialogDescription>
+                  </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -346,6 +331,27 @@ const Team = () => {
             </form>
           </DialogContent>
         </Dialog>
+          }
+        />
+      )}
+      
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={confirmDelete}
+        variant="delete"
+      />
+      
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black text-gradient-primary flex items-center gap-3">
+            <Users className="h-9 w-9 text-primary" aria-hidden="true" />
+            Mon Équipe
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Gérez vos salariés et leurs coûts
+          </p>
+        </div>
       </div>
 
       {/* KPI Cards */}
