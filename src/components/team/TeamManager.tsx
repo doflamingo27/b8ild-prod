@@ -22,9 +22,10 @@ interface Equipe {
 
 interface TeamManagerProps {
   entrepriseId: string;
+  addMemberButton?: React.ReactNode;
 }
 
-const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
+const TeamManager = ({ entrepriseId, addMemberButton }: TeamManagerProps) => {
   const { toast } = useToast();
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -166,13 +167,15 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
               Créez et gérez vos équipes par spécialité
             </CardDescription>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Créer une équipe
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-3">
+            {addMemberButton}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Créer une équipe
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
@@ -225,6 +228,7 @@ const TeamManager = ({ entrepriseId }: TeamManagerProps) => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
