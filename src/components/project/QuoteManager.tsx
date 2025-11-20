@@ -59,8 +59,21 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
     setLoading(true);
 
     try {
-      const montant_ht = parseFloat(formData.montant_ht) || 0;
-      const tva = parseFloat(formData.tva) || 0;
+      // Validation critique : vérifier que chantierId existe
+      if (!chantierId) {
+        throw new Error("ID du chantier manquant. Impossible de créer le devis.");
+      }
+      
+      console.log('[QuoteManager] Début création devis pour chantier:', chantierId);
+
+      // Normalisation des montants : remplacer virgule par point pour format français
+      const montantHtStr = formData.montant_ht.toString().replace(',', '.');
+      const tvaStr = formData.tva.toString().replace(',', '.');
+      
+      const montant_ht = parseFloat(montantHtStr) || 0;
+      const tva = parseFloat(tvaStr) || 0;
+
+      console.log('[QuoteManager] Montants normalisés:', { montant_ht, tva, montant_ttc: formData.montant_ttc });
 
       if (montant_ht <= 0) {
         throw new Error("Le montant HT doit être supérieur à 0");
@@ -70,6 +83,7 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
       // Upload du fichier si présent
       if (file) {
+        console.log('[QuoteManager] Début upload fichier:', file.name);
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage
@@ -79,13 +93,22 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
             upsert: false
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('[QuoteManager] Erreur upload fichier:', uploadError);
+          toast({
+            title: "Erreur d'upload",
+            description: `Impossible d'uploader le fichier: ${uploadError.message}`,
+            variant: "destructive",
+          });
+          return; // Stop ici si l'upload échoue
+        }
         
         const { data: { publicUrl } } = supabase.storage
           .from('devis')
           .getPublicUrl(fileName);
         
         fichier_url = publicUrl;
+        console.log('[QuoteManager] Fichier uploadé avec succès:', fichier_url);
       }
 
       // Auto-incrémenter la version
@@ -98,6 +121,7 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
       // Désactiver tous les autres devis si c'est le premier
       if (isFirstDevis) {
+        console.log('[QuoteManager] Premier devis, désactivation des anciens devis');
         await supabase
           .from("devis")
           .update({ actif: false })
@@ -115,11 +139,18 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
         actif: isFirstDevis, // Premier devis = actif
       };
 
+      console.log('[QuoteManager] DevisData envoyé à la base:', devisData);
+
       const { error } = await supabase
         .from("devis")
         .insert(devisData);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[QuoteManager] Erreur insertion devis:', error);
+        throw error;
+      }
+
+      console.log('[QuoteManager] Devis créé avec succès');
 
       toast({
         title: "Succès",
@@ -136,6 +167,7 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       setFile(null);
       onUpdate();
     } catch (error: any) {
+      console.error('[QuoteManager] Erreur création devis:', error);
       toast({
         title: "Erreur",
         description: error.message,
@@ -193,8 +225,16 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
     setLoading(true);
 
     try {
-      const montant_ht = parseFloat(formData.montant_ht) || 0;
-      const tva = parseFloat(formData.tva) || 0;
+      console.log('[QuoteManager] Début modification devis:', editingDevis?.id);
+      
+      // Normalisation des montants : remplacer virgule par point pour format français
+      const montantHtStr = formData.montant_ht.toString().replace(',', '.');
+      const tvaStr = formData.tva.toString().replace(',', '.');
+      
+      const montant_ht = parseFloat(montantHtStr) || 0;
+      const tva = parseFloat(tvaStr) || 0;
+
+      console.log('[QuoteManager] Montants normalisés pour update:', { montant_ht, tva, montant_ttc: formData.montant_ttc });
 
       const { error } = await supabase
         .from("devis")
@@ -206,7 +246,12 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
         })
         .eq("id", editingDevis.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[QuoteManager] Erreur modification devis:', error);
+        throw error;
+      }
+
+      console.log('[QuoteManager] Devis modifié avec succès');
 
       toast({
         title: "Succès",
@@ -217,6 +262,7 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       setEditingDevis(null);
       onUpdate();
     } catch (error: any) {
+      console.error('[QuoteManager] Erreur modification devis:', error);
       toast({
         title: "Erreur",
         description: error.message,
