@@ -71,10 +71,13 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       // Upload du fichier si présent
       if (file) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${chantierId}-devis-${Date.now()}.${fileExt}`;
+        const fileName = `${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from('devis')
-          .upload(fileName, file);
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) throw uploadError;
         
