@@ -11,8 +11,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import AutoExtractUploader from "@/components/AutoExtractUploader";
-import { useQuery } from "@tanstack/react-query";
 
 interface QuoteManagerProps {
   chantierId: string;
@@ -28,28 +26,12 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
   const [file, setFile] = useState<File | null>(null);
   const [editingDevis, setEditingDevis] = useState<any>(null);
   const [formData, setFormData] = useState({
-    montant_ht: 0,
-    tva: 20,
+    montant_ht: '',
+    tva: '20',
     montant_ttc: 0,
     statut: 'brouillon',
   });
 
-  // Récupérer entrepriseId pour AutoExtractUploader
-  const { data: entreprise } = useQuery({
-    queryKey: ['entreprise'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non authentifié");
-      
-      const { data } = await supabase
-        .from('entreprises')
-        .select('id')
-        .eq('proprietaire_user_id', user.id)
-        .single();
-      
-      return data;
-    }
-  });
 
   const devisList = Array.isArray(devis) ? devis : [];
   const devisActif = devisList.find(d => d.actif);
@@ -60,14 +42,16 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
   const handleHTChange = (value: string) => {
     const ht = parseFloat(value) || 0;
-    const ttc = calculateTTC(ht, formData.tva);
-    setFormData({ ...formData, montant_ht: ht, montant_ttc: ttc });
+    const tva = parseFloat(formData.tva) || 0;
+    const ttc = calculateTTC(ht, tva);
+    setFormData({ ...formData, montant_ht: value, montant_ttc: ttc });
   };
 
   const handleTVAChange = (value: string) => {
     const tva = parseFloat(value) || 0;
-    const ttc = calculateTTC(formData.montant_ht, tva);
-    setFormData({ ...formData, tva, montant_ttc: ttc });
+    const ht = parseFloat(formData.montant_ht) || 0;
+    const ttc = calculateTTC(ht, tva);
+    setFormData({ ...formData, tva: value, montant_ttc: ttc });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +59,13 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
     setLoading(true);
 
     try {
+      const montant_ht = parseFloat(formData.montant_ht) || 0;
+      const tva = parseFloat(formData.tva) || 0;
+
+      if (montant_ht <= 0) {
+        throw new Error("Le montant HT doit être supérieur à 0");
+      }
+
       let fichier_url = null;
 
       // Upload du fichier si présent
@@ -100,8 +91,10 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
         : 0;
       const newVersion = `V${maxVersion + 1}`;
 
+      const isFirstDevis = devisList.length === 0;
+
       // Désactiver tous les autres devis si c'est le premier
-      if (devisList.length === 0) {
+      if (isFirstDevis) {
         await supabase
           .from("devis")
           .update({ actif: false })
@@ -109,11 +102,14 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
       }
 
       const devisData = {
-        ...formData,
+        montant_ht,
+        tva,
+        montant_ttc: formData.montant_ttc,
+        statut: formData.statut,
         chantier_id: chantierId,
         fichier_url,
         version: newVersion,
-        actif: devisList.length === 0, // Premier devis = actif
+        actif: isFirstDevis, // Premier devis = actif
       };
 
       const { error } = await supabase
@@ -129,8 +125,8 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
       setOpen(false);
       setFormData({
-        montant_ht: 0,
-        tva: 20,
+        montant_ht: '',
+        tva: '20',
         montant_ttc: 0,
         statut: 'brouillon',
       });
@@ -181,8 +177,8 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
   const handleOpenEdit = (d: any) => {
     setEditingDevis(d);
     setFormData({
-      montant_ht: d.montant_ht,
-      tva: d.tva,
+      montant_ht: d.montant_ht.toString(),
+      tva: d.tva.toString(),
       montant_ttc: d.montant_ttc,
       statut: d.statut,
     });
@@ -194,11 +190,14 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
     setLoading(true);
 
     try {
+      const montant_ht = parseFloat(formData.montant_ht) || 0;
+      const tva = parseFloat(formData.tva) || 0;
+
       const { error } = await supabase
         .from("devis")
         .update({
-          montant_ht: formData.montant_ht,
-          tva: formData.tva,
+          montant_ht,
+          tva,
           montant_ttc: formData.montant_ttc,
           statut: formData.statut,
         })
@@ -282,40 +281,16 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
                 Nouveau devis
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Créer un nouveau devis</DialogTitle>
                 <DialogDescription>
-                  Uploadez votre devis pour extraction automatique (OCR.space)
+                  Saisissez les informations du devis manuellement
                 </DialogDescription>
               </DialogHeader>
 
-              {entreprise?.id && (
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  <p className="text-sm font-semibold mb-3">📄 Option 1 : Extraction automatique (recommandé)</p>
-                  <AutoExtractUploader 
-                    module="devis"
-                    entrepriseId={entreprise.id}
-                    chantierId={chantierId}
-                    onSaved={async (devisId) => {
-                      toast({
-                        title: "✅ Devis enregistré",
-                        description: "L'extraction OCR a réussi",
-                      });
-                      setOpen(false);
-                      onUpdate();
-                    }}
-                  />
-                </div>
-              )}
-              
-              <div className="text-center text-sm text-muted-foreground my-4">
-                — ou —
-              </div>
-
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
-                  <p className="text-sm font-semibold">✍️ Option 2 : Saisie manuelle</p>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
