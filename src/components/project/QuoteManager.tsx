@@ -79,20 +79,7 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
         throw new Error("Le montant HT doit être supérieur à 0");
       }
 
-      let fichier_url = null;
-
-      // Upload du fichier désactivé temporairement pour éviter les erreurs de stockage
-      if (file) {
-        console.warn('[QuoteManager] Upload de fichier devis désactivé temporairement. Le devis sera créé sans fichier.', {
-          fileName: file.name,
-        });
-        toast({
-          title: "Fichier ignoré",
-          description:
-            "Pour le moment, l'import de fichiers devis est désactivé. Le devis est créé sans pièce jointe.",
-        });
-        fichier_url = null;
-      }
+      const fichier_url = null; // Fichier désactivé pour les devis
 
       // Auto-incrémenter la version
       const maxVersion = devisList.length > 0 
@@ -323,39 +310,22 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="file">Fichier (optionnel)</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Le devis sera créé même si le fichier ne s'enregistre pas. Formats acceptés : PDF, PNG, JPG.
-                      </p>
-                      <Input
-                        id="file"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="statut">Statut</Label>
-                      <Select 
-                        value={formData.statut} 
-                        onValueChange={(value) => setFormData({ ...formData, statut: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="brouillon">Brouillon</SelectItem>
-                          <SelectItem value="envoye">Envoyé</SelectItem>
-                          <SelectItem value="accepte">Accepté</SelectItem>
-                          <SelectItem value="refuse">Refusé</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="statut">Statut</Label>
+                    <Select 
+                      value={formData.statut} 
+                      onValueChange={(value) => setFormData({ ...formData, statut: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="brouillon">Brouillon</SelectItem>
+                        <SelectItem value="envoye">Envoyé</SelectItem>
+                        <SelectItem value="accepte">Accepté</SelectItem>
+                        <SelectItem value="refuse">Refusé</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
