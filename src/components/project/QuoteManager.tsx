@@ -81,39 +81,17 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
       let fichier_url = null;
 
-      // Upload du fichier si présent (non bloquant)
+      // Upload du fichier désactivé temporairement pour éviter les erreurs de stockage
       if (file) {
-        try {
-          console.log('[QuoteManager] Début upload fichier:', file.name);
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('devis')
-            .upload(fileName, file, {
-              cacheControl: '3600',
-              upsert: false
-            });
-
-          if (uploadError) {
-            throw uploadError;
-          }
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('devis')
-            .getPublicUrl(fileName);
-          
-          fichier_url = publicUrl;
-          console.log('[QuoteManager] Fichier uploadé avec succès:', fichier_url);
-        } catch (uploadError: any) {
-          // L'upload a échoué mais on continue la création du devis sans fichier
-          console.error('[QuoteManager] Erreur upload fichier, on continue sans fichier:', uploadError);
-          toast({
-            title: "Fichier non enregistré",
-            description: "Le devis a été créé mais le fichier n'a pas pu être enregistré. Vous pouvez le conserver en local.",
-            variant: "default",
-          });
-          fichier_url = null; // On continue sans fichier
-        }
+        console.warn('[QuoteManager] Upload de fichier devis désactivé temporairement. Le devis sera créé sans fichier.', {
+          fileName: file.name,
+        });
+        toast({
+          title: "Fichier ignoré",
+          description:
+            "Pour le moment, l'import de fichiers devis est désactivé. Le devis est créé sans pièce jointe.",
+        });
+        fichier_url = null;
       }
 
       // Auto-incrémenter la version
