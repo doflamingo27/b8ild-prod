@@ -76,32 +76,29 @@ const AffectationForm = ({ chantierId, entrepriseId, affectation, onSuccess, onC
   const calculateCost = () => {
     const { jours_travailles, heures_par_jour, taux_horaire_specifique, useTauxSpecifique, membre_equipe_id, equipe_id } = formData;
 
-    let tauxHoraire = 0;
-    let charges = 0;
+    let totalCout = 0;
 
     if (selectedType === "membre" && membre_equipe_id) {
       const membre = membres.find(m => m.id === membre_equipe_id);
       if (membre) {
-        tauxHoraire = useTauxSpecifique && taux_horaire_specifique 
+        const tauxHoraire = useTauxSpecifique && taux_horaire_specifique 
           ? parseFloat(taux_horaire_specifique) 
           : membre.taux_horaire;
-        charges = 1 + (membre.charges_salariales / 100) + (membre.charges_patronales / 100);
+        const charges = 1 + (membre.charges_salariales / 100) + (membre.charges_patronales / 100);
+        totalCout = jours_travailles * heures_par_jour * tauxHoraire * charges;
       }
     } else if (selectedType === "equipe" && equipe_id) {
-      // Pour une équipe, on calcule le coût moyen des membres
+      // Pour une équipe, calculer le coût total de tous les membres
       const membresEquipe = membres.filter(m => m.equipe_id === equipe_id);
-      if (membresEquipe.length > 0) {
-        const totalCout = membresEquipe.reduce((sum, m) => {
-          const coutMembre = m.taux_horaire * (1 + (m.charges_salariales / 100) + (m.charges_patronales / 100));
-          return sum + coutMembre;
-        }, 0);
-        tauxHoraire = totalCout / membresEquipe.length;
-        charges = 1;
-      }
+      totalCout = membresEquipe.reduce((sum, membre) => {
+        const tauxHoraire = membre.taux_horaire;
+        const charges = 1 + (membre.charges_salariales / 100) + (membre.charges_patronales / 100);
+        const coutMembre = jours_travailles * heures_par_jour * tauxHoraire * charges;
+        return sum + coutMembre;
+      }, 0);
     }
 
-    const cout = jours_travailles * heures_par_jour * tauxHoraire * charges;
-    setCalculatedCost(cout);
+    setCalculatedCost(totalCout);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,44 +106,74 @@ const AffectationForm = ({ chantierId, entrepriseId, affectation, onSuccess, onC
     setLoading(true);
 
     try {
-      const dataToSubmit = {
-        chantier_id: chantierId,
-        membre_equipe_id: selectedType === "membre" ? formData.membre_equipe_id : null,
-        equipe_id: selectedType === "equipe" ? formData.equipe_id : null,
-        date_debut: format(formData.date_debut, "yyyy-MM-dd"),
-        date_fin: format(formData.date_fin, "yyyy-MM-dd"),
-        jours_travailles: formData.jours_travailles,
-        heures_par_jour: formData.heures_par_jour,
-        taux_horaire_specifique: formData.useTauxSpecifique && formData.taux_horaire_specifique 
-          ? parseFloat(formData.taux_horaire_specifique) 
-          : null,
-        notes: formData.notes,
-      };
-
-      // Copier les charges du membre pour historique
-      if (selectedType === "membre" && formData.membre_equipe_id) {
+      if (selectedType === "membre") {
+        // Affectation d'un membre individuel
         const membre = membres.find(m => m.id === formData.membre_equipe_id);
-        if (membre) {
-          (dataToSubmit as any).charges_salariales_pct = membre.charges_salariales;
-          (dataToSubmit as any).charges_patronales_pct = membre.charges_patronales;
+        if (!membre) throw new Error("Membre non trouvé");
+
+        const dataToSubmit = {
+          chantier_id: chantierId,
+          membre_equipe_id: formData.membre_equipe_id,
+          equipe_id: formData.equipe_id || null,
+          date_debut: format(formData.date_debut, "yyyy-MM-dd"),
+          date_fin: format(formData.date_fin, "yyyy-MM-dd"),
+          jours_travailles: formData.jours_travailles,
+          heures_par_jour: formData.heures_par_jour,
+          taux_horaire_specifique: formData.useTauxSpecifique && formData.taux_horaire_specifique 
+            ? parseFloat(formData.taux_horaire_specifique) 
+            : membre.taux_horaire,
+          charges_salariales_pct: membre.charges_salariales,
+          charges_patronales_pct: membre.charges_patronales,
+          notes: formData.notes,
+        };
+
+        if (affectation) {
+          const { error } = await supabase
+            .from("affectations_chantiers")
+            .update(dataToSubmit)
+            .eq("id", affectation.id);
+
+          if (error) throw error;
+          toast({ title: "Affectation modifiée" });
+        } else {
+          const { error } = await supabase
+            .from("affectations_chantiers")
+            .insert(dataToSubmit);
+
+          if (error) throw error;
+          toast({ title: "Affectation créée" });
         }
-      }
-
-      if (affectation) {
-        const { error } = await supabase
-          .from("affectations_chantiers")
-          .update(dataToSubmit)
-          .eq("id", affectation.id);
-
-        if (error) throw error;
-        toast({ title: "Affectation modifiée" });
       } else {
+        // Affectation d'une équipe complète - créer une affectation pour chaque membre
+        const membresEquipe = membres.filter(m => m.equipe_id === formData.equipe_id);
+        
+        if (membresEquipe.length === 0) {
+          throw new Error("Cette équipe n'a aucun membre. Ajoutez des membres à l'équipe d'abord.");
+        }
+
+        const affectationsToInsert = membresEquipe.map(membre => ({
+          chantier_id: chantierId,
+          membre_equipe_id: membre.id,
+          equipe_id: formData.equipe_id,
+          date_debut: format(formData.date_debut, "yyyy-MM-dd"),
+          date_fin: format(formData.date_fin, "yyyy-MM-dd"),
+          jours_travailles: formData.jours_travailles,
+          heures_par_jour: formData.heures_par_jour,
+          taux_horaire_specifique: membre.taux_horaire,
+          charges_salariales_pct: membre.charges_salariales,
+          charges_patronales_pct: membre.charges_patronales,
+          notes: formData.notes,
+        }));
+
         const { error } = await supabase
           .from("affectations_chantiers")
-          .insert(dataToSubmit);
+          .insert(affectationsToInsert);
 
         if (error) throw error;
-        toast({ title: "Affectation créée" });
+        toast({ 
+          title: `${membresEquipe.length} membre${membresEquipe.length > 1 ? 's' : ''} affecté${membresEquipe.length > 1 ? 's' : ''}`,
+          description: `L'équipe a été affectée avec succès`
+        });
       }
 
       onSuccess();
