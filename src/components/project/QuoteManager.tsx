@@ -81,34 +81,39 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
 
       let fichier_url = null;
 
-      // Upload du fichier si présent
+      // Upload du fichier si présent (non bloquant)
       if (file) {
-        console.log('[QuoteManager] Début upload fichier:', file.name);
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('devis')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        try {
+          console.log('[QuoteManager] Début upload fichier:', file.name);
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('devis')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-        if (uploadError) {
-          console.error('[QuoteManager] Erreur upload fichier:', uploadError);
+          if (uploadError) {
+            throw uploadError;
+          }
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('devis')
+            .getPublicUrl(fileName);
+          
+          fichier_url = publicUrl;
+          console.log('[QuoteManager] Fichier uploadé avec succès:', fichier_url);
+        } catch (uploadError: any) {
+          // L'upload a échoué mais on continue la création du devis sans fichier
+          console.error('[QuoteManager] Erreur upload fichier, on continue sans fichier:', uploadError);
           toast({
-            title: "Erreur d'upload",
-            description: `Impossible d'uploader le fichier: ${uploadError.message}`,
-            variant: "destructive",
+            title: "Fichier non enregistré",
+            description: "Le devis a été créé mais le fichier n'a pas pu être enregistré. Vous pouvez le conserver en local.",
+            variant: "default",
           });
-          return; // Stop ici si l'upload échoue
+          fichier_url = null; // On continue sans fichier
         }
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('devis')
-          .getPublicUrl(fileName);
-        
-        fichier_url = publicUrl;
-        console.log('[QuoteManager] Fichier uploadé avec succès:', fichier_url);
       }
 
       // Auto-incrémenter la version
@@ -344,6 +349,9 @@ const QuoteManager = ({ chantierId, devis = [], onUpdate }: QuoteManagerProps) =
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="file">Fichier (optionnel)</Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Le devis sera créé même si le fichier ne s'enregistre pas. Formats acceptés : PDF, PNG, JPG.
+                      </p>
                       <Input
                         id="file"
                         type="file"
