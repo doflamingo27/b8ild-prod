@@ -28,7 +28,7 @@ const Rentabilite = () => {
   const { user } = useAuth();
   const [chantiers, setChantiers] = useState<ChantierMetrics[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<'all' | 'en_cours' | 'projection'>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -126,20 +126,15 @@ const Rentabilite = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Calculer les chantiers actifs (en cours ou projection)
-  const chantiersActifs = chantiers.filter(c => 
-    c.etat_chantier === 'en_cours' || c.etat_chantier === 'projection'
-  );
-
-  // Calcul des KPIs globaux
-  const revenusTotaux = chantiersActifs.reduce((sum, c) => sum + (c.budget_ht || 0), 0);
-  const coutsTotaux = chantiersActifs.reduce((sum, c) => {
+  // Calcul des KPIs globaux sur TOUS les chantiers
+  const revenusTotaux = chantiers.reduce((sum, c) => sum + (c.budget_ht || 0), 0);
+  const coutsTotaux = chantiers.reduce((sum, c) => {
     const couts = (c.metrics?.couts_fixes_engages || 0) + (c.metrics?.cout_main_oeuvre_reel || 0);
     return sum + couts;
   }, 0);
   const margeGlobale = revenusTotaux - coutsTotaux;
-  const tauxMargeMoyen = chantiersActifs.length > 0 
-    ? chantiersActifs.reduce((sum, c) => sum + (c.metrics?.profitability_pct || 0), 0) / chantiersActifs.length 
+  const tauxMargeMoyen = chantiers.length > 0 
+    ? chantiers.reduce((sum, c) => sum + (c.metrics?.profitability_pct || 0), 0) / chantiers.length 
     : 0;
 
   return (
@@ -166,7 +161,7 @@ const Rentabilite = () => {
           <CardContent>
             <div className="text-3xl font-black text-green-600">{revenusTotaux.toFixed(2)} €</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {chantiersActifs.length} chantier(s) actif(s)
+              {chantiers.length} chantier(s)
             </p>
           </CardContent>
         </Card>
@@ -211,7 +206,7 @@ const Rentabilite = () => {
           <CardContent>
             <div className="text-3xl font-black text-blue-600">{tauxMargeMoyen.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Sur {chantiersActifs.length} chantier(s)
+              Sur {chantiers.length} chantier(s)
             </p>
           </CardContent>
         </Card>
@@ -229,13 +224,34 @@ const Rentabilite = () => {
             aria-label="Rechercher un chantier"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant={filterStatus === 'all' ? 'default' : 'outline'}
             onClick={() => setFilterStatus('all')}
             className="font-semibold"
           >
             Tous
+          </Button>
+          <Button
+            variant={filterStatus === 'brouillon' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('brouillon')}
+            className="font-semibold"
+          >
+            📝 Brouillon
+          </Button>
+          <Button
+            variant={filterStatus === 'projection' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('projection')}
+            className="font-semibold"
+          >
+            🔮 Projection
+          </Button>
+          <Button
+            variant={filterStatus === 'attente_signature' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('attente_signature')}
+            className="font-semibold"
+          >
+            ✍️ En attente
           </Button>
           <Button
             variant={filterStatus === 'en_cours' ? 'default' : 'outline'}
@@ -245,11 +261,25 @@ const Rentabilite = () => {
             🚧 En cours
           </Button>
           <Button
-            variant={filterStatus === 'projection' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('projection')}
+            variant={filterStatus === 'suspendu' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('suspendu')}
             className="font-semibold"
           >
-            💡 Intentions
+            ⏸️ Suspendu
+          </Button>
+          <Button
+            variant={filterStatus === 'termine' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('termine')}
+            className="font-semibold"
+          >
+            ✅ Terminé
+          </Button>
+          <Button
+            variant={filterStatus === 'annule' ? 'default' : 'outline'}
+            onClick={() => setFilterStatus('annule')}
+            className="font-semibold"
+          >
+            ❌ Annulé
           </Button>
         </div>
       </div>
