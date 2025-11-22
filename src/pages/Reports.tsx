@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Loader2, TrendingUp, FileCheck, Search, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useCalculations } from "@/hooks/useCalculations";
+import { useChantiersRealtime } from "@/hooks/useChantiersRealtime";
 import ExportManager from "@/components/ExportManager";
 import EmptyState from "@/components/EmptyState";
 import { labels, emptyStates } from "@/lib/content";
@@ -17,12 +17,20 @@ const Reports = () => {
   const [chantiers, setChantiers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     loadChantiers();
   }, []);
+
+  // Setup Realtime subscriptions
+  const handleRealtimeChange = useCallback(() => {
+    loadChantiers();
+  }, []);
+
+  useChantiersRealtime(entrepriseId, handleRealtimeChange);
 
   const loadChantiers = async () => {
     try {
@@ -37,11 +45,15 @@ const Reports = () => {
 
       if (!entreprise) return;
 
+      setEntrepriseId(entreprise.id);
+
+      // Charger les chantiers avec métriques temps réel au lieu de calculs manuels
       const { data } = await supabase
         .from("chantiers")
         .select(`
           *,
-          devis (montant_ht, montant_ttc, tva),
+          chantier_metrics_realtime (metrics),
+          devis (montant_ht, montant_ttc, tva, actif),
           factures_fournisseurs (*),
           equipe_chantier (
             membre_id,
@@ -52,7 +64,13 @@ const Reports = () => {
         .eq("entreprise_id", entreprise.id)
         .order("created_at", { ascending: false });
 
-      setChantiers(data || []);
+      // Map les métriques temps réel
+      const chantiersWithMetrics = (data || []).map(chantier => ({
+        ...chantier,
+        metrics: chantier.chantier_metrics_realtime?.[0]?.metrics as any,
+      }));
+
+      setChantiers(chantiersWithMetrics);
     } catch (error) {
       console.error("Error loading chantiers:", error);
     } finally {
@@ -173,29 +191,18 @@ const Reports = () => {
         ) : (
           filteredChantiers.map((chantier) => {
             const membres = chantier.equipe_chantier?.map((ec: any) => ec.membres_equipe) || [];
-            const devis = chantier.devis?.[0];
+            const devis = chantier.devis?.find((d: any) => d.actif) || chantier.devis?.[0];
             const factures = chantier.factures_fournisseurs || [];
             const frais = chantier.frais_chantier || [];
+            const metrics = chantier.metrics;
 
-            const coutsFixes = factures.reduce((sum: number, f: any) => sum + (f.montant_ht || 0), 0) +
-                               frais.reduce((sum: number, f: any) => sum + (f.montant_total || 0), 0);
-
-            // Calculs manuels sans hook
-            const budget_devis = devis?.montant_ht || 0;
-            const cout_journalier_equipe = membres.reduce((total: number, membre: any) => {
-              if (!membre || !membre.taux_horaire) return total;
-              const charges_sal = membre.charges_salariales_pct ?? (membre.charges_salariales ?? 0);
-              const charges_pat = membre.charges_patronales_pct ?? (membre.charges_patronales ?? 0);
-              const cout_horaire_reel = membre.taux_horaire * (1 + charges_sal / 100 + charges_pat / 100);
-              return total + (cout_horaire_reel * 8);
-            }, 0);
-            const budget_disponible = budget_devis - coutsFixes;
-            const rentabilite_pct = budget_devis > 0 ? (budget_disponible / budget_devis) * 100 : 0;
-            const jour_critique = cout_journalier_equipe > 0 ? budget_disponible / cout_journalier_equipe : Infinity;
-            const jours_effectifs = chantier.date_debut_prevue 
-              ? Math.max(0, Math.floor((new Date().getTime() - new Date(chantier.date_debut_prevue).getTime()) / (1000 * 60 * 60 * 24)))
-              : 0;
-            const jours_restants_avant_deficit = Math.max(0, Math.floor(jour_critique - jours_effectifs));
+            // Utiliser les métriques temps réel au lieu de calculs manuels
+            const budget_devis = metrics?.budget_ht || 0;
+            const cout_journalier_equipe = metrics?.cout_journalier_equipe || 0;
+            const budget_disponible = metrics?.budget_disponible || 0;
+            const rentabilite_pct = metrics?.profitability_pct || 0;
+            const jour_critique = metrics?.jour_critique || 0;
+            const jours_restants_avant_deficit = metrics?.jours_restants_rentables || 0;
             
             const rentabilityBadge = getRentabilityBadge(rentabilite_pct);
             
@@ -204,6 +211,10 @@ const Reports = () => {
             else if (rentabilite_pct >= 10) statut = "warning";
             else if (rentabilite_pct > 0) statut = "alert";
             else statut = "danger";
+
+            // Calcul des coûts pour compatibilité avec ExportManager
+            const coutsFixes = (metrics?.couts_fixes_engages || 0);
+            const cout_main_oeuvre = (metrics?.cout_main_oeuvre_reel || 0);
 
             return (
               <Card key={chantier.id} className="card-premium hover-lift">
@@ -223,11 +234,11 @@ const Reports = () => {
                       factures={factures}
                       frais={frais}
                       calculations={{
-                        cout_journalier_equipe,
-                        budget_disponible,
-                        jour_critique,
-                        rentabilite_pct,
-                        jours_restants_avant_deficit,
+                        cout_journalier_equipe: cout_journalier_equipe || 0,
+                        budget_disponible: budget_disponible || 0,
+                        jour_critique: jour_critique || 0,
+                        rentabilite_pct: rentabilite_pct || 0,
+                        jours_restants_avant_deficit: jours_restants_avant_deficit || 0,
                         statut,
                         calculerCoutHoraireReel: (membre: any) => {
                           if (!membre || !membre.taux_horaire) return 0;
@@ -250,7 +261,7 @@ const Reports = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Budget</p>
-                      <p className="text-2xl font-black font-mono text-gradient-primary">{(devis?.montant_ht || 0).toFixed(2)} €</p>
+                      <p className="text-2xl font-black font-mono text-gradient-primary">{budget_devis.toFixed(2)} €</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Rentabilité</p>
@@ -270,7 +281,7 @@ const Reports = () => {
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Jour critique</p>
-                      <p className="text-2xl font-black font-mono">{jour_critique.toFixed(1)} j</p>
+                      <p className="text-2xl font-black font-mono">{jour_critique > 0 ? jour_critique.toFixed(1) : '-'} j</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Statut</p>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useChantiersRealtime } from "@/hooks/useChantiersRealtime";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,13 @@ const Projects = () => {
       loadProjects();
     }
   }, [entrepriseId]);
+
+  // Setup Realtime subscriptions
+  const handleRealtimeChange = useCallback(() => {
+    loadProjects();
+  }, []);
+
+  useChantiersRealtime(entrepriseId, handleRealtimeChange);
 
   const loadEntreprise = async () => {
     try {

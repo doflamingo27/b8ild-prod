@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useChantiersRealtime } from "@/hooks/useChantiersRealtime";
 import KPICard from "@/components/KPICard";
 import RealtimeProjectCard from "@/components/RealtimeProjectCard";
 import EmptyState from "@/components/EmptyState";
@@ -47,6 +48,13 @@ const Dashboard = () => {
     }
   }, [user]);
 
+  // Setup Realtime subscriptions
+  const handleRealtimeChange = useCallback(() => {
+    loadDashboardData();
+  }, []);
+
+  useChantiersRealtime(entrepriseId, handleRealtimeChange);
+
   const loadDashboardData = async () => {
     try {
       // Get entreprise ID
@@ -59,10 +67,13 @@ const Dashboard = () => {
       if (!entrepriseData) return;
       setEntrepriseId(entrepriseData.id);
 
-      // Get projects with details for real calculations
+      // Get projects with metrics from chantier_metrics_realtime
       const { data: projects } = await supabase
         .from("chantiers")
-        .select("*")
+        .select(`
+          *,
+          chantier_metrics_realtime (metrics)
+        `)
         .eq("entreprise_id", entrepriseData.id)
         .eq("statut", "actif")
         .order("date_creation", { ascending: false });
@@ -74,48 +85,22 @@ const Dashboard = () => {
         .eq("entreprise_id", entrepriseData.id)
         .eq("actif", true);
 
-      // Calculate real stats
+      // Calculate stats from real-time metrics
       const totalProjects = projects?.length || 0;
       
-      // Get devis for all projects to calculate average rentabilite
-      const projectsWithDevis = await Promise.all(
-        (projects || []).map(async (project) => {
-          const { data: devis } = await supabase
-            .from("devis")
-            .select("montant_ttc")
-            .eq("chantier_id", project.id)
-            .maybeSingle();
+      const projectsWithMetrics = (projects || []).map(project => ({
+        ...project,
+        metrics: project.chantier_metrics_realtime?.[0]?.metrics as any,
+      }));
 
-          const { data: factures } = await supabase
-            .from("factures_fournisseurs")
-            .select("montant_ht")
-            .eq("chantier_id", project.id);
-
-          const { data: frais } = await supabase
-            .from("frais_chantier")
-            .select("montant_total")
-            .eq("chantier_id", project.id);
-
-          const totalFactures = factures?.reduce((sum, f) => sum + Number(f.montant_ht), 0) || 0;
-          const totalFrais = frais?.reduce((sum, f) => sum + Number(f.montant_total), 0) || 0;
-          const coutsFixes = totalFactures + totalFrais;
-          const budgetDisponible = (devis?.montant_ttc || 0) - coutsFixes;
-          const rentabilite = devis?.montant_ttc > 0 ? (budgetDisponible / devis.montant_ttc) * 100 : 0;
-
-          const jours_effectifs = project.date_debut_prevue 
-            ? Math.max(0, Math.floor((new Date().getTime() - new Date(project.date_debut_prevue).getTime()) / (1000 * 60 * 60 * 24)))
-            : 0;
-          
-          return { ...project, rentabilite, jours_restants: 30 }; // TODO: recalculate with real budget
-        })
-      );
-
-      const avgRentabilite = projectsWithDevis.length > 0
-        ? projectsWithDevis.reduce((sum, p) => sum + p.rentabilite, 0) / projectsWithDevis.length
+      // Average rentabilite from metrics
+      const projectsWithRentabilite = projectsWithMetrics.filter(p => p.metrics?.profitability_pct != null);
+      const avgRentabilite = projectsWithRentabilite.length > 0
+        ? projectsWithRentabilite.reduce((sum, p) => sum + (p.metrics?.profitability_pct || 0), 0) / projectsWithRentabilite.length
         : 0;
 
-      // Count alerts
-      const alertsCount = projectsWithDevis.filter(p => p.rentabilite < 10).length;
+      // Count alerts (profitability < 10%)
+      const alertsCount = projectsWithMetrics.filter(p => (p.metrics?.profitability_pct || 0) < 10).length;
 
       setStats({
         totalProjects,
@@ -124,7 +109,7 @@ const Dashboard = () => {
         alertsCount,
       });
 
-      setRecentProjects(projectsWithDevis.slice(0, 6));
+      setRecentProjects(projectsWithMetrics.slice(0, 6));
     } catch (error) {
       console.error("Erreur chargement dashboard:", error);
     }
