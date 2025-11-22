@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +95,64 @@ const ProjectDetail = () => {
       loadProjectData();
     }
   }, [id, user]);
+
+  // ✨ Subscription Realtime pour toutes les données du projet
+  const handleRealtimeChange = useCallback(() => {
+    console.log('[ProjectDetail] Changement détecté, rechargement...');
+    loadProjectData();
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`project_detail:${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'devis',
+          filter: `chantier_id=eq.${id}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'affectations_chantiers',
+          filter: `chantier_id=eq.${id}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'factures_fournisseurs',
+          filter: `chantier_id=eq.${id}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'frais_chantier',
+          filter: `chantier_id=eq.${id}`,
+        },
+        handleRealtimeChange
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, handleRealtimeChange]);
 
   const loadProjectData = async () => {
     if (!id || !user) return;

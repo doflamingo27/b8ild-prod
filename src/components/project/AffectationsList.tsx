@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import AffectationForm from "./AffectationForm";
+import { useAffectationsRealtime } from "@/hooks/useAffectationsRealtime";
 
 interface AffectationsListProps {
   chantierId: string;
@@ -27,6 +28,14 @@ const AffectationsList = ({ chantierId, entrepriseId }: AffectationsListProps) =
   useEffect(() => {
     loadData();
   }, [chantierId]);
+
+  // ✨ Subscription Realtime pour les affectations
+  const handleRealtimeChange = useCallback(() => {
+    console.log('[AffectationsList] Changement détecté, rechargement...');
+    loadData();
+  }, []);
+
+  useAffectationsRealtime(chantierId, handleRealtimeChange);
 
   const loadData = async () => {
     setLoading(true);

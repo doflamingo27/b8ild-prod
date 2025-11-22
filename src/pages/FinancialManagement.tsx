@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,76 @@ const FinancialManagement = () => {
       loadChantierData();
     }
   }, [selectedChantierId]);
+
+  // ✨ Subscription Realtime pour toutes les données du chantier
+  const handleRealtimeChange = useCallback(() => {
+    if (selectedChantierId) {
+      console.log('[FinancialManagement] Changement détecté, rechargement...');
+      loadChantierData();
+    }
+  }, [selectedChantierId]);
+
+  useEffect(() => {
+    if (!selectedChantierId) return;
+
+    const channel = supabase
+      .channel(`financial_management:${selectedChantierId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chantier_metrics_realtime',
+          filter: `chantier_id=eq.${selectedChantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'devis',
+          filter: `chantier_id=eq.${selectedChantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'affectations_chantiers',
+          filter: `chantier_id=eq.${selectedChantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'factures_fournisseurs',
+          filter: `chantier_id=eq.${selectedChantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'frais_chantier',
+          filter: `chantier_id=eq.${selectedChantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedChantierId, handleRealtimeChange]);
 
   const loadChantiers = async () => {
     try {

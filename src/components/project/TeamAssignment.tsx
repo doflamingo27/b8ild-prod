@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,34 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
   useEffect(() => {
     loadAvailableMembers();
   }, []);
+
+  // ✨ Subscription Realtime pour equipe_chantier
+  const handleRealtimeChange = useCallback(() => {
+    console.log('[TeamAssignment] Changement détecté, rechargement...');
+    onUpdate();
+  }, [onUpdate]);
+
+  useEffect(() => {
+    if (!chantierId) return;
+
+    const channel = supabase
+      .channel(`equipe_chantier:${chantierId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'equipe_chantier',
+          filter: `chantier_id=eq.${chantierId}`,
+        },
+        handleRealtimeChange
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chantierId, handleRealtimeChange]);
 
   const loadAvailableMembers = async () => {
     try {
