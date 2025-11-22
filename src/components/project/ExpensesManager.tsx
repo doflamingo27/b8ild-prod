@@ -40,6 +40,7 @@ const ExpensesManager = ({ chantierId, frais, onUpdate }: ExpensesManagerProps) 
     { value: "Assurance", label: "Assurance", icon: "🛡️" },
     { value: "Permis & autorisations", label: "Permis & autorisations", icon: "📄" },
     { value: "Sous-traitant", label: "Sous-traitant", icon: "👷" },
+    { value: "Pénalité de retard", label: "Pénalité de retard", icon: "⚠️" },
     { value: "Autre", label: "Autre", icon: "📦" },
   ];
 
