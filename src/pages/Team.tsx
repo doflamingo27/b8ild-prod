@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Pencil, Trash2, Users, Calculator, UserCheck, Hammer } from "lucide-react";
 import { useCalculations } from "@/hooks/useCalculations";
@@ -31,10 +32,17 @@ interface Membre {
   equipe_id?: string | null;
 }
 
+interface Equipe {
+  id: string;
+  nom: string;
+  specialite: string;
+}
+
 const Team = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [membres, setMembres] = useState<Membre[]>([]);
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -50,6 +58,7 @@ const Team = () => {
     taux_horaire: 15,
     charges_salariales: 22,
     charges_patronales: 42,
+    equipe_id: "" as string | null,
   });
 
   const { cout_journalier_equipe, calculerCoutJournalierMembre } = useCalculations({
@@ -65,6 +74,7 @@ const Team = () => {
   useEffect(() => {
     if (entrepriseId) {
       loadMembres();
+      loadEquipes();
     }
   }, [entrepriseId]);
 
@@ -95,6 +105,21 @@ const Team = () => {
       setMembres(data || []);
     } catch (error: any) {
       console.error("Erreur chargement membres:", error);
+    }
+  };
+
+  const loadEquipes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("equipes")
+        .select("id, nom, specialite")
+        .eq("entreprise_id", entrepriseId)
+        .order("nom");
+
+      if (error) throw error;
+      setEquipes(data || []);
+    } catch (error: any) {
+      console.error("Erreur chargement équipes:", error);
     }
   };
 
@@ -144,6 +169,7 @@ const Team = () => {
       taux_horaire: membre.taux_horaire,
       charges_salariales: membre.charges_salariales,
       charges_patronales: membre.charges_patronales,
+      equipe_id: membre.equipe_id || null,
     });
     setDialogOpen(true);
   };
@@ -183,6 +209,7 @@ const Team = () => {
       taux_horaire: 15,
       charges_salariales: 22,
       charges_patronales: 42,
+      equipe_id: null,
     });
   };
 
@@ -282,6 +309,25 @@ const Team = () => {
                       aria-label={labels.forms.memberSkill}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipe" className="font-semibold">Équipe (optionnel)</Label>
+                  <Select
+                    value={formData.equipe_id || "none"}
+                    onValueChange={(value) => setFormData({ ...formData, equipe_id: value === "none" ? null : value })}
+                  >
+                    <SelectTrigger id="equipe" className="w-full">
+                      <SelectValue placeholder="Aucune équipe" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="none">Aucune équipe</SelectItem>
+                      {equipes.map((equipe) => (
+                        <SelectItem key={equipe.id} value={equipe.id}>
+                          {equipe.nom} {equipe.specialite && `(${equipe.specialite})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="taux_horaire" className="font-semibold">{labels.forms.hourlyRate}</Label>
