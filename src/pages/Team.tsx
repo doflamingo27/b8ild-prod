@@ -226,8 +226,8 @@ const Team = () => {
   });
 
   // Calcul des KPIs basés sur les membres filtrés
-  const totalMembres = membres.length;
-  const membresActifs = membres.filter(m => m.actif).length;
+  const totalMembres = filteredMembres.length;
+  const membresActifs = filteredMembres.filter(m => m.actif).length;
   const coutTotalJournalier = filteredMembres
     .filter(m => m.actif)
     .reduce((total, membre) => {
@@ -237,7 +237,7 @@ const Team = () => {
       return total + coutJournalierMembre;
     }, 0);
   const coutMoyenHoraire = membresActifs > 0 
-    ? membres.filter(m => m.actif).reduce((sum, m) => sum + m.taux_horaire, 0) / membresActifs 
+    ? filteredMembres.filter(m => m.actif).reduce((sum, m) => sum + m.taux_horaire, 0) / membresActifs 
     : 0;
 
   return (
