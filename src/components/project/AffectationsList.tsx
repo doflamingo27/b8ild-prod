@@ -107,11 +107,18 @@ const AffectationsList = ({ chantierId, entrepriseId }: AffectationsListProps) =
 
   type AffectationGroup = [string, any[]];
 
-  // Calculer les totaux
+  // Calculer les totaux avec taux réels des membres
   const totalCout = affectations.reduce((sum, aff) => {
-    const cout = aff.jours_travailles * aff.heures_par_jour * 
-      (aff.taux_horaire_specifique || 0) * 
-      (1 + (aff.charges_salariales_pct || 0) / 100 + (aff.charges_patronales_pct || 0) / 100);
+    const membre = membres.find(m => m.id === aff.membre_equipe_id);
+    if (!membre) return sum;
+    
+    const tauxHoraire = aff.taux_horaire_specifique ?? membre.taux_horaire;
+    const chargesSalariales = aff.charges_salariales_pct ?? membre.charges_salariales_pct ?? membre.charges_salariales;
+    const chargesPatronales = aff.charges_patronales_pct ?? membre.charges_patronales_pct ?? membre.charges_patronales;
+    
+    const cout = aff.jours_travailles * (aff.heures_par_jour || 7) * 
+      tauxHoraire * 
+      (1 + chargesSalariales / 100 + chargesPatronales / 100);
     return sum + cout;
   }, 0);
 
@@ -157,9 +164,13 @@ const AffectationsList = ({ chantierId, entrepriseId }: AffectationsListProps) =
 
               const totalJoursMembre = affs.reduce((sum, a) => sum + a.jours_travailles, 0);
               const totalCoutMembre = affs.reduce((sum, aff) => {
-                const cout = aff.jours_travailles * aff.heures_par_jour * 
-                  (aff.taux_horaire_specifique || 0) * 
-                  (1 + (aff.charges_salariales_pct || 0) / 100 + (aff.charges_patronales_pct || 0) / 100);
+                const tauxHoraire = aff.taux_horaire_specifique ?? entity.taux_horaire;
+                const chargesSalariales = aff.charges_salariales_pct ?? entity.charges_salariales_pct ?? entity.charges_salariales;
+                const chargesPatronales = aff.charges_patronales_pct ?? entity.charges_patronales_pct ?? entity.charges_patronales;
+                
+                const cout = aff.jours_travailles * (aff.heures_par_jour || 7) * 
+                  tauxHoraire * 
+                  (1 + chargesSalariales / 100 + chargesPatronales / 100);
                 return sum + cout;
               }, 0);
 
@@ -203,10 +214,15 @@ const AffectationsList = ({ chantierId, entrepriseId }: AffectationsListProps) =
                           <div className="flex items-center gap-1">
                             <Euro className="h-4 w-4" />
                             <span>
-                              {(aff.jours_travailles * aff.heures_par_jour * 
-                                (aff.taux_horaire_specifique || 0) * 
-                                (1 + (aff.charges_salariales_pct || 0) / 100 + (aff.charges_patronales_pct || 0) / 100)
-                              ).toFixed(2)} €
+                              {(() => {
+                                const tauxHoraire = aff.taux_horaire_specifique ?? entity.taux_horaire;
+                                const chargesSalariales = aff.charges_salariales_pct ?? entity.charges_salariales_pct ?? entity.charges_salariales;
+                                const chargesPatronales = aff.charges_patronales_pct ?? entity.charges_patronales_pct ?? entity.charges_patronales;
+                                return (aff.jours_travailles * (aff.heures_par_jour || 7) * 
+                                  tauxHoraire * 
+                                  (1 + chargesSalariales / 100 + chargesPatronales / 100)
+                                ).toFixed(2);
+                              })()} €
                             </span>
                           </div>
                           {aff.notes && (
