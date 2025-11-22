@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,12 +96,7 @@ const ProjectDetail = () => {
     }
   }, [id, user]);
 
-  // ✨ Subscription Realtime pour toutes les données du projet
-  const handleRealtimeChange = useCallback(() => {
-    console.log('[ProjectDetail] Changement détecté, rechargement...');
-    loadProjectData();
-  }, []);
-
+  // Subscription Realtime pour toutes les données du projet
   useEffect(() => {
     if (!id) return;
 
@@ -115,7 +110,10 @@ const ProjectDetail = () => {
           table: 'devis',
           filter: `chantier_id=eq.${id}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[ProjectDetail] Devis changés, rechargement...');
+          loadProjectData();
+        }
       )
       .on(
         'postgres_changes',
@@ -125,7 +123,10 @@ const ProjectDetail = () => {
           table: 'affectations_chantiers',
           filter: `chantier_id=eq.${id}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[ProjectDetail] Affectations changées, rechargement...');
+          loadProjectData();
+        }
       )
       .on(
         'postgres_changes',
@@ -135,7 +136,10 @@ const ProjectDetail = () => {
           table: 'factures_fournisseurs',
           filter: `chantier_id=eq.${id}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[ProjectDetail] Factures changées, rechargement...');
+          loadProjectData();
+        }
       )
       .on(
         'postgres_changes',
@@ -145,14 +149,17 @@ const ProjectDetail = () => {
           table: 'frais_chantier',
           filter: `chantier_id=eq.${id}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[ProjectDetail] Frais changés, rechargement...');
+          loadProjectData();
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, handleRealtimeChange]);
+  }, [id]);
 
   const loadProjectData = async () => {
     if (!id || !user) return;

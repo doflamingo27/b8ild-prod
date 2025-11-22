@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -81,12 +81,7 @@ const Team = () => {
     }
   }, [entrepriseId]);
 
-  // ✨ Subscriptions Realtime pour affectations et membres
-  const handleRealtimeChange = useCallback(() => {
-    console.log('[Team] Changement détecté, rechargement...');
-    loadMembres();
-  }, [entrepriseId]);
-
+  // Subscriptions Realtime pour affectations et membres
   useEffect(() => {
     if (!entrepriseId) return;
 
@@ -99,7 +94,10 @@ const Team = () => {
           schema: 'public',
           table: 'affectations_chantiers',
         },
-        handleRealtimeChange
+        () => {
+          console.log('[Team] Affectation changée, rechargement...');
+          loadMembres();
+        }
       )
       .on(
         'postgres_changes',
@@ -109,14 +107,17 @@ const Team = () => {
           table: 'membres_equipe',
           filter: `entreprise_id=eq.${entrepriseId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[Team] Membre changé, rechargement...');
+          loadMembres();
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [entrepriseId, handleRealtimeChange]);
+  }, [entrepriseId]);
 
   const loadEntreprise = async () => {
     try {

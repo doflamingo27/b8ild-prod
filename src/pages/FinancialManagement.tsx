@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,14 +46,7 @@ const FinancialManagement = () => {
     }
   }, [selectedChantierId]);
 
-  // ✨ Subscription Realtime pour toutes les données du chantier
-  const handleRealtimeChange = useCallback(() => {
-    if (selectedChantierId) {
-      console.log('[FinancialManagement] Changement détecté, rechargement...');
-      loadChantierData();
-    }
-  }, [selectedChantierId]);
-
+  // Subscription Realtime pour le chantier sélectionné
   useEffect(() => {
     if (!selectedChantierId) return;
 
@@ -67,7 +60,10 @@ const FinancialManagement = () => {
           table: 'chantier_metrics_realtime',
           filter: `chantier_id=eq.${selectedChantierId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[FinancialManagement] Métriques changées, rechargement...');
+          loadChantierData();
+        }
       )
       .on(
         'postgres_changes',
@@ -77,7 +73,10 @@ const FinancialManagement = () => {
           table: 'devis',
           filter: `chantier_id=eq.${selectedChantierId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[FinancialManagement] Devis changés, rechargement...');
+          loadChantierData();
+        }
       )
       .on(
         'postgres_changes',
@@ -87,7 +86,10 @@ const FinancialManagement = () => {
           table: 'affectations_chantiers',
           filter: `chantier_id=eq.${selectedChantierId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[FinancialManagement] Affectations changées, rechargement...');
+          loadChantierData();
+        }
       )
       .on(
         'postgres_changes',
@@ -97,7 +99,10 @@ const FinancialManagement = () => {
           table: 'factures_fournisseurs',
           filter: `chantier_id=eq.${selectedChantierId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[FinancialManagement] Factures changées, rechargement...');
+          loadChantierData();
+        }
       )
       .on(
         'postgres_changes',
@@ -107,14 +112,17 @@ const FinancialManagement = () => {
           table: 'frais_chantier',
           filter: `chantier_id=eq.${selectedChantierId}`,
         },
-        handleRealtimeChange
+        () => {
+          console.log('[FinancialManagement] Frais changés, rechargement...');
+          loadChantierData();
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedChantierId, handleRealtimeChange]);
+  }, [selectedChantierId]);
 
   const loadChantiers = async () => {
     try {

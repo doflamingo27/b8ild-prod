@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,13 +29,11 @@ const AffectationsList = ({ chantierId, entrepriseId }: AffectationsListProps) =
     loadData();
   }, [chantierId]);
 
-  // ✨ Subscription Realtime pour les affectations
-  const handleRealtimeChange = useCallback(() => {
+  // Subscription Realtime pour les affectations
+  useAffectationsRealtime(chantierId, () => {
     console.log('[AffectationsList] Changement détecté, rechargement...');
     loadData();
-  }, []);
-
-  useAffectationsRealtime(chantierId, handleRealtimeChange);
+  });
 
   const loadData = async () => {
     setLoading(true);
