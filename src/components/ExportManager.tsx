@@ -7,6 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface ExportManagerProps {
   chantierId: string;
@@ -102,9 +104,6 @@ const ExportManager = ({
   const exportToPDF = async () => {
     try {
       console.log('[PDF Export] Début de l\'export PDF');
-      
-      const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
       
       const doc = new jsPDF();
       let currentY = 20;
