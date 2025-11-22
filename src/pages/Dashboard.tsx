@@ -90,7 +90,8 @@ const Dashboard = () => {
       
       const projectsWithMetrics = (projects || []).map(project => ({
         ...project,
-        metrics: project.chantier_metrics_realtime?.[0]?.metrics as any,
+        // Relation chantier_metrics_realtime est 1-1, pas un tableau
+        metrics: (project as any).chantier_metrics_realtime?.metrics as any,
       }));
 
       // Debug logs
