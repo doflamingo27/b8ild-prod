@@ -27,7 +27,7 @@ const FinancialManagement = () => {
   const [chantiers, setChantiers] = useState<Chantier[]>([]);
   const [selectedChantierId, setSelectedChantierId] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [devis, setDevis] = useState<any>(null);
+  const [devis, setDevis] = useState<any[]>([]);
   const [factures, setFactures] = useState<any[]>([]);
   const [membres, setMembres] = useState<any[]>([]);
   const [frais, setFrais] = useState<any[]>([]);
@@ -76,16 +76,17 @@ const FinancialManagement = () => {
 
   const loadChantierData = async () => {
     try {
-      // Charger les devis (tous les devis du chantier)
+      console.log('[FinancialManagement] Chargement données pour chantier:', selectedChantierId);
+      
+      // Charger tous les devis du chantier
       const { data: devisData } = await supabase
         .from("devis")
         .select("*")
         .eq("chantier_id", selectedChantierId)
         .order("created_at", { ascending: false });
       
-      // Prendre le devis actif ou le premier
-      const activeDevis = devisData?.find(d => d.actif) || devisData?.[0] || null;
-      setDevis(activeDevis);
+      console.log('[FinancialManagement] Devis chargés:', devisData);
+      setDevis(devisData || []);
 
       // Charger les factures
       const { data: facturesData } = await supabase
@@ -103,6 +104,7 @@ const FinancialManagement = () => {
         `)
         .eq("chantier_id", selectedChantierId);
       
+      console.log('[FinancialManagement] Affectations chargées:', affectationsData);
       const membresAffectes = affectationsData?.map(a => ({
         ...a.membres_equipe,
         jours_travailles: a.jours_travailles || 0,
@@ -130,9 +132,10 @@ const FinancialManagement = () => {
   const totalFrais = frais.reduce((sum, f) => sum + Number(f.montant_total), 0);
   const coutsFixes = totalFactures + totalFrais;
 
+  const devisActif = devis.find(d => d.actif);
   const calculations = useCalculations({
     membres,
-    budget_devis: devis?.montant_ttc || 0,
+    budget_devis: devisActif?.montant_ttc || 0,
     couts_fixes: coutsFixes,
     date_debut: null,
   });
