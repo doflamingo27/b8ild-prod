@@ -101,8 +101,12 @@ const ExportManager = ({
 
   const exportToPDF = async () => {
     try {
+      console.log('[PDF Export] Début de l\'export PDF');
+      
+      // Import dynamique des librairies
       const jsPDF = (await import('jspdf')).default;
       await import('jspdf-autotable');
+      console.log('[PDF Export] Librairies chargées');
       
       const doc = new jsPDF();
       
@@ -117,10 +121,12 @@ const ExportManager = ({
       
       // Informations générales
       doc.setFontSize(12);
-      doc.text(`Nom: ${chantierData.nom_chantier}`, 20, 50);
-      doc.text(`Client: ${chantierData.client}`, 20, 58);
+      doc.text(`Nom: ${chantierData.nom_chantier || 'N/A'}`, 20, 50);
+      doc.text(`Client: ${chantierData.client || 'N/A'}`, 20, 58);
       doc.text(`Adresse: ${chantierData.adresse || "Non renseignée"}`, 20, 66);
       doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 20, 74);
+      
+      console.log('[PDF Export] En-tête créé');
       
       // Finances
       doc.setFontSize(14);
@@ -129,31 +135,54 @@ const ExportManager = ({
       
       doc.setFontSize(11);
       doc.setTextColor(0, 0, 0);
-      doc.text(`Budget devis HT: ${(devis?.montant_ht || 0).toFixed(2)} €`, 20, 100);
-      doc.text(`Budget devis TTC: ${(devis?.montant_ttc || 0).toFixed(2)} €`, 20, 108);
-      doc.text(`Coût journalier équipe: ${(calculations.cout_journalier_equipe || 0).toFixed(2)} €`, 20, 116);
-      doc.text(`Budget disponible: ${(calculations.budget_disponible || 0).toFixed(2)} €`, 20, 124);
-      doc.text(`Rentabilité: ${(calculations.rentabilite_pct || 0).toFixed(2)} %`, 20, 132);
-      const jourCritique = isFinite(calculations.jour_critique) ? calculations.jour_critique.toFixed(2) : 'N/A';
-      doc.text(`Jour critique: ${jourCritique}`, 20, 140);
+      
+      const budgetHT = Number(devis?.montant_ht || 0);
+      const budgetTTC = Number(devis?.montant_ttc || 0);
+      const coutJournalier = Number(calculations?.cout_journalier_equipe || 0);
+      const budgetDispo = Number(calculations?.budget_disponible || 0);
+      const rentabilite = Number(calculations?.rentabilite_pct || 0);
+      const jourCrit = calculations?.jour_critique;
+      
+      doc.text(`Budget devis HT: ${budgetHT.toFixed(2)} €`, 20, 100);
+      doc.text(`Budget devis TTC: ${budgetTTC.toFixed(2)} €`, 20, 108);
+      doc.text(`Coût journalier équipe: ${coutJournalier.toFixed(2)} €`, 20, 116);
+      doc.text(`Budget disponible: ${budgetDispo.toFixed(2)} €`, 20, 124);
+      doc.text(`Rentabilité: ${rentabilite.toFixed(2)} %`, 20, 132);
+      doc.text(`Jour critique: ${isFinite(jourCrit) && jourCrit !== null ? Number(jourCrit).toFixed(2) : 'N/A'}`, 20, 140);
+      
+      console.log('[PDF Export] Section finances créée');
       
       // Équipe (tableau)
-      const equipeData = membres.map(m => {
-        const cout = calculations.calculerCoutJournalierMembre(m) || 0;
-        return [
-          `${m.prenom || ''} ${m.nom || ''}`,
-          m.poste || 'Non renseigné',
-          `${cout.toFixed(2)} €`
-        ];
+      const equipeData = (membres || []).map(m => {
+        try {
+          const cout = calculations?.calculerCoutJournalierMembre ? 
+            calculations.calculerCoutJournalierMembre(m) || 0 : 0;
+          return [
+            `${m?.prenom || ''} ${m?.nom || ''}`.trim() || 'N/A',
+            m?.poste || 'Non renseigné',
+            `${Number(cout).toFixed(2)} €`
+          ];
+        } catch (err) {
+          console.error('[PDF Export] Erreur calcul membre:', err, m);
+          return [
+            `${m?.prenom || ''} ${m?.nom || ''}`.trim() || 'N/A',
+            m?.poste || 'Non renseigné',
+            '0.00 €'
+          ];
+        }
       });
       
-      (doc as any).autoTable({
-        head: [['Nom', 'Poste', 'Coût journalier']],
-        body: equipeData,
-        startY: 155,
-        theme: 'grid',
-        headStyles: { fillColor: [234, 88, 12] },
-      });
+      if (equipeData.length > 0) {
+        (doc as any).autoTable({
+          head: [['Nom', 'Poste', 'Coût journalier']],
+          body: equipeData,
+          startY: 155,
+          theme: 'grid',
+          headStyles: { fillColor: [234, 88, 12] },
+          styles: { fontSize: 10 },
+        });
+        console.log('[PDF Export] Tableau équipe créé');
+      }
       
       // Factures (nouvelle page si nécessaire)
       const finalY = (doc as any).lastAutoTable?.finalY || 155;
@@ -168,33 +197,47 @@ const ExportManager = ({
         doc.text("Factures fournisseurs", 20, finalY + 15);
       }
       
-      const facturesData = factures.map(f => [
-        f.fournisseur || "Non renseigné",
-        f.categorie || "Autres",
-        `${f.montant_ht ?? 0} €`,
-        f.date_facture || "Non renseignée"
-      ]);
-      
-      (doc as any).autoTable({
-        head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
-        body: facturesData,
-        startY: finalY > 200 ? 30 : finalY + 20,
-        theme: 'grid',
-        headStyles: { fillColor: [234, 88, 12] },
+      const facturesData = (factures || []).map(f => {
+        const montantHT = Number(f?.montant_ht || 0);
+        return [
+          f?.fournisseur || "Non renseigné",
+          f?.categorie || "Autres",
+          `${montantHT.toFixed(2)} €`,
+          f?.date_facture || "Non renseignée"
+        ];
       });
       
+      if (facturesData.length > 0) {
+        (doc as any).autoTable({
+          head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
+          body: facturesData,
+          startY: finalY > 200 ? 30 : finalY + 20,
+          theme: 'grid',
+          headStyles: { fillColor: [234, 88, 12] },
+          styles: { fontSize: 10 },
+        });
+        console.log('[PDF Export] Tableau factures créé');
+      }
+      
+      // Nettoyer le nom du fichier
+      const cleanName = (chantierData.nom_chantier || 'chantier')
+        .replace(/[^a-z0-9]/gi, '_')
+        .toLowerCase();
+      const fileName = `chantier_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
       // Télécharger
-      doc.save(`chantier_${chantierData.nom_chantier}_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.save(fileName);
+      console.log('[PDF Export] PDF téléchargé:', fileName);
       
       toast({
         title: "Export PDF réussi",
         description: "Le fichier a été téléchargé",
       });
     } catch (error) {
-      console.error('Erreur export PDF:', error);
+      console.error('[PDF Export] Erreur complète:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'exporter en PDF",
+        title: "Erreur d'export",
+        description: error instanceof Error ? error.message : "Impossible d'exporter en PDF",
         variant: "destructive",
       });
     }
