@@ -225,12 +225,17 @@ const Team = () => {
     return true;
   });
 
-  // Calcul des KPIs
+  // Calcul des KPIs basés sur les membres filtrés
   const totalMembres = membres.length;
   const membresActifs = membres.filter(m => m.actif).length;
-  const coutTotalJournalier = membres
+  const coutTotalJournalier = filteredMembres
     .filter(m => m.actif)
-    .reduce((sum, m) => sum + calculerCoutJournalierMembre(m), 0);
+    .reduce((total, membre) => {
+      const coutHoraireReel = membre.taux_horaire * 
+        (1 + (membre.charges_salariales / 100) + (membre.charges_patronales / 100));
+      const coutJournalierMembre = coutHoraireReel * 8;
+      return total + coutJournalierMembre;
+    }, 0);
   const coutMoyenHoraire = membresActifs > 0 
     ? membres.filter(m => m.actif).reduce((sum, m) => sum + m.taux_horaire, 0) / membresActifs 
     : 0;
@@ -451,7 +456,7 @@ const Team = () => {
             <Calculator className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-purple-600">{coutTotalJournalier.toFixed(2)}€</div>
+            <div className="text-3xl font-black text-purple-600">{coutTotalJournalier.toFixed(2)}€/jour</div>
           </CardContent>
         </Card>
       </div>
