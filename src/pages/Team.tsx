@@ -688,6 +688,10 @@ const Team = () => {
           
           <RadioGroup value={newStatut} onValueChange={setNewStatut}>
             <div className="flex items-center space-x-2">
+              <RadioGroupItem value="sur_chantier" id="st-chantier" />
+              <Label htmlFor="st-chantier">🚧 Sur chantier</Label>
+            </div>
+            <div className="flex items-center space-x-2">
               <RadioGroupItem value="disponible" id="st-disponible" />
               <Label htmlFor="st-disponible">✅ Disponible</Label>
             </div>
