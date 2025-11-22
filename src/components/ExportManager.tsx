@@ -103,39 +103,52 @@ const ExportManager = ({
     try {
       console.log('[PDF Export] Début de l\'export PDF');
       
-      // Import dynamique des librairies
       const jsPDF = (await import('jspdf')).default;
       await import('jspdf-autotable');
-      console.log('[PDF Export] Librairies chargées');
       
       const doc = new jsPDF();
+      let currentY = 20;
       
-      // En-tête avec logo B8ild
-      doc.setFontSize(24);
-      doc.setTextColor(234, 88, 12); // Orange B8ild
-      doc.text("B8ild", 20, 20);
+      // ========== HEADER DESIGN ==========
+      // Bandeau orange en haut
+      doc.setFillColor(234, 88, 12);
+      doc.rect(0, 0, 210, 45, 'F');
       
-      doc.setFontSize(18);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Rapport de Chantier", 20, 35);
+      // Logo et titre
+      doc.setFontSize(32);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont(undefined, 'bold');
+      doc.text("B8ILD", 20, 25);
       
-      // Informations générales
-      doc.setFontSize(12);
-      doc.text(`Nom: ${chantierData.nom_chantier || 'N/A'}`, 20, 50);
-      doc.text(`Client: ${chantierData.client || 'N/A'}`, 20, 58);
-      doc.text(`Adresse: ${chantierData.adresse || "Non renseignée"}`, 20, 66);
-      doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 20, 74);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'normal');
+      doc.text("Rapport de Chantier", 20, 37);
       
-      console.log('[PDF Export] En-tête créé');
+      // Date en haut à droite
+      doc.setFontSize(10);
+      doc.text(new Date().toLocaleDateString('fr-FR'), 150, 37);
       
-      // Finances
+      currentY = 55;
+      
+      // ========== INFORMATIONS GÉNÉRALES ==========
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(15, currentY, 180, 32, 3, 3, 'F');
+      
       doc.setFontSize(14);
       doc.setTextColor(234, 88, 12);
-      doc.text("Finances", 20, 90);
+      doc.setFont(undefined, 'bold');
+      doc.text("Informations du chantier", 20, currentY + 8);
       
       doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Chantier: ${chantierData.nom_chantier || 'N/A'}`, 20, currentY + 16);
+      doc.text(`Client: ${chantierData.client || 'N/A'}`, 20, currentY + 23);
+      doc.text(`Adresse: ${chantierData.adresse || "Non renseignée"}`, 20, currentY + 30);
       
+      currentY += 42;
+      
+      // ========== FINANCES - KPIs Cards ==========
       const budgetHT = Number(devis?.montant_ht || 0);
       const budgetTTC = Number(devis?.montant_ttc || 0);
       const coutJournalier = Number(calculations?.cout_journalier_equipe || 0);
@@ -143,16 +156,64 @@ const ExportManager = ({
       const rentabilite = Number(calculations?.rentabilite_pct || 0);
       const jourCrit = calculations?.jour_critique;
       
-      doc.text(`Budget devis HT: ${budgetHT.toFixed(2)} €`, 20, 100);
-      doc.text(`Budget devis TTC: ${budgetTTC.toFixed(2)} €`, 20, 108);
-      doc.text(`Coût journalier équipe: ${coutJournalier.toFixed(2)} €`, 20, 116);
-      doc.text(`Budget disponible: ${budgetDispo.toFixed(2)} €`, 20, 124);
-      doc.text(`Rentabilité: ${rentabilite.toFixed(2)} %`, 20, 132);
-      doc.text(`Jour critique: ${isFinite(jourCrit) && jourCrit !== null ? Number(jourCrit).toFixed(2) : 'N/A'}`, 20, 140);
+      doc.setFontSize(14);
+      doc.setTextColor(234, 88, 12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Indicateurs Financiers", 20, currentY);
       
-      console.log('[PDF Export] Section finances créée');
+      currentY += 8;
       
-      // Équipe (tableau)
+      // KPI Cards en grille 2x3
+      const kpis = [
+        { label: 'Budget Devis HT', value: `${budgetHT.toFixed(2)} €`, color: [66, 135, 245] },
+        { label: 'Budget Devis TTC', value: `${budgetTTC.toFixed(2)} €`, color: [66, 135, 245] },
+        { label: 'Coût/Jour Équipe', value: `${coutJournalier.toFixed(2)} €`, color: [156, 39, 176] },
+        { label: 'Budget Disponible', value: `${budgetDispo.toFixed(2)} €`, color: [76, 175, 80] },
+        { 
+          label: 'Rentabilité', 
+          value: `${rentabilite.toFixed(1)} %`, 
+          color: rentabilite >= 20 ? [76, 175, 80] : rentabilite >= 10 ? [255, 152, 0] : [244, 67, 54] 
+        },
+        { 
+          label: 'Jour Critique', 
+          value: isFinite(jourCrit) && jourCrit !== null ? `${Number(jourCrit).toFixed(0)} j` : 'N/A',
+          color: [255, 87, 34]
+        }
+      ];
+      
+      kpis.forEach((kpi, idx) => {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const x = 15 + (col * 92);
+        const y = currentY + (row * 24);
+        
+        // Card background
+        doc.setFillColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+        doc.setDrawColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+        doc.roundedRect(x, y, 88, 20, 2, 2, 'FD');
+        
+        // Label
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'normal');
+        doc.text(kpi.label, x + 4, y + 6);
+        
+        // Value
+        doc.setFontSize(13);
+        doc.setFont(undefined, 'bold');
+        doc.text(kpi.value, x + 4, y + 15);
+      });
+      
+      currentY += 80;
+      
+      // ========== ÉQUIPE ==========
+      doc.setFontSize(14);
+      doc.setTextColor(234, 88, 12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Composition de l'équipe", 20, currentY);
+      
+      currentY += 5;
+      
       const equipeData = (membres || []).map(m => {
         try {
           const cout = calculations?.calculerCoutJournalierMembre ? 
@@ -163,7 +224,6 @@ const ExportManager = ({
             `${Number(cout).toFixed(2)} €`
           ];
         } catch (err) {
-          console.error('[PDF Export] Erreur calcul membre:', err, m);
           return [
             `${m?.prenom || ''} ${m?.nom || ''}`.trim() || 'N/A',
             m?.poste || 'Non renseigné',
@@ -176,26 +236,40 @@ const ExportManager = ({
         (doc as any).autoTable({
           head: [['Nom', 'Poste', 'Coût journalier']],
           body: equipeData,
-          startY: 155,
-          theme: 'grid',
-          headStyles: { fillColor: [234, 88, 12] },
-          styles: { fontSize: 10 },
+          startY: currentY,
+          theme: 'striped',
+          headStyles: { 
+            fillColor: [234, 88, 12],
+            fontSize: 11,
+            fontStyle: 'bold',
+            textColor: 255
+          },
+          styles: { 
+            fontSize: 10,
+            cellPadding: 5
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          },
+          columnStyles: {
+            2: { halign: 'right', fontStyle: 'bold' }
+          }
         });
-        console.log('[PDF Export] Tableau équipe créé');
+        currentY = (doc as any).lastAutoTable.finalY + 10;
       }
       
-      // Factures (nouvelle page si nécessaire)
-      const finalY = (doc as any).lastAutoTable?.finalY || 155;
-      if (finalY > 200) {
+      // ========== FACTURES ==========
+      if (currentY > 230) {
         doc.addPage();
-        doc.setFontSize(14);
-        doc.setTextColor(234, 88, 12);
-        doc.text("Factures fournisseurs", 20, 20);
-      } else {
-        doc.setFontSize(14);
-        doc.setTextColor(234, 88, 12);
-        doc.text("Factures fournisseurs", 20, finalY + 15);
+        currentY = 20;
       }
+      
+      doc.setFontSize(14);
+      doc.setTextColor(234, 88, 12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Factures Fournisseurs", 20, currentY);
+      
+      currentY += 5;
       
       const facturesData = (factures || []).map(f => {
         const montantHT = Number(f?.montant_ht || 0);
@@ -211,27 +285,52 @@ const ExportManager = ({
         (doc as any).autoTable({
           head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
           body: facturesData,
-          startY: finalY > 200 ? 30 : finalY + 20,
-          theme: 'grid',
-          headStyles: { fillColor: [234, 88, 12] },
-          styles: { fontSize: 10 },
+          startY: currentY,
+          theme: 'striped',
+          headStyles: { 
+            fillColor: [234, 88, 12],
+            fontSize: 11,
+            fontStyle: 'bold',
+            textColor: 255
+          },
+          styles: { 
+            fontSize: 10,
+            cellPadding: 5
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250]
+          },
+          columnStyles: {
+            2: { halign: 'right', fontStyle: 'bold' }
+          }
         });
-        console.log('[PDF Export] Tableau factures créé');
+        currentY = (doc as any).lastAutoTable.finalY;
       }
       
-      // Nettoyer le nom du fichier
+      // ========== FOOTER ==========
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFillColor(245, 245, 245);
+        doc.rect(0, 285, 210, 12, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont(undefined, 'normal');
+        doc.text(`B8ild - Rapport généré le ${new Date().toLocaleDateString('fr-FR')}`, 20, 292);
+        doc.text(`Page ${i} / ${pageCount}`, 180, 292);
+      }
+      
       const cleanName = (chantierData.nom_chantier || 'chantier')
         .replace(/[^a-z0-9]/gi, '_')
         .toLowerCase();
-      const fileName = `chantier_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `rapport_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Télécharger
       doc.save(fileName);
       console.log('[PDF Export] PDF téléchargé:', fileName);
       
       toast({
         title: "Export PDF réussi",
-        description: "Le fichier a été téléchargé",
+        description: "Le rapport a été téléchargé avec succès",
       });
     } catch (error) {
       console.error('[PDF Export] Erreur complète:', error);
