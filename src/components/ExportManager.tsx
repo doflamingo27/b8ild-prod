@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface ExportManagerProps {
   chantierId: string;
@@ -232,7 +232,7 @@ const ExportManager = ({
       });
       
       if (equipeData.length > 0) {
-        (doc as any).autoTable({
+        autoTable(doc, {
           head: [['Nom', 'Poste', 'Coût journalier']],
           body: equipeData,
           startY: currentY,
@@ -281,7 +281,7 @@ const ExportManager = ({
       });
       
       if (facturesData.length > 0) {
-        (doc as any).autoTable({
+        autoTable(doc, {
           head: [['Fournisseur', 'Catégorie', 'Montant HT', 'Date']],
           body: facturesData,
           startY: currentY,
