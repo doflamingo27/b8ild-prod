@@ -76,13 +76,16 @@ const FinancialManagement = () => {
 
   const loadChantierData = async () => {
     try {
-      // Charger le devis
+      // Charger les devis (tous les devis du chantier)
       const { data: devisData } = await supabase
         .from("devis")
         .select("*")
         .eq("chantier_id", selectedChantierId)
-        .maybeSingle();
-      setDevis(devisData);
+        .order("created_at", { ascending: false });
+      
+      // Prendre le devis actif ou le premier
+      const activeDevis = devisData?.find(d => d.actif) || devisData?.[0] || null;
+      setDevis(activeDevis);
 
       // Charger les factures
       const { data: facturesData } = await supabase
@@ -91,15 +94,24 @@ const FinancialManagement = () => {
         .eq("chantier_id", selectedChantierId);
       setFactures(facturesData || []);
 
-      // Charger les membres
-      const { data: equipeData } = await supabase
-        .from("equipe_chantier")
-        .select("*, membres_equipe(*)")
+      // Charger les membres depuis affectations_chantiers
+      const { data: affectationsData } = await supabase
+        .from("affectations_chantiers")
+        .select(`
+          *,
+          membres_equipe:membre_equipe_id (*)
+        `)
         .eq("chantier_id", selectedChantierId);
       
-      const membresAffectes = equipeData?.map(e => ({
-        ...e.membres_equipe,
-        jours_travailles: e.jours_travailles || 0
+      const membresAffectes = affectationsData?.map(a => ({
+        ...a.membres_equipe,
+        jours_travailles: a.jours_travailles || 0,
+        affectation: {
+          date_debut: a.date_debut,
+          date_fin: a.date_fin,
+          heures_par_jour: a.heures_par_jour,
+          taux_horaire_specifique: a.taux_horaire_specifique
+        }
       })) || [];
       setMembres(membresAffectes);
 
