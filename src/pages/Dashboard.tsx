@@ -83,7 +83,7 @@ const Dashboard = () => {
         .from("membres_equipe")
         .select("id")
         .eq("entreprise_id", entrepriseData.id)
-        .eq("actif", true);
+        .in("statut", ['sur_chantier', 'disponible']);
 
       // Calculate stats from real-time metrics
       const totalProjects = projects?.length || 0;

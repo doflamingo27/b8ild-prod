@@ -794,7 +794,6 @@ export type Database = {
       }
       membres_equipe: {
         Row: {
-          actif: boolean | null
           charges_patronales: number
           charges_patronales_pct: number | null
           charges_salariales: number
@@ -807,11 +806,11 @@ export type Database = {
           poste: string | null
           prenom: string
           specialite: string | null
+          statut: string | null
           taux_horaire: number
           updated_at: string | null
         }
         Insert: {
-          actif?: boolean | null
           charges_patronales?: number
           charges_patronales_pct?: number | null
           charges_salariales?: number
@@ -824,11 +823,11 @@ export type Database = {
           poste?: string | null
           prenom: string
           specialite?: string | null
+          statut?: string | null
           taux_horaire?: number
           updated_at?: string | null
         }
         Update: {
-          actif?: boolean | null
           charges_patronales?: number
           charges_patronales_pct?: number | null
           charges_salariales?: number
@@ -841,6 +840,7 @@ export type Database = {
           poste?: string | null
           prenom?: string
           specialite?: string | null
+          statut?: string | null
           taux_horaire?: number
           updated_at?: string | null
         }
@@ -1347,6 +1347,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_membre_statut_daily: { Args: never; Returns: undefined }
       compute_chantier_metrics: { Args: { p_chantier: string }; Returns: Json }
       get_current_entreprise: { Args: never; Returns: string }
       has_role: {

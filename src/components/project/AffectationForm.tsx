@@ -57,7 +57,7 @@ const AffectationForm = ({ chantierId, entrepriseId, affectation, onSuccess, onC
           .from("membres_equipe")
           .select("*")
           .eq("entreprise_id", entrepriseId)
-          .eq("actif", true)
+          .in("statut", ['sur_chantier', 'disponible'])
           .order("nom"),
         supabase
           .from("equipes")

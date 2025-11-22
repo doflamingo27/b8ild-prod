@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Pencil, Trash2, Users, Calculator, UserCheck, Hammer } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Users, Calculator, UserCheck, Hammer, RefreshCw } from "lucide-react";
 import { useCalculations } from "@/hooks/useCalculations";
 import EmptyState from "@/components/EmptyState";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -18,6 +19,7 @@ import { labels, placeholders, toasts, emptyStates, tooltips, modals, tables } f
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamManager from "@/components/team/TeamManager";
 import MemberTeamAssignment from "@/components/team/MemberTeamAssignment";
+import { cn } from "@/lib/utils";
 
 interface Membre {
   id: string;
@@ -28,7 +30,7 @@ interface Membre {
   taux_horaire: number;
   charges_salariales: number;
   charges_patronales: number;
-  actif: boolean;
+  statut: 'sur_chantier' | 'disponible' | 'repos' | 'en_arret';
   equipe_id?: string | null;
 }
 
@@ -49,7 +51,10 @@ const Team = () => {
   const [loading, setLoading] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
   const [editingMembre, setEditingMembre] = useState<Membre | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'actifs'>('all');
+  const [filterStatut, setFilterStatut] = useState<'all' | 'sur_chantier' | 'disponible' | 'repos' | 'en_arret'>('all');
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [editingMembreId, setEditingMembreId] = useState<string | null>(null);
+  const [newStatut, setNewStatut] = useState<string>('disponible');
   const [filterEquipe, setFilterEquipe] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     prenom: "",
@@ -63,7 +68,7 @@ const Team = () => {
   });
 
   const { cout_journalier_equipe, calculerCoutJournalierMembre } = useCalculations({
-    membres: membres.filter(m => m.actif),
+    membres: membres.filter(m => m.statut === 'sur_chantier' || m.statut === 'disponible'),
   });
 
   useEffect(() => {
@@ -103,7 +108,7 @@ const Team = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setMembres(data || []);
+      setMembres((data || []) as any);
     } catch (error: any) {
       console.error("Erreur chargement membres:", error);
     }
@@ -217,7 +222,7 @@ const Team = () => {
   // Filtrage des membres
   const filteredMembres = membres.filter(membre => {
     // Filtre par statut
-    if (filterStatus === 'actifs' && !membre.actif) return false;
+    if (filterStatut !== 'all' && membre.statut !== filterStatut) return false;
     
     // Filtre par équipe
     if (filterEquipe && membre.equipe_id !== filterEquipe) return false;
@@ -227,9 +232,13 @@ const Team = () => {
 
   // Calcul des KPIs basés sur les membres filtrés
   const totalMembres = filteredMembres.length;
-  const membresActifs = filteredMembres.filter(m => m.actif).length;
+  const membresSurChantier = filteredMembres.filter(m => m.statut === 'sur_chantier').length;
+  const membresDisponibles = filteredMembres.filter(m => m.statut === 'disponible').length;
+  const membresRepos = filteredMembres.filter(m => m.statut === 'repos').length;
+  const membresEnArret = filteredMembres.filter(m => m.statut === 'en_arret').length;
+  const membresActifs = membresSurChantier + membresDisponibles;
   const coutTotalJournalier = filteredMembres
-    .filter(m => m.actif)
+    .filter(m => m.statut === 'sur_chantier' || m.statut === 'disponible')
     .reduce((total, membre) => {
       const coutHoraireReel = membre.taux_horaire * 
         (1 + (membre.charges_salariales / 100) + (membre.charges_patronales / 100));
@@ -237,8 +246,41 @@ const Team = () => {
       return total + coutJournalierMembre;
     }, 0);
   const coutMoyenHoraire = membresActifs > 0 
-    ? filteredMembres.filter(m => m.actif).reduce((sum, m) => sum + m.taux_horaire, 0) / membresActifs 
+    ? filteredMembres.filter(m => m.statut === 'sur_chantier' || m.statut === 'disponible').reduce((sum, m) => sum + m.taux_horaire, 0) / membresActifs 
     : 0;
+
+  // Helper pour badges de statut
+  const getStatutBadge = (statut: string) => {
+    const badges = {
+      sur_chantier: { label: "🚧 Sur chantier", className: "bg-green-500 hover:bg-green-600 text-white" },
+      disponible: { label: "✅ Disponible", className: "bg-blue-500 hover:bg-blue-600 text-white" },
+      repos: { label: "😴 Repos", className: "bg-yellow-500 hover:bg-yellow-600 text-white" },
+      en_arret: { label: "🏥 En arrêt", className: "bg-red-500 hover:bg-red-600 text-white" }
+    };
+    return badges[statut as keyof typeof badges] || badges.disponible;
+  };
+
+  // Fonction de modification du statut
+  const handleChangeStatut = async () => {
+    try {
+      const { error } = await supabase
+        .from("membres_equipe")
+        .update({ statut: newStatut })
+        .eq("id", editingMembreId);
+
+      if (error) throw error;
+
+      toast({ title: "Statut modifié avec succès" });
+      setStatusDialogOpen(false);
+      loadMembres();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-8 animate-fade-up">
@@ -464,18 +506,39 @@ const Team = () => {
       {/* Filtres */}
       <div className="flex gap-2 flex-wrap items-center">
         <Button
-          variant={filterStatus === 'all' ? 'default' : 'outline'}
-          onClick={() => setFilterStatus('all')}
+          variant={filterStatut === 'all' ? 'default' : 'outline'}
+          onClick={() => setFilterStatut('all')}
           className="font-semibold"
         >
           Tous
         </Button>
         <Button
-          variant={filterStatus === 'actifs' ? 'default' : 'outline'}
-          onClick={() => setFilterStatus('actifs')}
+          variant={filterStatut === 'sur_chantier' ? 'default' : 'outline'}
+          onClick={() => setFilterStatut('sur_chantier')}
           className="font-semibold"
         >
-          ✅ Actifs
+          🚧 Sur chantier
+        </Button>
+        <Button
+          variant={filterStatut === 'disponible' ? 'default' : 'outline'}
+          onClick={() => setFilterStatut('disponible')}
+          className="font-semibold"
+        >
+          ✅ Disponibles
+        </Button>
+        <Button
+          variant={filterStatut === 'repos' ? 'default' : 'outline'}
+          onClick={() => setFilterStatut('repos')}
+          className="font-semibold"
+        >
+          😴 Repos
+        </Button>
+        <Button
+          variant={filterStatut === 'en_arret' ? 'default' : 'outline'}
+          onClick={() => setFilterStatut('en_arret')}
+          className="font-semibold"
+        >
+          🏥 En arrêt
         </Button>
         
         <div className="flex items-center gap-2">
@@ -559,8 +622,10 @@ const Team = () => {
                         {calculerCoutJournalierMembre(membre).toFixed(2)} €
                       </TableCell>
                       <TableCell>
-                        <Badge variant={membre.actif ? "default" : "secondary"} className="font-semibold">
-                          {membre.actif ? labels.forms.active : "Inactif"}
+                        <Badge 
+                          className={cn("font-semibold", getStatutBadge(membre.statut).className)}
+                        >
+                          {getStatutBadge(membre.statut).label}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -568,8 +633,21 @@ const Team = () => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => {
+                              setEditingMembreId(membre.id);
+                              setNewStatut(membre.statut);
+                              setStatusDialogOpen(true);
+                            }}
+                            className="hover:bg-primary/10"
+                            aria-label="Changer le statut"
+                            title="Changer le statut"
+                          >
+                            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleEdit(membre)}
-                            disabled={!membre.actif}
                             className="hover:bg-primary/10"
                             aria-label={labels.actions.edit}
                             title={labels.actions.edit}
@@ -580,7 +658,6 @@ const Team = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(membre.id)}
-                            disabled={!membre.actif}
                             className="hover:bg-danger/10"
                             aria-label={labels.actions.delete}
                             title={labels.actions.delete}
@@ -597,6 +674,43 @@ const Team = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de modification du statut */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le statut</DialogTitle>
+            <DialogDescription>
+              Changez le statut de ce membre. Le statut sera automatiquement mis à jour 
+              "Sur chantier" s'il est affecté à un projet actif.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <RadioGroup value={newStatut} onValueChange={setNewStatut}>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="disponible" id="st-disponible" />
+              <Label htmlFor="st-disponible">✅ Disponible</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="repos" id="st-repos" />
+              <Label htmlFor="st-repos">😴 Repos</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="en_arret" id="st-arret" />
+              <Label htmlFor="st-arret">🏥 En arrêt (maladie/accident)</Label>
+            </div>
+          </RadioGroup>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleChangeStatut}>
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

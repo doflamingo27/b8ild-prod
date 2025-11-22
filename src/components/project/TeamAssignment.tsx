@@ -55,7 +55,7 @@ const TeamAssignment = ({ chantierId, membres, onUpdate, coutJournalier }: TeamA
         .from("membres_equipe")
         .select("*")
         .eq("entreprise_id", entreprise.id)
-        .eq("actif", true);
+        .in("statut", ['sur_chantier', 'disponible']);
 
       setAvailableMembers(data || []);
     } catch (error) {
