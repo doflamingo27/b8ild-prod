@@ -64,10 +64,10 @@ const Reports = () => {
         .eq("entreprise_id", entreprise.id)
         .order("created_at", { ascending: false });
 
-      // Map les métriques temps réel
+      // Map les métriques temps réel (relation 1-1, pas un tableau)
       const chantiersWithMetrics = (data || []).map(chantier => ({
         ...chantier,
-        metrics: chantier.chantier_metrics_realtime?.[0]?.metrics as any,
+        metrics: (chantier as any).chantier_metrics_realtime?.metrics as any,
       }));
 
       setChantiers(chantiersWithMetrics);
