@@ -16,6 +16,13 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+const suggestedQuestions = [
+  "Quel est l'état de mes chantiers en cours ?",
+  "Quels chantiers ont une rentabilité critique ?",
+  "Quel est mon budget total engagé ?",
+  "Combien de membres d'équipe sont disponibles ?",
+];
+
 const ChatAI = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -187,56 +194,67 @@ const ChatAI = () => {
     }
   };
 
-  const suggestedQuestions = [
-    "Quel est l'état de mes chantiers en cours ?",
-    "Quels chantiers ont une rentabilité critique ?",
-    "Combien de membres d'équipe sont disponibles ?",
-    "Quel est mon budget total engagé ?",
-  ];
-
   return (
     <>
-      {/* Bouton flottant */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
-        size="icon"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
+      {/* Bouton flottant avec effet pulse */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="h-16 w-16 rounded-full shadow-2xl bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 hover:scale-110 relative group"
+          size="icon"
+        >
+          <MessageCircle className="h-7 w-7 text-primary-foreground transition-transform group-hover:scale-110" />
+          {messages.length > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-background animate-pulse" />
+          )}
+        </Button>
+        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping pointer-events-none" style={{ animationDuration: '2s' }} />
+      </div>
 
       {/* Dialog du chat */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="right" className="w-full sm:w-[540px] p-0 flex flex-col">
-          <SheetHeader className="p-4 border-b">
+          <SheetHeader className="p-4 border-b bg-gradient-to-r from-primary/5 to-primary/10">
             <SheetTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-primary" />
-              Assistant IA
-              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <div className="relative">
+                <Brain className="h-6 w-6 text-primary" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 bg-green-500 rounded-full border-2 border-background" />
+              </div>
+              <span className="text-lg font-semibold">Assistant IA</span>
+              <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
+              <span className="ml-auto text-xs text-muted-foreground font-normal">En ligne</span>
             </SheetTitle>
           </SheetHeader>
 
           {/* Zone de messages */}
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             {messages.length === 0 && !isLoading && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="h-full flex flex-col items-center justify-center p-6 animate-in fade-in-0 duration-500">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 shadow-lg">
+                  <Brain className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Assistant IA BTP</h3>
+                <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
                   Bonjour ! Je suis votre assistant IA pour la gestion de vos chantiers BTP.
                   Posez-moi vos questions sur vos projets, finances, équipes...
                 </p>
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Questions suggérées :</p>
+                <div className="w-full space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                    <Sparkles className="h-3 w-3" />
+                    Questions suggérées
+                  </p>
                   {suggestedQuestions.map((q, i) => (
                     <Button
                       key={i}
                       variant="outline"
                       size="sm"
-                      className="w-full justify-start text-left h-auto py-2"
+                      className="w-full justify-start text-left h-auto py-3 hover:bg-primary/5 hover:border-primary/30 transition-all"
                       onClick={() => {
                         setInput(q);
                         sendMessage(q);
                       }}
                     >
+                      <span className="text-xs text-muted-foreground mr-2">💬</span>
                       {q}
                     </Button>
                   ))}
@@ -244,52 +262,65 @@ const ChatAI = () => {
               </div>
             )}
 
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
               <div
                 key={msg.id}
                 className={cn(
-                  'mb-4 flex gap-3',
+                  'mb-4 flex gap-3 animate-in fade-in-0 slide-in-from-bottom-2 duration-300',
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 {msg.role === 'assistant' && (
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Brain className="h-4 w-4 text-primary" />
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0 shadow-sm ring-2 ring-primary/20">
+                    <Brain className="h-5 w-5 text-primary" />
                   </div>
                 )}
                 <div
                   className={cn(
-                    'rounded-lg px-4 py-2 max-w-[80%]',
+                    'rounded-2xl px-4 py-3 max-w-[80%] shadow-md transition-all hover:shadow-lg',
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                      ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground'
+                      : 'bg-gradient-to-br from-muted to-muted/50 border border-border'
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {msg.timestamp.toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <p className="text-xs opacity-70">
+                      {msg.timestamp.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    {msg.role === 'assistant' && (
+                      <span className="text-xs opacity-50 ml-auto">✓</span>
+                    )}
+                  </div>
                 </div>
+                {msg.role === 'user' && (
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-sm text-white font-semibold text-sm">
+                    U
+                  </div>
+                )}
               </div>
             ))}
 
             {isLoading && (
-              <div className="flex gap-3 mb-4">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Brain className="h-4 w-4 text-primary" />
+              <div className="flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0 shadow-sm ring-2 ring-primary/20">
+                  <Brain className="h-5 w-5 text-primary animate-pulse" />
                 </div>
-                <div className="bg-muted rounded-lg px-4 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="bg-gradient-to-br from-muted to-muted/50 border border-border rounded-2xl px-5 py-3 shadow-md flex items-center gap-1">
+                  <span className="h-2 w-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="h-2 w-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="h-2 w-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
           </ScrollArea>
 
           {/* Input fixé en bas */}
-          <div className="p-4 border-t bg-background">
+          <div className="p-4 border-t bg-gradient-to-t from-muted/20 to-transparent">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -302,12 +333,24 @@ const ChatAI = () => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Posez votre question..."
                 disabled={isLoading}
-                className="flex-1"
+                className="flex-1 border-2 focus:border-primary transition-colors"
               />
-              <Button type="submit" disabled={isLoading || !input.trim()} size="icon">
-                <Send className="h-4 w-4" />
+              <Button 
+                type="submit" 
+                disabled={isLoading || !input.trim()} 
+                size="icon"
+                className="bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all hover:scale-105 shadow-md"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </form>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Propulsé par Lovable AI
+            </p>
           </div>
         </SheetContent>
       </Sheet>
