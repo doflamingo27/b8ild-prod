@@ -131,18 +131,18 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
         </Card>
       </div>
 
-      {/* Jour critique et marge */}
+      {/* Marge à date, Jours restants, Marge finale */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className={`border-2 ${metrics.jours_restants_rentables != null && metrics.jours_restants_rentables <= 3 ? 'border-danger' : 'border-border'}`}>
+        <Card className="border-2 border-primary">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Jour critique</CardTitle>
+            <CardTitle className="text-sm font-medium">Marge à date</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {metrics.jour_critique == null ? '—' : Math.floor(metrics.jour_critique)}
+            <div className={`text-3xl font-bold ${metrics.marge_a_date >= 0 ? 'text-success' : 'text-danger'}`}>
+              {formatCurrency(metrics.marge_a_date)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Jour de basculement en déficit
+              Budget disponible: {formatCurrency(metrics.budget_disponible)}
             </p>
           </CardContent>
         </Card>
@@ -167,16 +167,21 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-primary">
+        <Card className="border-2 border-success">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Marge à date</CardTitle>
+            <CardTitle className="text-sm font-medium">Marge finale</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${metrics.marge_a_date >= 0 ? 'text-success' : 'text-danger'}`}>
-              {formatCurrency(metrics.marge_a_date)}
+            <div className="flex items-center gap-4">
+              <span className={`text-3xl font-bold ${metrics.marge_finale >= 0 ? 'text-success' : 'text-danger'}`}>
+                {formatCurrency(metrics.marge_finale)}
+              </span>
+              <span className={`text-2xl font-semibold ${metrics.marge_finale_pct >= 0 ? 'text-success' : 'text-danger'}`}>
+                ({metrics.marge_finale_pct?.toFixed(1)}%)
+              </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Budget disponible: {formatCurrency(metrics.budget_disponible)}
+              Projection à la fin du chantier
             </p>
           </CardContent>
         </Card>

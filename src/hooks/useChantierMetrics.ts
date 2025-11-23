@@ -14,6 +14,8 @@ export interface ChantierMetrics {
   budget_disponible: number;
   jour_critique: number | null;
   jours_restants_rentables: number | null;
+  marge_finale: number;
+  marge_finale_pct: number;
   statut_rentabilite: 'VERT' | 'JAUNE' | 'ORANGE' | 'ROUGE';
 }
 
