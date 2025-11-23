@@ -128,6 +128,41 @@ export type Database = {
           },
         ]
       }
+      ai_analyses: {
+        Row: {
+          analysis_data: Json
+          chantier_id: string
+          created_at: string | null
+          id: string
+          score_global: number | null
+          statut: string | null
+        }
+        Insert: {
+          analysis_data: Json
+          chantier_id: string
+          created_at?: string | null
+          id?: string
+          score_global?: number | null
+          statut?: string | null
+        }
+        Update: {
+          analysis_data?: Json
+          chantier_id?: string
+          created_at?: string | null
+          id?: string
+          score_global?: number | null
+          statut?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analyses_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "chantiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chantier_metrics_realtime: {
         Row: {
           chantier_id: string

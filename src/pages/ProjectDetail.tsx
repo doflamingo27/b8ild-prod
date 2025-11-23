@@ -18,7 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, Building, Users, FileText, Receipt, 
-  AlertTriangle, TrendingUp, Calendar, MapPin, Edit, Trash2 
+  AlertTriangle, TrendingUp, Calendar, MapPin, Edit, Trash2, Brain 
 } from "lucide-react";
 import QuoteManager from "@/components/project/QuoteManager";
 import InvoiceManager from "@/components/project/InvoiceManager";
@@ -27,6 +27,7 @@ import ExpensesManager from "@/components/project/ExpensesManager";
 import ExportManager from "@/components/ExportManager";
 import ChantierKpis from "@/components/ChantierKpis";
 import ChantierCharts from "@/components/ChantierCharts";
+import { AIChantierAnalysis } from "@/components/project/AIChantierAnalysis";
 
 interface Chantier {
   id: string;
@@ -407,7 +408,7 @@ const ProjectDetail = () => {
       {/* Tabs de gestion */}
       <Card className="card-premium">
         <Tabs defaultValue="quote" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-14 bg-muted/50 p-1">
+          <TabsList className="grid w-full grid-cols-5 h-14 bg-muted/50 p-1">
             <TabsTrigger value="quote" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
               <FileText className="h-5 w-5 mr-2" />
               Devis
@@ -423,6 +424,10 @@ const ProjectDetail = () => {
             <TabsTrigger value="expenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
               <Receipt className="h-5 w-5 mr-2" />
               Frais
+            </TabsTrigger>
+            <TabsTrigger value="ai-analysis" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+              <Brain className="h-5 w-5 mr-2" />
+              Analyse IA
             </TabsTrigger>
           </TabsList>
 
@@ -445,6 +450,10 @@ const ProjectDetail = () => {
 
           <TabsContent value="expenses" className="mt-6">
             <ExpensesManager chantierId={id!} frais={frais} onUpdate={loadProjectData} />
+          </TabsContent>
+
+          <TabsContent value="ai-analysis" className="mt-6">
+            <AIChantierAnalysis chantierId={id!} />
           </TabsContent>
         </Tabs>
       </Card>
