@@ -28,6 +28,9 @@ interface ChantierMetrics {
     marge_a_date: number;
     profitability_pct: number;
     marge_finale_pct: number;
+    marge_finale: number;
+    cout_journalier_equipe: number;
+    duree_estimee_jours: number;
   };
 }
 
@@ -136,8 +139,9 @@ const Rentabilite = () => {
   // Calcul des KPIs globaux sur TOUS les chantiers
   const revenusTotaux = chantiers.reduce((sum, c) => sum + (c.budget_ht || 0), 0);
   const coutsTotaux = chantiers.reduce((sum, c) => {
-    const couts = (c.metrics?.couts_fixes_engages || 0) + (c.metrics?.cout_main_oeuvre_reel || 0);
-    return sum + couts;
+    const couts_fixes = c.metrics?.couts_fixes_engages || 0;
+    const cout_mo_total = (c.metrics?.cout_journalier_equipe || 0) * (c.metrics?.duree_estimee_jours || 0);
+    return sum + couts_fixes + cout_mo_total;
   }, 0);
   const margeGlobale = revenusTotaux - coutsTotaux;
   const tauxMargeMoyen = chantiers.length > 0 
@@ -315,13 +319,14 @@ const Rentabilite = () => {
                         <div className="text-right min-w-[120px]">
                           <p className="text-xs text-muted-foreground uppercase mb-1">Coûts</p>
                           <p className="text-xl font-black text-orange-600">
-                            {((chantier.metrics?.couts_fixes_engages || 0) + (chantier.metrics?.cout_main_oeuvre_reel || 0)).toFixed(2)} €
+                            {((chantier.metrics?.couts_fixes_engages || 0) + 
+                              ((chantier.metrics?.cout_journalier_equipe || 0) * (chantier.metrics?.duree_estimee_jours || 0))).toFixed(2)} €
                           </p>
                         </div>
                         <div className="text-right min-w-[120px]">
                           <p className="text-xs text-muted-foreground uppercase mb-1">Marge</p>
                           <p className="text-xl font-black text-emerald-600">
-                            {(chantier.metrics?.marge_a_date || 0).toFixed(2)} €
+                            {(chantier.metrics?.marge_finale || 0).toFixed(2)} €
                           </p>
                         </div>
                         <div className="text-right min-w-[100px]">
