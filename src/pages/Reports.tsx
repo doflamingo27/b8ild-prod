@@ -200,7 +200,7 @@ const Reports = () => {
             const budget_devis = metrics?.budget_ht || 0;
             const cout_journalier_equipe = metrics?.cout_journalier_equipe || 0;
             const budget_disponible = metrics?.budget_disponible || 0;
-            const rentabilite_pct = metrics?.profitability_pct || 0;
+            const rentabilite_pct = metrics?.marge_finale_pct || 0;
             const jour_critique = metrics?.jour_critique || 0;
             const jours_restants_avant_deficit = metrics?.jours_restants_rentables || 0;
             

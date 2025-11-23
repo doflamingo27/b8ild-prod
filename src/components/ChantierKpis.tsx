@@ -11,7 +11,7 @@ interface ChantierKpisProps {
 export default function ChantierKpis({ metrics }: ChantierKpisProps) {
   if (!metrics) return null;
 
-  const rentabilityBadge = getRentabilityBadge(metrics.profitability_pct || 0);
+  const rentabilityBadge = getRentabilityBadge(metrics.marge_finale_pct || 0);
 
   const formatCurrency = (value: number | null | undefined) => {
     if (value == null) return '—';
@@ -28,7 +28,7 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
     return Math.floor(value).toString();
   };
 
-  const isProfitable = metrics.profitability_pct >= 0;
+  const isProfitable = metrics.marge_finale_pct >= 0;
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -50,7 +50,7 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
                 <TrendingDown className="h-5 w-5 text-danger" />
               )}
               <span className={`text-3xl font-bold ${isProfitable ? 'text-success' : 'text-danger'}`}>
-                {metrics.profitability_pct?.toFixed(1) ?? '0'}%
+                {metrics.marge_finale_pct?.toFixed(1) ?? '0'}%
               </span>
             </div>
             {rentabilityBadge.urgency !== 'none' && (

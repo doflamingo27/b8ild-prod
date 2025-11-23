@@ -27,6 +27,7 @@ interface ChantierMetrics {
     cout_main_oeuvre_reel: number;
     marge_a_date: number;
     profitability_pct: number;
+    marge_finale_pct: number;
   };
 }
 
@@ -140,7 +141,7 @@ const Rentabilite = () => {
   }, 0);
   const margeGlobale = revenusTotaux - coutsTotaux;
   const tauxMargeMoyen = chantiers.length > 0 
-    ? chantiers.reduce((sum, c) => sum + (c.metrics?.profitability_pct || 0), 0) / chantiers.length 
+    ? chantiers.reduce((sum, c) => sum + (c.metrics?.marge_finale_pct || 0), 0) / chantiers.length 
     : 0;
 
   return (
@@ -279,7 +280,7 @@ const Rentabilite = () => {
           filteredChantiers.map((chantier) => {
             const etat = etatConfig[chantier.etat_chantier] || etatConfig['brouillon'];
             const hasMetrics = chantier.metrics && chantier.budget_ht > 0;
-            const rentabilityBadge = getRentabilityBadge(chantier.metrics?.profitability_pct || 0);
+            const rentabilityBadge = getRentabilityBadge(chantier.metrics?.marge_finale_pct || 0);
 
             return (
               <Card key={chantier.id} className="card-premium hover-lift cursor-pointer transition-all">
@@ -326,13 +327,13 @@ const Rentabilite = () => {
                         <div className="text-right min-w-[100px]">
                           <p className="text-xs text-muted-foreground uppercase mb-1">Taux</p>
                           <p className={`text-2xl font-black ${
-                            (chantier.metrics?.profitability_pct || 0) >= 10 
+                            (chantier.metrics?.marge_finale_pct || 0) >= 10 
                               ? 'text-green-600' 
-                              : (chantier.metrics?.profitability_pct || 0) >= 0 
+                              : (chantier.metrics?.marge_finale_pct || 0) >= 0 
                               ? 'text-amber-600' 
                               : 'text-red-600'
                           }`}>
-                            {(chantier.metrics?.profitability_pct || 0).toFixed(1)}%
+                            {(chantier.metrics?.marge_finale_pct || 0).toFixed(1)}%
                           </p>
                         </div>
                       </div>
