@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useCalculations } from "@/hooks/useCalculations";
 import { useChantierMetrics } from "@/hooks/useChantierMetrics";
+import { getRentabilityBadge } from "@/lib/rentabilityBadge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -235,24 +236,14 @@ const ProjectDetail = () => {
   };
 
   const getStatusBadge = () => {
-    const { statut, rentabilite_pct } = calculations;
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      success: "default",
-      warning: "secondary",
-      alert: "outline",
-      danger: "destructive",
-    };
+    const { rentabilite_pct } = calculations;
+    const rentabilityBadge = getRentabilityBadge(rentabilite_pct || 0);
     
-    const labels: Record<string, string> = {
-      success: "Excellent",
-      warning: "Bon",
-      alert: "Attention",
-      danger: "Déficit",
-    };
-
     return (
-      <Badge variant={variants[statut]}>
-        {labels[statut]} - {rentabilite_pct.toFixed(1)}%
+      <Badge 
+        className={`font-bold px-3 py-1 border-2 ${rentabilityBadge.bgColor} ${rentabilityBadge.color}`}
+      >
+        {rentabilityBadge.emoji} {rentabilityBadge.label}
       </Badge>
     );
   };
