@@ -515,7 +515,7 @@ const Projects = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
             const metrics = project.metrics || {};
-            const rentabilite = metrics.profitability_pct || 0;
+            const rentabilite = metrics.marge_finale_pct || 0;
             const joursRestants = metrics.jours_restants_rentables || project.duree_estimee || 0;
             
             return (

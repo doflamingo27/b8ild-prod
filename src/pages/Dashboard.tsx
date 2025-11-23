@@ -100,9 +100,9 @@ const Dashboard = () => {
 
       // Average rentabilite from metrics
       const projectsWithRentabilite = projectsWithMetrics.filter(p => {
-        const hasProfitability = p.metrics?.profitability_pct != null;
+        const hasProfitability = p.metrics?.marge_finale_pct != null;
         if (!hasProfitability && p.metrics) {
-          console.log('[Dashboard] Project without profitability_pct:', p.nom_chantier, 'metrics:', p.metrics);
+          console.log('[Dashboard] Project without marge_finale_pct:', p.nom_chantier, 'metrics:', p.metrics);
         }
         return hasProfitability;
       });
@@ -110,13 +110,13 @@ const Dashboard = () => {
       console.log('[Dashboard] Projects with rentabilite:', projectsWithRentabilite.length);
       
       const avgRentabilite = projectsWithRentabilite.length > 0
-        ? projectsWithRentabilite.reduce((sum, p) => sum + (p.metrics?.profitability_pct || 0), 0) / projectsWithRentabilite.length
+        ? projectsWithRentabilite.reduce((sum, p) => sum + (p.metrics?.marge_finale_pct || 0), 0) / projectsWithRentabilite.length
         : 0;
 
       console.log('[Dashboard] Average rentabilite calculated:', avgRentabilite);
 
-      // Count alerts (profitability < 10%)
-      const alertsCount = projectsWithMetrics.filter(p => (p.metrics?.profitability_pct || 0) < 10).length;
+      // Count alerts (marge_finale < 10%)
+      const alertsCount = projectsWithMetrics.filter(p => (p.metrics?.marge_finale_pct || 0) < 10).length;
 
       setStats({
         totalProjects,

@@ -12,7 +12,7 @@ const RealtimeProjectCard = ({ project, onEdit, onDelete }: RealtimeProjectCardP
 
   console.log('[🔴 RealtimeProjectCard MOUNTED v2]', project.nom_chantier);
 
-  const rentabilite = metrics?.profitability_pct || 0;
+  const rentabilite = metrics?.marge_finale_pct || 0;
   const joursRestants = metrics?.jours_restants_rentables ?? project.duree_estimee_jours;
   const budgetDevis = metrics?.budget_ht || 0;
   const coutsEngages = (metrics?.couts_fixes_engages || 0) + (metrics?.cout_main_oeuvre_reel || 0);
