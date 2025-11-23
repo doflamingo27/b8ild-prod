@@ -183,7 +183,7 @@ const Team = () => {
           .insert({
             ...formData,
             entreprise_id: entrepriseId,
-            actif: true,
+            statut: 'disponible',
           });
 
         if (error) throw error;
