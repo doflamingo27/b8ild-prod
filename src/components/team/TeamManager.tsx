@@ -44,6 +44,32 @@ const TeamManager = ({ entrepriseId, addMemberButton }: TeamManagerProps) => {
     loadEquipes();
   }, [entrepriseId]);
 
+  // Abonnement Realtime pour actualiser le nombre de membres
+  useEffect(() => {
+    if (!entrepriseId) return;
+
+    const channel = supabase
+      .channel(`team_membres:${entrepriseId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'membres_equipe',
+          filter: `entreprise_id=eq.${entrepriseId}`,
+        },
+        (payload) => {
+          console.log('[TeamManager] Membre changé, actualisation nombre...', payload);
+          loadEquipes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [entrepriseId]);
+
   const loadEquipes = async () => {
     try {
       const { data, error } = await supabase
