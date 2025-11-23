@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, DollarSign, TrendingDown, Percent, Search, MapPin, AlertCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { TrendingUp, DollarSign, TrendingDown, Percent, Search, MapPin, AlertCircle, ChevronDown } from "lucide-react";
 import { getRentabilityBadge } from "@/lib/rentabilityBadge";
 
 interface ChantierMetrics {
@@ -28,7 +34,7 @@ const Rentabilite = () => {
   const { user } = useAuth();
   const [chantiers, setChantiers] = useState<ChantierMetrics[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('en_cours');
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -224,64 +230,40 @@ const Rentabilite = () => {
             aria-label="Rechercher un chantier"
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant={filterStatus === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('all')}
-            className="font-semibold"
-          >
-            Tous
-          </Button>
-          <Button
-            variant={filterStatus === 'brouillon' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('brouillon')}
-            className="font-semibold"
-          >
-            📝 Brouillon
-          </Button>
-          <Button
-            variant={filterStatus === 'projection' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('projection')}
-            className="font-semibold"
-          >
-            🔮 Projection
-          </Button>
-          <Button
-            variant={filterStatus === 'attente_signature' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('attente_signature')}
-            className="font-semibold"
-          >
-            ✍️ En attente
-          </Button>
-          <Button
-            variant={filterStatus === 'en_cours' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('en_cours')}
-            className="font-semibold"
-          >
-            🚧 En cours
-          </Button>
-          <Button
-            variant={filterStatus === 'suspendu' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('suspendu')}
-            className="font-semibold"
-          >
-            ⏸️ Suspendu
-          </Button>
-          <Button
-            variant={filterStatus === 'termine' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('termine')}
-            className="font-semibold"
-          >
-            ✅ Terminé
-          </Button>
-          <Button
-            variant={filterStatus === 'annule' ? 'default' : 'outline'}
-            onClick={() => setFilterStatus('annule')}
-            className="font-semibold"
-          >
-            ❌ Annulé
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="min-w-[200px] font-semibold h-12 justify-between">
+              {etatConfig[filterStatus]?.icon} {etatConfig[filterStatus]?.label || 'Tous'}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[200px] bg-background border-border">
+            <DropdownMenuItem onClick={() => setFilterStatus('all')} className="font-semibold cursor-pointer">
+              Tous
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('brouillon')} className="font-semibold cursor-pointer">
+              📝 Brouillon
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('projection')} className="font-semibold cursor-pointer">
+              🔮 Projection
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('attente_signature')} className="font-semibold cursor-pointer">
+              ✍️ En attente
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('en_cours')} className="font-semibold cursor-pointer">
+              🚧 En cours
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('suspendu')} className="font-semibold cursor-pointer">
+              ⏸️ Suspendu
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('termine')} className="font-semibold cursor-pointer">
+              ✅ Terminé
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilterStatus('annule')} className="font-semibold cursor-pointer">
+              ❌ Annulé
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Liste des chantiers */}
@@ -322,27 +304,27 @@ const Rentabilite = () => {
                     </div>
 
                     {hasMetrics ? (
-                      <div className="flex gap-6 items-center">
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground uppercase">Revenus</p>
-                          <p className="text-lg font-black text-green-600">
+                      <div className="flex gap-10 items-center">
+                        <div className="text-right min-w-[120px]">
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Revenus</p>
+                          <p className="text-xl font-black text-green-600">
                             {chantier.budget_ht.toFixed(2)} €
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground uppercase">Coûts</p>
-                          <p className="text-lg font-black text-orange-600">
+                        <div className="text-right min-w-[120px]">
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Coûts</p>
+                          <p className="text-xl font-black text-orange-600">
                             {((chantier.metrics?.couts_fixes_engages || 0) + (chantier.metrics?.cout_main_oeuvre_reel || 0)).toFixed(2)} €
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground uppercase">Marge</p>
-                          <p className="text-lg font-black text-emerald-600">
+                        <div className="text-right min-w-[120px]">
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Marge</p>
+                          <p className="text-xl font-black text-emerald-600">
                             {(chantier.metrics?.marge_a_date || 0).toFixed(2)} €
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground uppercase">Taux</p>
+                        <div className="text-right min-w-[100px]">
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Taux</p>
                           <p className={`text-2xl font-black ${
                             (chantier.metrics?.profitability_pct || 0) >= 10 
                               ? 'text-green-600' 
