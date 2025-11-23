@@ -16,6 +16,11 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+// Fonction pour nettoyer le markdown des réponses IA
+const cleanMarkdown = (text: string): string => {
+  return text.replace(/\*\*/g, '');
+};
+
 const suggestedQuestions = [
   "Quel est l'état de mes chantiers en cours ?",
   "Quels chantiers ont une rentabilité critique ?",
@@ -281,11 +286,11 @@ const ChatAI = () => {
                     'rounded-2xl px-4 py-3 max-w-[80%] shadow-md transition-all hover:shadow-lg',
                     msg.role === 'user'
                       ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground'
-                      : 'bg-gradient-to-br from-muted to-muted/50 border border-border'
-                  )}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                  <div className="flex items-center gap-2 mt-2">
+                  : 'bg-gradient-to-br from-muted to-muted/50 border border-border'
+              )}
+            >
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{cleanMarkdown(msg.content)}</p>
+              <div className="flex items-center gap-2 mt-2">
                     <p className="text-xs opacity-70">
                       {msg.timestamp.toLocaleTimeString('fr-FR', {
                         hour: '2-digit',
