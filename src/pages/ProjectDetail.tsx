@@ -405,6 +405,14 @@ const ProjectDetail = () => {
         </Alert>
       )}
 
+      {/* Message explicatif IA */}
+      <Alert className="border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        <AlertDescription className="text-foreground">
+          💡 <strong>Analyse IA disponible</strong> : Utilisez l'onglet <strong>"Analyse IA"</strong> ci-dessous pour obtenir une analyse complète (problèmes détectés, points positifs, recommandations prioritaires, prévisions et comparaison aux standards BTP français).
+        </AlertDescription>
+      </Alert>
+
       {/* Tabs de gestion */}
       <Card className="card-premium">
         <Tabs defaultValue="quote" className="w-full">

@@ -57,6 +57,9 @@ const ProjectCard = ({
               <Badge className={`${currentEtat.color} font-semibold px-2 py-1`}>
                 {currentEtat.icon} {currentEtat.label}
               </Badge>
+              <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 font-semibold px-2 py-1 border border-purple-300 dark:border-purple-700">
+                🤖 IA
+              </Badge>
             </div>
             <CardTitle className="text-lg font-bold flex items-center gap-2 group-hover:text-primary transition-smooth">
               <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-smooth">

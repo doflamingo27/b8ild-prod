@@ -30,11 +30,44 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [chantierData, setChantierData] = useState<any>(null);
+  const [hasMinimalData, setHasMinimalData] = useState(false);
+  const [migrationError, setMigrationError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadLatestAnalysis();
+    checkChantierData();
   }, [chantierId]);
+
+  const checkChantierData = async () => {
+    try {
+      // Vérifier les données minimales du chantier
+      const { data: chantier, error: chantierError } = await supabase
+        .from('chantiers')
+        .select(`
+          *,
+          devis!inner(count),
+          factures_fournisseurs(count),
+          affectations_chantiers(count)
+        `)
+        .eq('id', chantierId)
+        .single();
+
+      if (chantierError) throw chantierError;
+
+      setChantierData(chantier);
+      
+      // Vérifier si le chantier a des données minimales pour une analyse pertinente
+      const hasDevis = (chantier as any).devis?.[0]?.count > 0;
+      const hasFactures = (chantier as any).factures_fournisseurs?.length > 0;
+      const hasAffectations = (chantier as any).affectations_chantiers?.length > 0;
+      
+      setHasMinimalData(hasDevis || hasFactures || hasAffectations);
+    } catch (error) {
+      console.error('Error checking chantier data:', error);
+    }
+  };
 
   const loadLatestAnalysis = async () => {
     try {
@@ -45,6 +78,14 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
+
+      if (error) {
+        // Si erreur table n'existe pas, migration non appliquée
+        if (error.code === '42P01') {
+          setMigrationError(true);
+        }
+        return;
+      }
 
       if (data) {
         setAnalysis(data.analysis_data);
@@ -62,7 +103,16 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
         body: { chantierId }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Gestion des erreurs spécifiques
+        if (error.status === 429) {
+          throw new Error("🚫 Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.");
+        }
+        if (error.status === 402) {
+          throw new Error("💳 Crédit insuffisant. Ajoutez des crédits dans Paramètres → Workspace → Usage.");
+        }
+        throw error;
+      }
 
       if (data) {
         setAnalysis(data);
@@ -138,6 +188,19 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
     return order[priorite?.toLowerCase()] || 5;
   };
 
+  // Affichage erreur migration
+  if (migrationError) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Migration de base de données requise</AlertTitle>
+        <AlertDescription>
+          La table `ai_analyses` n'existe pas encore. Veuillez approuver la migration en attente dans Cloud → Database → Migrations pour activer l'analyse IA.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (!analysis && !loading) {
     return (
       <Card className="card-premium">
@@ -147,7 +210,28 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
           <p className="text-muted-foreground mb-6">
             Générez votre première analyse IA pour obtenir des recommandations personnalisées
           </p>
-          <Button onClick={generateAnalysis} disabled={loading} size="lg" className="hover-lift">
+          
+          {/* Message si données insuffisantes */}
+          {!hasMinimalData && (
+            <Alert className="mb-6 text-left max-w-xl mx-auto">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Données insuffisantes</strong> : Pour une analyse pertinente, renseignez d'abord :
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Un devis actif avec budget</li>
+                  <li>Des factures ou frais de chantier</li>
+                  <li>Des affectations d'équipe</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <Button 
+            onClick={generateAnalysis} 
+            disabled={loading || !hasMinimalData} 
+            size="lg" 
+            className="hover-lift"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
@@ -160,6 +244,11 @@ export const AIChantierAnalysis = ({ chantierId }: AIChantierAnalysisProps) => {
               </>
             )}
           </Button>
+          {!hasMinimalData && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Le bouton sera activé dès que vous ajouterez des données au chantier
+            </p>
+          )}
         </CardContent>
       </Card>
     );

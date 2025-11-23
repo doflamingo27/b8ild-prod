@@ -5,7 +5,7 @@ import { useChantiersRealtime } from "@/hooks/useChantiersRealtime";
 import KPICard from "@/components/KPICard";
 import RealtimeProjectCard from "@/components/RealtimeProjectCard";
 import EmptyState from "@/components/EmptyState";
-import { TrendingUp, Users, AlertTriangle, Building, Plus } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle, Building, Plus, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -246,6 +246,25 @@ const Dashboard = () => {
           subtitle="chantiers à surveiller"
         />
       </div>
+
+      {/* Callout IA */}
+      <Card className="card-premium border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/50">
+              <Brain className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold mb-2">✨ Analyse IA disponible</h3>
+              <p className="text-muted-foreground">
+                Obtenez une analyse complète de chaque chantier avec des recommandations personnalisées, 
+                prévisions financières et comparaison aux standards BTP. 
+                <strong> Accédez à l'onglet "Analyse IA"</strong> depuis le détail d'un chantier.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
