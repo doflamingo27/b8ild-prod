@@ -29,6 +29,7 @@ const Projects = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nom_chantier: "",
+    reference_chantier: "",
     client: "",
     adresse: "",
     duree_estimee_jours: 30,
@@ -147,6 +148,7 @@ const Projects = () => {
       setEditingProject(null);
       setFormData({
         nom_chantier: "",
+        reference_chantier: "",
         client: "",
         adresse: "",
         duree_estimee_jours: 30,
@@ -223,6 +225,7 @@ const Projects = () => {
     
     setFormData({
       nom_chantier: project.nom_chantier,
+      reference_chantier: project.reference_chantier || "",
       client: project.client,
       adresse: project.adresse || "",
       duree_estimee_jours: project.duree_estimee_jours || 30,
@@ -326,6 +329,21 @@ const Projects = () => {
                     placeholder={placeholders.project.name}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reference_chantier" className="font-semibold">
+                    Référence du chantier *
+                  </Label>
+                  <Input
+                    id="reference_chantier"
+                    value={formData.reference_chantier}
+                    onChange={(e) => setFormData({ ...formData, reference_chantier: e.target.value })}
+                    placeholder="Ex: REF-2025-001"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground italic">
+                    (Veuillez utiliser la même référence que dans vos factures fournisseurs)
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="client" className="font-semibold">{labels.forms.projectClient}</Label>

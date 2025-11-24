@@ -32,6 +32,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nom_chantier: "",
+    reference_chantier: "",
     client: "",
     adresse: "",
     duree_estimee_jours: 30,
@@ -157,6 +158,7 @@ const Dashboard = () => {
       setDialogOpen(false);
       setFormData({
         nom_chantier: "",
+        reference_chantier: "",
         client: "",
         adresse: "",
         duree_estimee_jours: 30,
@@ -295,6 +297,21 @@ const Dashboard = () => {
                         placeholder={placeholders.project.name}
                         required
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reference_chantier" className="font-semibold">
+                        Référence du chantier *
+                      </Label>
+                      <Input
+                        id="reference_chantier"
+                        value={formData.reference_chantier}
+                        onChange={(e) => setFormData({ ...formData, reference_chantier: e.target.value })}
+                        placeholder="Ex: REF-2025-001"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground italic">
+                        (Veuillez utiliser la même référence que dans vos factures fournisseurs)
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="client" className="font-semibold">{labels.forms.projectClient}</Label>
