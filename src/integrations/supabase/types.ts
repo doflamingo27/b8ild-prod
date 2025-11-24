@@ -252,6 +252,7 @@ export type Database = {
           etat_chantier: string | null
           id: string
           nom_chantier: string
+          reference_chantier: string | null
           statut: string | null
           updated_at: string | null
         }
@@ -273,6 +274,7 @@ export type Database = {
           etat_chantier?: string | null
           id?: string
           nom_chantier: string
+          reference_chantier?: string | null
           statut?: string | null
           updated_at?: string | null
         }
@@ -294,6 +296,7 @@ export type Database = {
           etat_chantier?: string | null
           id?: string
           nom_chantier?: string
+          reference_chantier?: string | null
           statut?: string | null
           updated_at?: string | null
         }
