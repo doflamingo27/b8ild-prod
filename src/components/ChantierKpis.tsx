@@ -11,7 +11,7 @@ interface ChantierKpisProps {
 export default function ChantierKpis({ metrics }: ChantierKpisProps) {
   if (!metrics) return null;
 
-  const rentabilityBadge = getRentabilityBadge(metrics.marge_finale_pct || 0);
+  const rentabilityBadge = getRentabilityBadge(metrics.profitability_pct || 0);
 
   const formatCurrency = (value: number | null | undefined) => {
     if (value == null) return '—';
@@ -32,44 +32,19 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      {/* Rentabilité Finale Estimée - KPI Principal */}
-      <Card className={`card-premium border-4 shadow-xl ${rentabilityBadge.bgColor} bg-gradient-to-br from-card to-card/80`}>
+      {/* Marge Actuelle - KPI Principal */}
+      <Card className="card-premium border-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-xl font-bold tracking-tight">Rentabilité Finale Estimée</CardTitle>
-          <Activity className="h-6 w-6 text-primary animate-pulse" />
+          <CardTitle className="text-lg font-semibold">Marge Actuelle</CardTitle>
+          <Activity className="h-6 w-6 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6">
-            <Badge className={`font-black text-xl px-6 py-3 border-3 shadow-lg ${rentabilityBadge.bgColor} ${rentabilityBadge.color}`}>
-              <span className="text-2xl mr-2">{rentabilityBadge.emoji}</span>
-              {rentabilityBadge.label}
+          <div className="space-y-4">
+            <div className="text-5xl font-black tracking-tight">{metrics.profitability_pct?.toFixed(1) ?? '0'}%</div>
+            <div className="text-sm text-muted-foreground">à ce jour</div>
+            <Badge className={`font-bold text-lg px-5 py-2 border-2 ${rentabilityBadge.bgColor} ${rentabilityBadge.color}`}>
+              {rentabilityBadge.emoji} {rentabilityBadge.label}
             </Badge>
-            <div className="flex items-center gap-3">
-              {isProfitable ? (
-                <TrendingUp className="h-7 w-7 text-success" />
-              ) : (
-                <TrendingDown className="h-7 w-7 text-danger animate-bounce" />
-              )}
-              <span className={`text-5xl font-black tracking-tighter ${isProfitable ? 'text-success' : 'text-danger'}`}>
-                {metrics.marge_finale_pct?.toFixed(1) ?? '0'}%
-              </span>
-            </div>
-            {rentabilityBadge.urgency !== 'none' && (
-              <div className="ml-auto flex items-center gap-3 animate-pulse">
-                <AlertTriangle className={`h-7 w-7 ${rentabilityBadge.color}`} />
-                <span className={`text-lg font-bold ${rentabilityBadge.color}`}>
-                  {rentabilityBadge.urgency === 'critical' && '🚨 CRITIQUE'}
-                  {rentabilityBadge.urgency === 'high' && '⚠️ URGENT'}
-                  {rentabilityBadge.urgency === 'medium' && '⚠️ ATTENTION'}
-                  {rentabilityBadge.urgency === 'low' && 'VIGILANCE'}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className={`mt-4 p-4 rounded-lg border-2 ${rentabilityBadge.bgColor} ${rentabilityBadge.color}`}>
-            <p className="text-sm font-semibold leading-relaxed">
-              {rentabilityBadge.message}
-            </p>
           </div>
         </CardContent>
       </Card>
