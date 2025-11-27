@@ -33,14 +33,20 @@ export default function ChantierKpis({ metrics }: ChantierKpisProps) {
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Marge Finale Estimée - KPI Principal */}
-      <Card className="card-premium border-2">
+      <Card className={`card-premium ${rentabilityBadge.urgency === 'critical' || rentabilityBadge.urgency === 'high' ? 'border-4 border-red-500 animate-pulse' : 'border-2'}`}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
           <CardTitle className="text-lg font-semibold">Rentabilité Finale Estimée</CardTitle>
-          <Activity className="h-6 w-6 text-primary" />
+          {(rentabilityBadge.urgency === 'critical' || rentabilityBadge.urgency === 'high') ? (
+            <AlertTriangle className="h-6 w-6 text-red-500 animate-pulse" />
+          ) : (
+            <Activity className="h-6 w-6 text-primary" />
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="text-5xl font-black tracking-tight">{metrics.marge_finale_pct?.toFixed(1) ?? '0'}%</div>
+            <div className={`text-5xl font-black tracking-tight ${(rentabilityBadge.urgency === 'critical' || rentabilityBadge.urgency === 'high') ? 'text-red-500' : ''}`}>
+              {metrics.marge_finale_pct?.toFixed(1) ?? '0'}%
+            </div>
             <div className="text-sm text-muted-foreground">projection finale</div>
             <Badge className={`font-bold text-lg px-5 py-2 border-2 ${rentabilityBadge.bgColor} ${rentabilityBadge.color}`}>
               {rentabilityBadge.emoji} {rentabilityBadge.label}
