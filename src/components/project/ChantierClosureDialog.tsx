@@ -73,9 +73,10 @@ const ChantierClosureDialog = ({
   };
 
   const handleDialogClose = () => {
+    const wasOnBilan = step === 'bilan'; // Sauvegarder l'état AVANT de le modifier
     setStep('confirm');
     onOpenChange(false);
-    if (step === 'bilan') {
+    if (wasOnBilan) {
       onClosed(); // Notifier le parent seulement si on ferme après avoir vu le bilan
     }
   };
