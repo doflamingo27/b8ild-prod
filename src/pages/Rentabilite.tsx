@@ -22,6 +22,7 @@ interface ChantierMetrics {
   adresse: string;
   etat_chantier: string;
   budget_ht: number;
+  frais_count: number;
   metrics?: {
     couts_fixes_engages: number;
     cout_main_oeuvre_reel: number;
@@ -94,6 +95,12 @@ const Rentabilite = () => {
             .eq("chantier_id", chantier.id)
             .single();
 
+          // Charger le nombre de frais pour ce chantier
+          const { count: fraisCount } = await supabase
+            .from("frais_chantier")
+            .select("*", { count: 'exact', head: true })
+            .eq("chantier_id", chantier.id);
+
           return {
             id: chantier.id,
             nom_chantier: chantier.nom_chantier,
@@ -101,6 +108,7 @@ const Rentabilite = () => {
             adresse: chantier.adresse,
             etat_chantier: chantier.etat_chantier,
             budget_ht: chantier.budget_ht,
+            frais_count: fraisCount || 0,
             metrics: metricsData?.metrics as any,
           } as ChantierMetrics;
         })
@@ -240,10 +248,7 @@ const Rentabilite = () => {
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Nombre de dépenses</p>
                 <p className="text-2xl font-bold">
-                  {chantiers.reduce((sum, c) => {
-                    // Comptabiliser les frais pour ce chantier (à implémenter côté data)
-                    return sum;
-                  }, 0)}
+                  {chantiers.reduce((sum, c) => sum + (c.frais_count || 0), 0)}
                 </p>
               </div>
               <div>

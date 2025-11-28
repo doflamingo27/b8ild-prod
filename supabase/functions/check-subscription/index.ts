@@ -65,7 +65,12 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Valider la date avant de créer l'objet Date
+      if (subscription.current_period_end && !isNaN(subscription.current_period_end)) {
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      } else {
+        logStep("Invalid subscription end date", { current_period_end: subscription.current_period_end });
+      }
       productId = subscription.items.data[0].price.product;
       
       // Déterminer le nom du plan
