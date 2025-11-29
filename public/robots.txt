@@ -1,3 +1,7 @@
+# Sitemap
+Sitemap: https://b8ild.fr/sitemap.xml
+
+# Robots autorisés
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +14,12 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Tous les autres robots
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+# Crawl delay pour les robots tiers
+User-agent: *
+Crawl-delay: 1

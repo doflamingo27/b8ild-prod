@@ -1,0 +1,159 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "B8ild",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Logiciel de pilotage de rentabilité de chantiers BTP en temps réel avec alertes déficit, import factures OCR et calcul automatique du jour critique",
+      "url": "https://b8ild.fr",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "127",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "49",
+        "highPrice": "249",
+        "priceCurrency": "EUR",
+        "priceSpecification": [
+          {
+            "@type": "UnitPriceSpecification",
+            "price": "49",
+            "priceCurrency": "EUR",
+            "name": "Starter",
+            "billingDuration": "P1M"
+          },
+          {
+            "@type": "UnitPriceSpecification",
+            "price": "99",
+            "priceCurrency": "EUR",
+            "name": "Pro",
+            "billingDuration": "P1M"
+          },
+          {
+            "@type": "UnitPriceSpecification",
+            "price": "249",
+            "priceCurrency": "EUR",
+            "name": "Business",
+            "billingDuration": "P1M"
+          }
+        ]
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "B8ild",
+        "url": "https://b8ild.fr",
+        "logo": "https://b8ild.fr/logo.png",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@b8ild.fr",
+          "contactType": "customer support",
+          "availableLanguage": "French"
+        }
+      },
+      "screenshot": "https://lovable.dev/opengraph-image-p98pqg.png",
+      "featureList": [
+        "Calcul automatique rentabilité temps réel",
+        "Alertes 7, 3, 1 jour avant déficit",
+        "Import factures OCR intelligent",
+        "Jour critique précis",
+        "Gestion équipe et coûts main-d'œuvre",
+        "Simulateur pénalités retard",
+        "IA analyse de chantier",
+        "Export PDF enrichi"
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "B8ild",
+      "url": "https://b8ild.fr",
+      "logo": "https://b8ild.fr/logo.png",
+      "description": "Solution SaaS de pilotage de rentabilité pour artisans et PME du BTP",
+      "sameAs": [
+        "https://twitter.com/b8ild",
+        "https://linkedin.com/company/b8ild"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@b8ild.fr",
+        "contactType": "customer support",
+        "availableLanguage": "French",
+        "areaServed": "FR"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "B8ild Team"
+      },
+      "foundingDate": "2024",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "FR"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Comment B8ild calcule-t-il la rentabilité en temps réel ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "B8ild agrège automatiquement tous vos coûts (devis, factures fournisseurs importées par OCR, coûts main-d'œuvre de vos équipes, frais annexes) et les compare au budget du chantier. Le calcul se met à jour instantanément à chaque nouvelle dépense ou affectation d'équipe."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Qu'est-ce que le 'jour critique' ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le jour critique est le jour précis où votre chantier bascule de rentable à déficitaire. B8ild projette tous vos coûts futurs et calcule mathématiquement le moment où vos dépenses dépasseront votre budget. Vous recevez des alertes 7, 3 et 1 jour avant."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Mes données sont-elles sécurisées ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui. Toutes vos données sont hébergées en France sur des serveurs sécurisés, chiffrées en transit (TLS) et au repos (AES-256). Nous sommes 100% conformes RGPD avec des politiques de sécurité garantissant que seul vous pouvez accéder à vos chantiers."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Puis-je essayer B8ild gratuitement ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui, nous offrons un essai gratuit de 14 jours sans carte bancaire requise. Vous avez accès à toutes les fonctionnalités sur un nombre illimité de chantiers."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Accueil",
+          "item": "https://b8ild.fr/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Fonctionnalités",
+          "item": "https://b8ild.fr/#features"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Tarifs",
+          "item": "https://b8ild.fr/#pricing"
+        }
+      ]
+    }
+  ]
+}
