@@ -1,25 +1,114 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>B8ild - Pilotez la rentabilité de vos chantiers en temps réel</title>
-    <meta name="description" content="B8ild calcule automatiquement le jour exact où votre chantier devient déficitaire. Solution SaaS pour artisans et PME du BTP." />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.dicebear.com https://images.unsplash.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- Primary Meta Tags -->
+    <title>B8ild - Logiciel de pilotage rentabilité chantier BTP en temps réel | Alertes déficit</title>
+    <meta name="title" content="B8ild - Logiciel de pilotage rentabilité chantier BTP en temps réel | Alertes déficit" />
+    <meta name="description" content="B8ild calcule automatiquement votre rentabilité en temps réel et vous alerte 7, 3, 1 jour avant le déficit. Import factures OCR, jour critique précis, +18% marge. Essai gratuit 14 jours." />
     <meta name="author" content="B8ild" />
-    <meta name="keywords" content="BTP, rentabilité chantier, gestion chantier, artisan, électricien, plombier, maçon" />
+    <meta name="keywords" content="logiciel BTP, rentabilité chantier temps réel, gestion chantier, pilotage coûts BTP, alerte déficit chantier, jour critique, import factures OCR, artisan électricien, plombier, maçon, peintre, couvreur, PME BTP, calcul rentabilité automatique, suivi budget chantier, devis factures, coût main oeuvre, perte chantier, marge BTP" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://b8ild.fr/" />
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
-    <meta property="og:title" content="B8ild - Pilotez la rentabilité de vos chantiers" />
-    <meta property="og:description" content="Ne perdez plus un seul euro sur vos chantiers. Calcul automatique de rentabilité en temps réel." />
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://b8ild.fr/" />
+    <meta property="og:site_name" content="B8ild" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="B8ild - Pilotez la rentabilité de vos chantiers BTP en temps réel" />
+    <meta property="og:description" content="Ne perdez plus un seul euro sur vos chantiers. Calcul automatique de rentabilité, alertes avant déficit, import factures OCR. +18% de marge après 3 mois." />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@b8ild" />
+    <meta name="twitter:creator" content="@b8ild" />
+    <meta name="twitter:title" content="B8ild - Pilotez la rentabilité de vos chantiers BTP en temps réel" />
+    <meta name="twitter:description" content="Calcul automatique rentabilité, alertes déficit, import factures OCR. +18% marge après 3 mois. Essai gratuit 14 jours." />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "B8ild",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "Logiciel de pilotage de rentabilité de chantiers BTP en temps réel avec alertes déficit, import factures OCR et calcul automatique du jour critique",
+          "url": "https://b8ild.fr",
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "127",
+            "bestRating": "5",
+            "worstRating": "1"
+          },
+          "offers": {
+            "@type": "AggregateOffer",
+            "lowPrice": "49",
+            "highPrice": "249",
+            "priceCurrency": "EUR"
+          }
+        },
+        {
+          "@type": "Organization",
+          "name": "B8ild",
+          "url": "https://b8ild.fr",
+          "description": "Solution SaaS de pilotage de rentabilité pour artisans et PME du BTP",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "support@b8ild.fr",
+            "contactType": "customer support",
+            "availableLanguage": "French",
+            "areaServed": "FR"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Comment B8ild calcule-t-il la rentabilité en temps réel ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "B8ild agrège automatiquement tous vos coûts (devis, factures fournisseurs importées par OCR, coûts main-d'œuvre de vos équipes, frais annexes) et les compare au budget du chantier."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Qu'est-ce que le jour critique ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Le jour critique est le jour précis où votre chantier bascule de rentable à déficitaire. Vous recevez des alertes 7, 3 et 1 jour avant."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>
