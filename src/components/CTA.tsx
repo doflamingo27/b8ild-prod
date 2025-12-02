@@ -18,9 +18,9 @@ const CTA = () => {
             <span className="text-accent">Votre succès, maîtrisé.</span>
           </h2>
           <p className="text-lg text-white/90 lg:text-xl">
-            Rejoignez les centaines d'artisans qui pilotent leurs chantiers avec B8ild.
+            Rejoignez les artisans et PME du BTP qui pilotent leurs chantiers avec B8ild, un logiciel conçu exclusivement pour votre secteur.
             <br />
-            <span className="font-semibold text-accent">Essai gratuit 7 jours, sans carte bancaire.</span>
+            <span className="font-semibold text-accent">Réservé aux entreprises du BTP · Essai gratuit 7 jours, sans carte bancaire.</span>
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button 
@@ -47,7 +47,7 @@ const CTA = () => {
             </Button>
           </div>
           <p className="text-sm text-white/80 font-medium">
-            ✓ Installation en 5 minutes · ✓ Support français · ✓ Sans engagement
+            ✓ Installation en 5 minutes · ✓ Support français · ✓ Pensé pour les réalités terrain du BTP · ✓ Sans engagement
           </p>
         </div>
       </div>

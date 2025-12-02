@@ -4,44 +4,44 @@ const features = [
   {
     icon: Calculator,
     title: "Calcul automatique de rentabilité",
-    description: "Suivez en temps réel le coût de votre main-d'œuvre, vos charges et votre marge. Tout est automatique.",
+    description: "Suivez en temps réel le coût de votre main-d'œuvre, vos charges et votre marge sur chaque chantier BTP.",
     details: [
-      "Agrégation automatique de tous les coûts (factures, équipes, frais)",
-      "Mise à jour instantanée à chaque nouvelle dépense",
-      "Projection de la marge finale selon l'avancement",
-      "Comparaison budget prévu vs dépensé"
+      "Agrégation automatique de tous les coûts (factures matériaux, équipes, frais de chantier)",
+      "Mise à jour instantanée à chaque nouvelle dépense ou affectation",
+      "Projection de la marge finale selon l'avancement du chantier",
+      "Comparaison devis initial vs coûts réels (matériaux, sous-traitants, main-d'œuvre)"
     ],
     color: "text-accent",
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1590490359854-dfba19688d70?w=600&h=400&fit=crop",
     direction: "left",
     badge: "Nouveau",
   },
   {
     icon: AlertTriangle,
     title: "Alertes avant déficit",
-    description: "Recevez des notifications 7, 3 et 1 jour avant que votre chantier ne devienne déficitaire.",
+    description: "Recevez des notifications 7, 3 et 1 jour avant que votre chantier BTP ne devienne déficitaire.",
     details: [
       "Alertes par email et notification in-app",
-      "Détection précoce des dérapages budgétaires",
+      "Détection précoce des dérapages budgétaires sur vos chantiers BTP",
       "Recommandations d'actions correctives automatiques",
-      "Historique des alertes et actions prises"
+      "Historique des alertes et actions prises par chantier"
     ],
     color: "text-danger",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1581090700227-1e37b190418e?w=600&h=400&fit=crop",
     direction: "right",
   },
   {
     icon: Users,
     title: "Gestion d'équipe complète",
-    description: "Gérez vos équipes, coûts horaires, charges sociales et affectations par chantier.",
+    description: "Gérez vos équipes chantier, coûts horaires, charges sociales et affectations par chantier.",
     details: [
-      "Calcul automatique du coût/jour par membre",
-      "Suivi des affectations et disponibilités",
+      "Calcul automatique du coût/jour par membre (chef de chantier, compagnon, apprenti…)",
+      "Suivi des affectations et disponibilités par chantier BTP",
       "Gestion des congés et absences",
-      "Statistiques de productivité par équipe"
+      "Statistiques de productivité par équipe et par corps d'état (gros œuvre, second œuvre…)"
     ],
     color: "text-primary",
-    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8c?w=600&h=400&fit=crop",
     direction: "left",
   },
   {
@@ -49,56 +49,56 @@ const features = [
     title: "Jour critique précis",
     description: "Connaissez exactement le jour où votre chantier bascule en perte.",
     details: [
-      "Projection mathématique basée sur vos coûts réels",
-      "Visualisation graphique de l'évolution de la marge",
+      "Projection mathématique basée sur vos coûts réels et prévus",
+      "Visualisation graphique de l'évolution de la marge chantier",
       "Simulation d'impact des retards et ajustements",
-      "Compteur de jours rentables restants"
+      "Compteur de jours rentables restants sur chaque chantier BTP"
     ],
     color: "text-success",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&h=400&fit=crop",
     direction: "right",
     badge: "Populaire",
   },
   {
     icon: FileText,
     title: "Import factures intelligent",
-    description: "Importez vos devis et factures fournisseurs en 1 clic grâce à l'OCR avancé.",
+    description: "Importez vos devis et factures fournisseurs BTP en 1 clic grâce à l'OCR avancé.",
     details: [
       "Reconnaissance automatique de tous formats PDF/images",
       "Extraction HT, TVA, TTC, fournisseur, date, SIRET",
       "Correction manuelle rapide si besoin",
-      "Association automatique aux chantiers par référence"
+      "Association automatique aux chantiers par référence de chantier BTP"
     ],
     color: "text-accent",
-    image: "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop",
     direction: "left",
   },
   {
     icon: BarChart3,
     title: "Rapports PDF enrichis",
-    description: "Exportez des bilans financiers complets avec graphiques et métriques détaillées.",
+    description: "Exportez des bilans financiers complets avec graphiques et métriques détaillées pour vos chantiers BTP.",
     details: [
       "Export PDF professionnel en 1 clic",
       "Synthèse rentabilité avec badges colorés",
       "Comparaison prévisionnel vs réel",
-      "Sections devis, factures, équipes, coûts annexes"
+      "Sections devis, factures, équipes, coûts annexes BTP"
     ],
     color: "text-purple-500",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=600&h=400&fit=crop",
     direction: "right",
   },
   {
     icon: Sparkles,
     title: "IA d'analyse de chantier",
-    description: "Intelligence artificielle qui analyse vos chantiers et recommande des optimisations.",
+    description: "Intelligence artificielle qui analyse vos chantiers BTP et recommande des optimisations.",
     details: [
-      "Détection automatique des problèmes et risques",
+      "Détection automatique des problèmes et risques sur vos chantiers",
       "Recommandations concrètes et actionnables",
       "Comparaison aux standards BTP français",
-      "Prévisions de coût final et rentabilité"
+      "Prévisions de coût final et rentabilité par chantier"
     ],
     color: "text-pink-500",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1582719478250-c2c9e2684b1c?w=600&h=400&fit=crop",
     direction: "left",
     badge: "IA",
   },
@@ -107,13 +107,13 @@ const features = [
     title: "Simulateur pénalités retard",
     description: "Anticipez l'impact financier des retards avec des simulations instantanées.",
     details: [
-      "Configuration flexible des clauses de pénalités",
+      "Configuration flexible des clauses de pénalités prévues à vos marchés",
       "Graphiques d'impact selon jours de retard",
       "Comparateur de scénarios multi-paramètres",
-      "Alertes intelligentes et actions recommandées"
+      "Alertes intelligentes et actions recommandées",
     ],
     color: "text-orange-500",
-    image: "https://images.unsplash.com/photo-1495592822108-9e6261896da8?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1531834685032-c34bf0d84c77?w=600&h=400&fit=crop",
     direction: "right",
   },
   {
@@ -122,12 +122,12 @@ const features = [
     description: "Alertes par email et dans l'app pour ne jamais manquer un seuil critique.",
     details: [
       "Notifications personnalisables par type d'alerte",
-      "Résumé quotidien de tous vos chantiers",
+      "Résumé quotidien de tous vos chantiers BTP",
       "Historique des notifications et actions prises",
       "Désactivation granulaire par catégorie"
     ],
     color: "text-warning",
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=400&fit=crop",
     direction: "left",
   },
 ];
@@ -141,7 +141,10 @@ const Features = () => {
             Anticipez, ajustez, <span className="text-gradient-accent">rentabilisez</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Tous les outils dont vous avez besoin pour piloter vos chantiers comme un pro
+            Tous les outils dont vous avez besoin pour piloter la rentabilité de vos chantiers BTP — conçu exclusivement pour artisans et PME du secteur.
+          </p>
+          <p className="mt-3 text-sm font-semibold text-accent">
+            Pensé uniquement pour les entreprises du BTP, pas pour les autres secteurs.
           </p>
         </div>
 
@@ -164,7 +167,7 @@ const Features = () => {
                   <div className="relative overflow-hidden rounded-2xl shadow-elegant border border-border">
                     <img
                       src={feature.image}
-                      alt={feature.title}
+                      alt={`${feature.title} - logiciel BTP pour rentabilité de chantier`}
                       className="w-full h-[300px] object-cover group-hover:scale-105 transition-smooth"
                     />
                     {feature.badge && (

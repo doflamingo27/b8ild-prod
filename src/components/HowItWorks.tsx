@@ -6,33 +6,33 @@ const steps = [
   {
     number: "01",
     icon: Building2,
-    title: "Créez votre chantier",
-    description: "Ajoutez un nouveau chantier avec le devis et les informations client en moins de 2 minutes.",
-    details: "Renseignez nom du chantier, client, référence, dates prévisionnelles et budget. Importez votre devis par OCR en 1 clic.",
+    title: "Créez votre chantier BTP",
+    description: "Ajoutez un nouveau chantier BTP avec le devis et les informations client en moins de 2 minutes.",
+    details: "Renseignez nom du chantier, client, référence, dates prévisionnelles et budget. Importez votre devis par OCR en 1 clic, comme sur vos chantiers réels.",
     color: "text-primary",
   },
   {
     number: "02",
     icon: Users,
-    title: "Affectez votre équipe",
-    description: "Assignez les membres de votre équipe avec leurs coûts horaires et charges.",
-    details: "Sélectionnez les membres, définissez les jours travaillés et les taux horaires. Le coût main-d'œuvre se calcule automatiquement.",
+    title: "Affectez votre équipe terrain",
+    description: "Assignez les membres de votre équipe chantier avec leurs coûts horaires et charges (chef de chantier, compagnons, apprentis…).",
+    details: "Sélectionnez les membres, définissez les jours travaillés et les taux horaires. Le coût main-d'œuvre BTP se calcule automatiquement.",
     color: "text-accent",
   },
   {
     number: "03",
     icon: Calculator,
-    title: "Suivez les coûts",
-    description: "Importez vos factures fournisseurs et frais de chantier en temps réel.",
-    details: "Upload de factures par OCR : extraction automatique HT, TVA, TTC. Ajoutez les coûts annexes (location, outillage, déplacements).",
+    title: "Suivez les coûts BTP",
+    description: "Importez vos factures fournisseurs matériaux et frais de chantier en temps réel.",
+    details: "Upload de factures par OCR : extraction automatique HT, TVA, TTC. Ajoutez les coûts annexes (location, outillage, déplacements, sous-traitants).",
     color: "text-warning",
   },
   {
     number: "04",
     icon: TrendingUp,
     title: "Pilotez en temps réel",
-    description: "Consultez votre rentabilité et le jour critique à tout moment sur tous vos écrans.",
-    details: "Dashboard avec KPIs en temps réel, graphiques d'évolution, alertes automatiques, export PDF enrichi. Réagissez avant qu'il soit trop tard.",
+    description: "Consultez votre rentabilité et le jour critique à tout moment, depuis le bureau, la base vie ou le camion.",
+    details: "Dashboard avec KPIs en temps réel, graphiques d'évolution, alertes automatiques et export PDF enrichi. Réagissez avant qu'il soit trop tard.",
     color: "text-success",
   },
 ];
@@ -52,7 +52,10 @@ const HowItWorks = () => {
             Simple, rapide, <span className="text-gradient-accent">efficace</span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            4 étapes pour prendre le contrôle de vos chantiers et éviter les pertes
+            4 étapes pour que votre entreprise BTP prenne le contrôle de ses chantiers et évite les pertes.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold text-accent">
+            Aucun paramétrage complexe — pensé pour les artisans, pas pour les équipes IT.
           </p>
         </div>
 
@@ -130,7 +133,7 @@ const HowItWorks = () => {
               Prêt à reprendre le contrôle de vos chantiers ?
             </p>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Rejoignez les 500+ artisans qui pilotent déjà leurs chantiers avec B8ild
+              Rejoignez les 500+ artisans et PME du BTP qui pilotent déjà leurs chantiers avec B8ild
             </p>
             <Link to="/auth?mode=signup">
               <Button size="lg" className="btn-ripple shadow-glow">

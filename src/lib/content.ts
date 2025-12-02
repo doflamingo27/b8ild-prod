@@ -263,7 +263,7 @@ export const tables = {
 
 export const microcopy = {
   heroTitle: "Pilotez la rentabilité de vos chantiers en temps réel.",
-  heroSubtitle: "B8ild calcule automatiquement le jour où votre chantier devient déficitaire. Anticipez, maîtrisez, gagnez.",
+  heroSubtitle: "B8ild, logiciel 100% dédié aux artisans et PME du BTP, calcule automatiquement le jour où votre chantier devient déficitaire. Anticipez, maîtrisez, gagnez.",
   whyChoose: [
     "Rentabilité temps réel",
     "Alertes automatiques avant déficit",

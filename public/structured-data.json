@@ -6,7 +6,7 @@
       "name": "B8ild",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
-      "description": "Logiciel de pilotage de rentabilité de chantiers BTP en temps réel avec alertes déficit, import factures OCR et calcul automatique du jour critique",
+      "description": "Logiciel 100% dédié aux artisans et PME du BTP pour le pilotage de rentabilité de chantiers BTP en temps réel avec alertes déficit, import factures OCR et calcul automatique du jour critique",
       "url": "https://b8ild.fr",
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -73,7 +73,7 @@
       "name": "B8ild",
       "url": "https://b8ild.fr",
       "logo": "https://b8ild.fr/logo.png",
-      "description": "Solution SaaS de pilotage de rentabilité pour artisans et PME du BTP",
+      "description": "Solution SaaS 100% dédiée au pilotage de rentabilité pour artisans et PME du BTP",
       "sameAs": [
         "https://twitter.com/b8ild",
         "https://linkedin.com/company/b8ild"
