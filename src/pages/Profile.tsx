@@ -34,7 +34,7 @@ const Profile = () => {
         .from("entreprises")
         .select("*")
         .eq("proprietaire_user_id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       if (data) {
@@ -50,23 +50,71 @@ const Profile = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      console.log("=== DEBUG handleSubmit ===");
+      console.log("user?.id:", user?.id);
+      console.log("entreprise data:", entreprise);
+
+      // Vérifier si l'entreprise existe
+      const { data: existing, error: selectError } = await supabase
         .from("entreprises")
-        .update({
+        .select("id")
+        .eq("proprietaire_user_id", user?.id)
+        .single();
+
+      console.log("existing:", existing);
+      console.log("selectError:", selectError);
+
+      if (existing) {
+        // UPDATE si existe
+        console.log("-> UPDATE entreprise");
+        const { error } = await supabase
+          .from("entreprises")
+          .update({
+            nom: entreprise.nom,
+            adresse: entreprise.adresse,
+            siret: entreprise.siret,
+            specialite_metier: entreprise.specialite_metier,
+          })
+          .eq("proprietaire_user_id", user?.id);
+        if (error) {
+          console.error("UPDATE error:", error);
+          throw error;
+        }
+        console.log("UPDATE success");
+      } else {
+        // INSERT si n'existe pas
+        console.log("-> INSERT nouvelle entreprise");
+        const insertData = {
           nom: entreprise.nom,
           adresse: entreprise.adresse,
           siret: entreprise.siret,
           specialite_metier: entreprise.specialite_metier,
-        })
-        .eq("proprietaire_user_id", user?.id);
+          proprietaire_user_id: user?.id,
+        };
+        console.log("insertData:", insertData);
 
-      if (error) throw error;
+        const { data: insertResult, error } = await supabase
+          .from("entreprises")
+          .insert(insertData)
+          .select();
+
+        console.log("INSERT result:", insertResult);
+        if (error) {
+          console.error("INSERT error:", error);
+          throw error;
+        }
+        console.log("INSERT success");
+      }
 
       toast({
         title: "Profil mis à jour",
         description: "Les informations de votre entreprise ont été enregistrées.",
       });
+
+      // Recharger les données après sauvegarde
+      loadEntreprise();
     } catch (error: any) {
+      console.error("handleSubmit error:", error);
       toast({
         title: "Erreur",
         description: error.message,
