@@ -81,14 +81,14 @@ export const useDocumentExtraction = () => {
         duration: 2000
       });
       
-      console.log('[EXTRACTION] Calling extract-document-v3 with:', { 
-        fileUrl: urlData.signedUrl, 
+      console.log('[EXTRACTION] Calling ocr-claude-vision with:', {
+        fileUrl: urlData.signedUrl,
         documentType: documentType === 'ao' ? 'ao' : 'facture',
-        entrepriseId: entreprise.id 
+        entrepriseId: entreprise.id
       });
-      
-      // Appeler l'edge function d'extraction v3
-      const { data, error } = await supabase.functions.invoke('extract-document-v3', {
+
+      // Appeler l'edge function Claude Vision
+      const { data, error } = await supabase.functions.invoke('ocr-claude-vision', {
         body: {
           fileUrl: urlData.signedUrl,
           documentType: documentType === 'ao' ? 'ao' : 'facture',
